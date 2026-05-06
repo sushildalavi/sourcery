@@ -65,9 +65,13 @@ jobs:
           pytest --version
           python --version
 
-      - name: Init schema
+      - name: Init schema + apply all migrations
         run: |
           PGPASSWORD=$PGPASSWORD psql -h 127.0.0.1 -U $PGUSER -d $PGDATABASE -f db/init.sql
+          for f in db/migrations/*.sql; do
+            echo "applying $f"
+            PGPASSWORD=$PGPASSWORD psql -h 127.0.0.1 -U $PGUSER -d $PGDATABASE -f "$f"
+          done
 
       - name: Lint (ruff)
         run: ruff check backend/ scripts/
