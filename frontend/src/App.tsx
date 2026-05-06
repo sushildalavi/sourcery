@@ -1,18 +1,33 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { RouteFallback } from './components/RouteFallback';
 import UploadedChat from './routes/UploadedChat';
 import PublicChat from './routes/PublicChat';
-import Analytics from './routes/Analytics';
+
+// Analytics is the heaviest route (charts) — defer it so the chat shell
+// hydrates fast on first paint.
+const Analytics = lazy(() => import('./routes/Analytics'));
 
 export default function App() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<UploadedChat />} />
-        <Route path="/public" element={<PublicChat />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<UploadedChat />} />
+          <Route path="/public" element={<PublicChat />} />
+          <Route
+            path="/analytics"
+            element={
+              <Suspense fallback={<RouteFallback label="Loading analytics" />}>
+                <Analytics />
+              </Suspense>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </ErrorBoundary>
   );
 }
