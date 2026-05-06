@@ -1,0 +1,80 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      python-runtime:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "ruff"
+          - "pyright"
+          - "pytest*"
+      python-dev:
+        patterns:
+          - "ruff"
+          - "pyright"
+          - "pytest*"
+    labels:
+      - dependencies
+      - python
+
+  - package-ecosystem: npm
+    directory: "/frontend"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    versioning-strategy: increase-if-necessary
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-*"
+          - "@types/react*"
+      build-tooling:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript"
+          - "@typescript-eslint/*"
+      ui:
+        patterns:
+          - "lucide-react"
+          - "framer-motion"
+          - "tailwindcss"
+          - "postcss"
+          - "autoprefixer"
+    labels:
+      - dependencies
+      - javascript
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - ci
+
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - docker
+
+  - package-ecosystem: docker
+    directory: "/frontend"
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - docker
