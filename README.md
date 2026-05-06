@@ -352,13 +352,13 @@ overfitting** on the 530-pair set.
 
 Evaluated via `python scripts/eval_retrieval.py --eval-set /tmp/eval_retrieval_120.json --k 10` against `Evaluation/queries/queries_120.json` with each query's `target_doc_id` as ground truth. Report in [`Evaluation/data/retrieval_eval_120.json`](Evaluation/data/retrieval_eval_120.json).
 
-| Metric | Value |
-|---|---|
-| Cases | 120 |
-| **Recall@5** | **0.992** (119/120) |
-| **Recall@10** | **1.000** (120/120) |
-| **MRR** | **0.981** |
-| **nDCG@10** | **0.986** (known-item normalized) |
+```mermaid
+xychart-beta
+    title "Retrieval quality on 120 queries (×100, higher is better)"
+    x-axis ["Recall@5", "Recall@10", "MRR", "nDCG@10"]
+    y-axis "Score" 95 --> 100
+    bar [99.2, 100.0, 98.1, 98.6]
+```
 
 The target document surfaces in the top-10 for **every** query and at rank-1
 for ~98% of them, confirming the hybrid dense-plus-sparse retrieval reliably
@@ -366,40 +366,44 @@ ranks the intended chunks first.
 
 ### Public Research Mode (7-API Aggregation)
 
-Evaluated on 20 diverse ML/NLP queries with live API calls.
+Evaluated on 20 diverse ML/NLP queries with live API calls — 200 total results, mean 4.78s, median 4.77s.
 
-| Metric | Value |
-|--------|-------|
-| Queries tested | 20 |
-| Total results returned | 200 |
-| Avg results per query | 10.0 |
-| Mean search latency | 4.78s |
-| Median search latency | 4.77s |
+```mermaid
+pie showData
+    title Result share by provider (n=200, IEEE requires separate API key)
+    "OpenAlex" : 56
+    "Elsevier/Scopus" : 52
+    "Semantic Scholar" : 34
+    "arXiv" : 29
+    "Crossref" : 20
+    "Springer" : 9
+```
 
-**Provider Distribution:**
+> Round-robin selection ensures provider diversity. 6 of 7 APIs contribute results. End-to-end latency is dominated by the slowest API in the concurrent fan-out.
 
-| Provider | Results | Share |
-|----------|---------|-------|
-| OpenAlex | 56 | 28.0% |
-| Elsevier/Scopus | 52 | 26.0% |
-| Semantic Scholar | 34 | 17.0% |
-| arXiv | 29 | 14.5% |
-| Crossref | 20 | 10.0% |
-| Springer | 9 | 4.5% |
+### System Latency (per-stage, ms)
 
-> Round-robin selection ensures provider diversity. 6 of 7 APIs contribute results (IEEE requires a separate API key). Latency is dominated by the slowest API in the concurrent fan-out.
+```mermaid
+xychart-beta
+    title "End-to-end latency by stage — p50 ms"
+    x-axis ["Embed", "Retrieve", "Rerank", "Generate"]
+    y-axis "Latency (ms)" 0 --> 350
+    bar [28, 95, 18, 310]
+```
 
-### System Latency (p50 / p95 / p99 ms)
+```mermaid
+xychart-beta
+    title "Tail latency by stage — p95 vs p99 (ms)"
+    x-axis ["Embed", "Retrieve", "Rerank", "Generate"]
+    y-axis "Latency (ms)" 0 --> 1300
+    bar [62, 210, 45, 720]
+    line [115, 380, 90, 1240]
+```
 
-| Stage | p50 | p95 | p99 |
-|-------|-----|-----|-----|
-| Embed query | 28 | 62 | 115 |
-| Retrieve | 95 | 210 | 380 |
-| Rerank | 18 | 45 | 90 |
-| Generate | 310 | 720 | 1240 |
-| **Total** | **420** | **980** | **1600** |
+End-to-end totals: **p50 420 ms · p95 980 ms · p99 1.6 s**. Generation
+dominates the tail; embed/retrieve/rerank stay sub-450 ms even at p99.
 
-> Latency measured on a 3-chunk context window, GPT-4o-mini, local Postgres pgvector, and local Ollama.
+> Measured on a 3-chunk context window, GPT-4o-mini, local Postgres pgvector, and local Ollama.
 
 ---
 
