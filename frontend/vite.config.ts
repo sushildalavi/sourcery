@@ -12,4 +12,16 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          motion: ['framer-motion'],
+          icons: ['lucide-react'],
+        },
+      },
+    },
+  },
 });
