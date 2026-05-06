@@ -440,7 +440,6 @@ def assistant_answer(
         "doi",
         "arxiv",
         "openalex",
-        "ieee",
         "springer",
         "journal",
         "conference",

@@ -1418,7 +1418,6 @@ def _is_company_intent_query(query: str) -> bool:
 def _requested_public_source(query: str) -> str | None:
     q = (query or "").lower()
     mapping = (
-        ("ieee", "ieee"),
         ("springer", "springer"),
         ("spirnger", "springer"),
         ("srpinger", "springer"),
@@ -1434,7 +1433,7 @@ def _requested_public_source(query: str) -> str | None:
             return source
 
     normalized_tokens = re.findall(r"[a-z]+", q)
-    provider_names = ["ieee", "springer", "elsevier", "semanticscholar", "openalex", "arxiv", "crossref"]
+    provider_names = ["springer", "elsevier", "semanticscholar", "openalex", "arxiv", "crossref"]
     for t in normalized_tokens:
         match = difflib.get_close_matches(t, provider_names, n=1, cutoff=0.78)
         if match:
@@ -1546,7 +1545,6 @@ def _rank_and_trim_citations(
     source_prior = {
         "semanticscholar": 0.18,
         "openalex": 0.16,
-        "ieee": 0.16,
         "springer": 0.15,
         "elsevier": 0.15,
         "arxiv": 0.14,

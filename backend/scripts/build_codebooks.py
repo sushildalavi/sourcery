@@ -164,7 +164,7 @@ def run_pipeline(pairs_path: Path, *, include_public: bool = False, per_call_tim
                     "scope": mode,
                     "k": 8,
                     # Disable general-background public fallback so uploaded-mode
-                    # runs stay fully offline (no arXiv / CrossRef / IEEE hits).
+                    # runs stay fully offline (no arXiv / CrossRef hits).
                     "allow_general_background": False,
                 }
                 if is_uploaded:
@@ -412,9 +412,6 @@ def main() -> int:
     # (arXiv, OpenAlex, Semantic Scholar, CrossRef) which can take 30-60s per
     # call when CrossRef is rate-limited.
     per_call_timeout = int(os.getenv("CODEBOOK_PER_CALL_TIMEOUT", "120"))
-    # Disable IEEE (expired key — every call wastes retry budget).
-    if include_public:
-        os.environ.setdefault("PUBLIC_IEEE_LIMIT", "0")
     all_pairs = run_pipeline(pairs_path, include_public=include_public, per_call_timeout_s=per_call_timeout)
     print()
     print(f"Collected {len(all_pairs)} pairs in {int(time.time() - t0)}s")

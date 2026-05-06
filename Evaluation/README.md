@@ -51,7 +51,7 @@ python -m backend.scripts.generate_queries
 ```bash
 # Run assistant_answer for each query, extract (claim, evidence) pairs,
 # emit 3 identical coder xlsx files at /Users/…/Desktop/HUMAN EVAL/
-CODEBOOK_MAX_QUERIES=80 CODEBOOK_INCLUDE_PUBLIC=true PUBLIC_IEEE_LIMIT=0 \
+CODEBOOK_MAX_QUERIES=80 CODEBOOK_INCLUDE_PUBLIC=true \
   python -m backend.scripts.build_codebooks
 ```
 

@@ -55,7 +55,7 @@ def _ensure_doc_type_schema() -> None:
         SET doc_type='research_paper'
         WHERE (doc_type IS NULL OR doc_type='other')
           AND (
-            lower(title) ~ '\\m(arxiv|ieee|acm|conference|journal|paper)\\M'
+            lower(title) ~ '\\m(arxiv|acm|conference|journal|paper)\\M'
             OR lower(title) ~ '\\m[0-9]{4}\\.[0-9]{4,5}(v[0-9]+)?\\M'
           )
         """
@@ -258,7 +258,7 @@ def _infer_doc_type(name: str) -> str:
         return "notes"
     if any(k in n for k in ("policy", "report", "spec", "manual", "company profile", "official")):
         return "official_doc"
-    if any(k in n for k in ("paper", "arxiv", "ieee", "acm", "journal", "conference")):
+    if any(k in n for k in ("paper", "arxiv", "acm", "journal", "conference")):
         return "research_paper"
     # arXiv-style filenames like 2602.17037v2.pdf
     if re.search(r"\b\d{4}\.\d{4,5}(v\d+)?\b", n):

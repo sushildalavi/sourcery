@@ -82,7 +82,6 @@ function formatProviderName(name: string): string {
     semanticscholar: 'Semantic Scholar',
     arxiv: 'arXiv',
     crossref: 'Crossref',
-    ieee: 'IEEE',
     springer: 'Springer',
     elsevier: 'Elsevier',
   };

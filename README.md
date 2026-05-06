@@ -10,7 +10,7 @@
 
 **ScholarRAG** is a production-architecture Retrieval-Augmented Generation (RAG) system for scientific literature discovery, multi-document question answering, and calibrated answer confidence scoring.
 
-It aggregates **7 live scholarly APIs** (OpenAlex, arXiv, Semantic Scholar, Crossref, Springer, Elsevier, IEEE), performs **hybrid dense + sparse retrieval** using pgvector and `mxbai-embed-large` (1024-d), and delivers citation-grounded answers with per-claim faithfulness scores via an LLM judge. Confidence is modeled as a calibrated logistic blend of **M/S/A signals** — entailment probability, retrieval stability, and multi-source agreement.
+It aggregates **6 live scholarly APIs** (OpenAlex, arXiv, Semantic Scholar, Crossref, Springer, Elsevier), performs **hybrid dense + sparse retrieval** using pgvector and `mxbai-embed-large` (1024-d), and delivers citation-grounded answers with per-claim faithfulness scores via an LLM judge. Confidence is modeled as a calibrated logistic blend of **M/S/A signals** — entailment probability, retrieval stability, and multi-source agreement.
 
 ---
 
@@ -57,7 +57,7 @@ flowchart LR
 
     subgraph External["External APIs"]
         OAI[OpenAI<br/>GPT-4o-mini]
-        SCH[7 Scholarly APIs<br/>OpenAlex · arXiv · S2<br/>Crossref · Springer<br/>Elsevier · IEEE]
+        SCH[6 Scholarly APIs<br/>OpenAlex · arXiv · S2<br/>Crossref · Springer<br/>Elsevier]
     end
 
     UI -->|REST + SSE| ROUTE
@@ -376,7 +376,7 @@ Evaluated on 20 diverse ML/NLP queries with live API calls — 200 total results
 
 ```mermaid
 pie showData
-    title Result share by provider (n=200, IEEE requires separate API key)
+    title Result share by provider (n=200 across 20 live queries)
     "OpenAlex" : 56
     "Elsevier/Scopus" : 52
     "Semantic Scholar" : 34
@@ -385,7 +385,7 @@ pie showData
     "Springer" : 9
 ```
 
-> Round-robin selection ensures provider diversity. 6 of 7 APIs contribute results. End-to-end latency is dominated by the slowest API in the concurrent fan-out.
+> Round-robin selection ensures provider diversity. End-to-end latency is dominated by the slowest API in the concurrent fan-out.
 
 ### System Latency (per-stage, ms)
 
@@ -509,7 +509,6 @@ citelens/
 │   │   ├── arxiv_utils.py       # arXiv API client
 │   │   ├── crossref_utils.py    # Crossref API client
 │   │   ├── elsevier_utils.py    # Elsevier/Scopus API client
-│   │   ├── ieee_utils.py        # IEEE Xplore API client
 │   │   ├── openalex_utils.py    # OpenAlex API client
 │   │   ├── semanticscholar_utils.py  # Semantic Scholar API client
 │   │   ├── springer_utils.py    # Springer API client
@@ -586,7 +585,7 @@ All evaluation data, scripts, and generated figures live in the [`Evaluation/`](
 |---|---|---|
 | 1. Ingest corpus | `python -m backend.scripts.ingest_corpus` | 15 documents in `documents` table |
 | 2. Generate queries | `python -m backend.scripts.generate_queries` | `Evaluation/queries/queries_120.json` |
-| 3. Build coder workbooks | `CODEBOOK_MAX_QUERIES=80 CODEBOOK_INCLUDE_PUBLIC=true PUBLIC_IEEE_LIMIT=0 python -m backend.scripts.build_codebooks` | 3 xlsx files + `claim_evidence_pairs.json` |
+| 3. Build coder workbooks | `CODEBOOK_MAX_QUERIES=80 CODEBOOK_INCLUDE_PUBLIC=true python -m backend.scripts.build_codebooks` | 3 xlsx files + `claim_evidence_pairs.json` |
 | 4. IAA + majority vote | `python -m backend.scripts.compute_iaa_majority` | `iaa_report.json`, `gold_labels.xlsx` |
 | 5. M/S/A features | `python -m backend.scripts.extract_msa_features` | `features.xlsx` |
 | 6. Fit + ablation + DB write | `python -m backend.scripts.fit_unified_calibration --write-db` | `calibration_fit.json`, `reliability_diagram.xlsx`, DB row `label='unified'` |

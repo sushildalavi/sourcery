@@ -26,8 +26,6 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-# Make sure we're disabling IEEE (expired key) and keeping public timeout sane.
-os.environ.setdefault("PUBLIC_IEEE_LIMIT", "0")
 os.environ.setdefault("CONFIDENCE_USE_FITTED_WEIGHTS", "false")
 
 from backend.services.assistant_utils import (  # noqa: E402

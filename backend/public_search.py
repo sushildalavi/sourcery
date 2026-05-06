@@ -11,7 +11,6 @@ from backend.utils.arxiv_utils import fetch_arxiv_candidates
 from backend.utils.crossref_utils import fetch_from_crossref
 from backend.utils.elsevier_utils import fetch_from_elsevier
 from backend.utils.embedding_utils import embed_batch_cached, embed_query
-from backend.utils.ieee_utils import fetch_from_ieee
 from backend.utils.openalex_utils import fetch_candidates_from_openalex
 from backend.utils.semanticscholar_utils import fetch_from_s2, fetch_seminal_from_s2
 from backend.utils.springer_utils import fetch_from_springer
@@ -22,13 +21,6 @@ CROSSREF_LIMIT = int(os.getenv("PUBLIC_CROSSREF_LIMIT", "20")) or 20
 S2_LIMIT = int(os.getenv("PUBLIC_S2_LIMIT", "25")) or 25
 SPRINGER_LIMIT = int(os.getenv("PUBLIC_SPRINGER_LIMIT", "20")) or 20
 ELSEVIER_LIMIT = int(os.getenv("PUBLIC_ELSEVIER_LIMIT", "20")) or 20
-# IEEE: a value of 0 in the env is treated as "disabled" (useful when the IEEE
-# API key is expired — every request otherwise consumes retries for no results).
-IEEE_LIMIT_RAW = os.getenv("PUBLIC_IEEE_LIMIT")
-if IEEE_LIMIT_RAW == "0":
-    IEEE_LIMIT = 0
-else:
-    IEEE_LIMIT = int(IEEE_LIMIT_RAW or 20) or 20
 PUBLIC_SPARSE_WEIGHT = float(os.getenv("PUBLIC_SPARSE_WEIGHT", "0.35"))
 PUBLIC_CORROB_MAX = float(os.getenv("PUBLIC_CORROB_MAX", "0.10"))
 PUBLIC_CORROB_STEP = float(os.getenv("PUBLIC_CORROB_STEP", "0.035"))
@@ -42,16 +34,15 @@ _DISABLED_PROVIDERS: set[str] = set()
 _PUBLIC_SEARCH_CACHE: dict[tuple[str, str, int], tuple[float, dict]] = {}
 PUBLIC_SEARCH_CACHE_TTL_SECONDS = int(os.getenv("PUBLIC_SEARCH_CACHE_TTL_SECONDS", "300")) or 300
 PUBLIC_PROVIDER_MAX_WORKERS = int(os.getenv("PUBLIC_PROVIDER_MAX_WORKERS", "7")) or 7
-PUBLIC_PROVIDERS = ("openalex", "arxiv", "crossref", "semanticscholar", "springer", "elsevier", "ieee")
+PUBLIC_PROVIDERS = ("openalex", "arxiv", "crossref", "semanticscholar", "springer", "elsevier")
 _PROVIDER_DISPLAY_PRIORITY = {
     "openalex": 0,
     "arxiv": 1,
-    "ieee": 2,
-    "springer": 3,
-    "elsevier": 4,
-    "semanticscholar": 5,
-    "crossref": 6,
-    "unknown_public": 7,
+    "springer": 2,
+    "elsevier": 3,
+    "semanticscholar": 4,
+    "crossref": 5,
+    "unknown_public": 6,
 }
 
 
@@ -77,7 +68,6 @@ def _normalize_public_query(query: str) -> str:
         "research paper",
         "papers",
         "paper",
-        "from ieee",
         "from springer",
         "from elsevier",
         "from arxiv",
@@ -212,8 +202,6 @@ def _fetch_provider(provider: str, query: str, limit: int) -> list[dict]:
         return fetch_from_springer(query, limit=min(limit, SPRINGER_LIMIT))
     if provider == "elsevier" and ELSEVIER_LIMIT > 0:
         return fetch_from_elsevier(query, limit=min(limit, ELSEVIER_LIMIT))
-    if provider == "ieee" and IEEE_LIMIT > 0:
-        return fetch_from_ieee(query, limit=min(limit, IEEE_LIMIT))
     return []
 
 
@@ -226,7 +214,6 @@ def _provider_status_seed(provider: str) -> dict:
     needs_key = {
         "springer": "SPRINGER_API_KEY",
         "elsevier": "ELSEVIER_API_KEY",
-        "ieee": "IEEE_API_KEY",
         "semanticscholar": "SEMANTIC_SCHOLAR_API_KEY",
         "openalex": "OPENALEX_API_KEY",
     }
