@@ -2380,6 +2380,34 @@ def home():
     }
 
 
+@app.get("/health/full")
+def health_full():
+    """Aggregated readiness: db reachable, embedding provider live.
+
+    Returns 200 with `status: degraded` when any dependency is down — the
+    monitor reads `status` instead of relying on HTTP code.
+    """
+    checks: dict[str, dict] = {}
+
+    try:
+        ping = fetchone("SELECT 1 AS ok") or {}
+        checks["db"] = {"ok": ping.get("ok") == 1}
+    except Exception as exc:
+        checks["db"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+    embed = healthcheck_embeddings()
+    checks["embeddings"] = {"ok": bool(embed.get("ok")), **{k: v for k, v in embed.items() if k != "ok"}}
+
+    overall = all(c.get("ok") for c in checks.values())
+    return {
+        "status": "ok" if overall else "degraded",
+        "service": "scholarrag-backend",
+        "version": app.version,
+        "uptime_seconds": round(time.time() - _BOOT_TS, 1),
+        "checks": checks,
+    }
+
+
 @app.get("/health/embeddings")
 def embeddings_health():
     return healthcheck_embeddings()
