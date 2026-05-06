@@ -1,0 +1,122 @@
+import {
+  AnswerResponse,
+  ChunkResult,
+  DocumentRow,
+  EvalCase,
+  EvalRunResponse,
+  JudgeRunPayload,
+  JudgeRunResponse,
+  JudgeRunSummary,
+  MsaCalibrationPayload,
+  MsaCalibrationResponse,
+  MsaCalibrationLatest,
+} from './types';
+
+export const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE ||
+  'http://127.0.0.1:8000';
+
+async function jsonRequest<T>(path: string, opts: RequestInit = {}): Promise<T> {
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...opts,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(opts.headers || {}),
+      },
+    });
+    if (!res.ok) {
+      throw new Error((await res.text()) || res.statusText);
+    }
+    return res.json() as Promise<T>;
+  } catch (e: any) {
+    const msg = e?.message || 'Network error';
+    if (/Failed to fetch/i.test(msg)) {
+      throw new Error(`Backend unreachable at ${API_BASE}`);
+    }
+    throw new Error(msg);
+  }
+}
+
+export const api = {
+  async listDocs(limit = 12): Promise<{ documents: DocumentRow[] }> {
+    return jsonRequest(`/documents/latest?limit=${limit}`);
+  },
+
+  async uploadFile(file: File): Promise<{ document_id: number; pages: number; chunks: number }> {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${API_BASE}/documents/upload`, {
+      method: 'POST',
+      body: form,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  async searchChunks(q: string, k = 10, docId?: number): Promise<{ results: ChunkResult[] }> {
+    return jsonRequest('/documents/search/chunks', {
+      method: 'POST',
+      body: JSON.stringify({ q, k, doc_id: docId }),
+    });
+  },
+
+  async askAssistant(payload: {
+    query: string;
+    scope: 'uploaded' | 'public';
+    doc_id?: number;
+    doc_ids?: number[];
+    k?: number;
+    sense?: string;
+    compare_senses?: boolean;
+    allow_general_background?: boolean;
+    run_judge?: boolean;
+    run_judge_llm?: boolean;
+  }): Promise<AnswerResponse> {
+    return jsonRequest('/assistant/answer', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteDoc(docId: number): Promise<{ ok: boolean }> {
+    const res = await fetch(`${API_BASE}/documents/${docId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  async runEval(payload: { name?: string; scope?: 'uploaded' | 'public'; k?: number; cases: EvalCase[] }): Promise<EvalRunResponse> {
+    return jsonRequest('/eval/run', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async listEvalRuns(limit = 20): Promise<{ runs: EvalRunResponse[] }> {
+    return jsonRequest(`/eval/runs?limit=${limit}`);
+  },
+
+  async runJudge(payload: JudgeRunPayload): Promise<JudgeRunResponse> {
+    return jsonRequest('/eval/judge', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async listJudgeRuns(limit = 20): Promise<{ runs: JudgeRunSummary[] }> {
+    return jsonRequest(`/eval/judge/runs?limit=${limit}`);
+  },
+
+  async calibrateConfidence(payload: MsaCalibrationPayload): Promise<MsaCalibrationResponse> {
+    return jsonRequest('/confidence/calibrate', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getLatestCalibration(label?: string): Promise<MsaCalibrationLatest> {
+    const qs = label ? `?label=${encodeURIComponent(label)}` : '';
+    return jsonRequest(`/confidence/calibration${qs}`);
+  },
+};
