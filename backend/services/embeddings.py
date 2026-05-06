@@ -421,12 +421,18 @@ def healthcheck_embeddings() -> dict:
         "vector_store_dim": VECTOR_STORE_DIM,
         "base_url": OLLAMA_BASE_URL if get_provider() == "ollama" else None,
         "openai_dimensions": _openai_dimensions_for_request() if get_provider() == "openai" else None,
+        "max_query_words": EMBEDDING_MAX_QUERY_WORDS,
+        "max_doc_words": EMBEDDING_MAX_DOC_WORDS,
     }
-    probe = embed_query("embedding healthcheck")
-    diagnostics["ok"] = True
-    diagnostics["returned_dim"] = len(probe)
-    diagnostics["max_query_words"] = EMBEDDING_MAX_QUERY_WORDS
-    diagnostics["max_doc_words"] = EMBEDDING_MAX_DOC_WORDS
+    try:
+        probe = embed_query("embedding healthcheck")
+        diagnostics["ok"] = True
+        diagnostics["returned_dim"] = len(probe)
+    except Exception as exc:
+        # Health endpoints surface failures as data, never as 5xx — that
+        # way uptime monitors get a clean degraded signal.
+        diagnostics["ok"] = False
+        diagnostics["error"] = f"{type(exc).__name__}: {exc}"
     return diagnostics
 
 
