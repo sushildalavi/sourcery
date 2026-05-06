@@ -622,10 +622,28 @@ cd frontend && npm run dev
 ## Healthcheck
 
 ```bash
-GET /health/embeddings
+GET /                      # liveness — returns {"message":"...live!"}
+GET /health/embeddings     # embedding-provider readiness, never 5xx
+GET /metrics               # rolling latency p50/p95/p99 + counts
 ```
 
-Returns Ollama reachability, embedding shape, active provider/model/version, and configured dimensions.
+`/health/embeddings` returns `{ok: false, error: "..."}` with HTTP 200 when the embedding provider is unreachable, so uptime monitors get a clean degraded signal instead of a noisy 5xx.
+
+---
+
+## Quality Gates
+
+| Gate | Command | Status |
+|---|---|---|
+| Backend tests | `make test` | **160 / 160 passing** |
+| Backend lint | `make lint` | **clean** (ruff E/F/W/I) |
+| Frontend typecheck | `make frontend-typecheck` | **clean** (`tsc --noEmit`) |
+| Frontend lint | `make frontend-lint` | **clean** (eslint flat config) |
+| Frontend build | `make frontend-build` | **passes** (vendor-chunked, no size warnings) |
+| API smoke | `make health` after `make stack-up` | 32 routes, key endpoints 200 |
+| CI | `.github/workflows/ci.yml` | runs both jobs on push + PR |
+
+The CI workflow stands up a `pgvector/pgvector:pg16` service container, applies `db/init.sql`, then runs ruff + the full pytest suite for the backend job and `tsc --noEmit` + `vite build` for the frontend job.
 
 ---
 
