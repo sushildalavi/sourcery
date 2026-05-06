@@ -31,19 +31,219 @@ It aggregates **7 live scholarly APIs** (OpenAlex, arXiv, Semantic Scholar, Cros
 
 ## Architecture
 
-![System Architecture](images/system_architecture.png)
+### System Overview
+
+```mermaid
+flowchart LR
+    subgraph Client["Client (React + Vite)"]
+        UI[Chat UI]
+        AN[Analytics Dashboard]
+    end
+
+    subgraph API["FastAPI Backend"]
+        ROUTE[Routers<br/>/chat /documents /search]
+        IR[Intent Resolver]
+        SR[Sense Filter]
+        ING[PDF Ingest]
+        AGG[Public Aggregator]
+        CONF[MSA Confidence]
+        JUDGE[LLM-as-Judge]
+    end
+
+    subgraph Data["Data Layer"]
+        PG[(PostgreSQL<br/>+ pgvector)]
+        OL[Ollama<br/>mxbai-embed-large]
+    end
+
+    subgraph External["External APIs"]
+        OAI[OpenAI<br/>GPT-4o-mini]
+        SCH[7 Scholarly APIs<br/>OpenAlex · arXiv · S2<br/>Crossref · Springer<br/>Elsevier · IEEE]
+    end
+
+    UI -->|REST + SSE| ROUTE
+    AN -->|metrics| ROUTE
+    ROUTE --> IR --> SR
+    SR --> ING & AGG
+    ING --> PG
+    AGG --> SCH
+    AGG --> PG
+    ROUTE --> CONF --> JUDGE
+    CONF --> PG
+    JUDGE --> OAI
+    ING --> OL
+    OL --> PG
+
+    classDef client fill:#dbeafe,stroke:#1d4ed8,color:#0f172a
+    classDef api fill:#ecfccb,stroke:#65a30d,color:#0f172a
+    classDef data fill:#fef3c7,stroke:#b45309,color:#0f172a
+    classDef ext fill:#fce7f3,stroke:#be185d,color:#0f172a
+    class UI,AN client
+    class ROUTE,IR,SR,ING,AGG,CONF,JUDGE api
+    class PG,OL data
+    class OAI,SCH ext
+```
 
 ### Dual Retrieval Pipeline
 
-![Dual Retrieval Pipeline](images/dual_retrieval_pipeline.png)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant FE as Frontend
+    participant BE as FastAPI
+    participant IR as Intent Resolver
+    participant UP as Uploaded Index<br/>(pgvector)
+    participant PUB as Public Aggregator
+    participant SR as Sense Filter
+    participant LLM as GPT-4o-mini
+
+    U->>FE: question
+    FE->>BE: POST /chat
+    BE->>IR: classify(query)
+    IR-->>BE: domain + canonical term + sub-queries
+
+    par Uploaded path
+        BE->>UP: hybrid retrieve (dense + BM25)
+        UP-->>BE: top-K chunks
+    and Public path
+        BE->>PUB: fan-out 7 APIs
+        PUB-->>BE: deduped + ranked papers
+        BE->>SR: drop wrong-sense hits
+        SR-->>BE: domain-aligned set
+    end
+
+    BE->>BE: blend (uploaded-first, public augments)
+    alt overlap below abstain threshold
+        BE-->>FE: insufficient evidence
+    else
+        BE->>LLM: generate(answer + citations)
+        LLM-->>BE: claims with chunk refs
+        BE-->>FE: stream answer + sources
+    end
+```
 
 ### MSA Confidence Scoring Pipeline
 
-![MSA Confidence Pipeline](images/msa_confidence_pipeline.png)
+```mermaid
+flowchart TB
+    Q[User Query] --> RET[Hybrid Retrieval]
+    RET --> CTX[Top-K Evidence Chunks]
 
-### Database Schema (ER Diagram)
+    CTX --> M_BR[NLI entailment<br/>per claim → evidence]
+    CTX --> S_BR[Resample retrieval<br/>n=5 perturbed queries]
+    CTX --> A_BR[Cross-source<br/>token overlap]
 
-![ER Diagram](images/er_diagram.png)
+    M_BR --> M[M score<br/>P claim entailed]
+    S_BR --> S[S score<br/>top-K stability]
+    A_BR --> A[A score<br/>multi-source<br/>agreement]
+
+    M --> CAL[Calibrated Logistic<br/>P = σ b + w₁M + w₂S + w₃A]
+    S --> CAL
+    A --> CAL
+
+    CAL -->|≥ 0.70| HIGH[High confidence<br/>green badge]
+    CAL -->|0.40 – 0.70| MED[Medium confidence<br/>amber badge]
+    CAL -->|< 0.40| LOW[Low confidence<br/>red badge + caveat]
+
+    classDef sig fill:#e0f2fe,stroke:#0369a1,color:#0c4a6e
+    classDef cal fill:#fef9c3,stroke:#a16207,color:#3f3f46
+    classDef hi fill:#dcfce7,stroke:#15803d,color:#14532d
+    classDef me fill:#fef3c7,stroke:#b45309,color:#3f3f46
+    classDef lo fill:#fee2e2,stroke:#b91c1c,color:#7f1d1d
+    class M,S,A sig
+    class CAL cal
+    class HIGH hi
+    class MED me
+    class LOW lo
+```
+
+### Database Schema
+
+```mermaid
+erDiagram
+    PAPERS ||--o{ CHUNKS : "(public)"
+    DOCUMENTS ||--o{ CHUNKS : has
+    CHUNKS ||--|| CHUNK_EMBEDDINGS : "(uploaded)"
+    EMBEDDING_CACHE }o--|| CHUNK_EMBEDDINGS : "may serve"
+    EVALUATION_JUDGE_RUNS }o--|| CHUNKS : evaluates
+
+    PAPERS {
+        uuid paper_id PK
+        text title
+        text abstract
+        text[] authors
+        int year
+        text source
+        vector_1536 embedding
+    }
+
+    DOCUMENTS {
+        uuid id PK
+        text title
+        text doc_type
+        text hash_sha256 UK
+        text status
+        timestamptz created_at
+    }
+
+    CHUNKS {
+        bigserial id PK
+        uuid document_id FK
+        int page_no
+        text text
+        int tokens
+        text heading_path
+    }
+
+    CHUNK_EMBEDDINGS {
+        bigserial chunk_id PK
+        text provider
+        text model
+        text version
+        int dim
+        vector_1536 embedding
+    }
+
+    EMBEDDING_CACHE {
+        text input_hash PK
+        text provider
+        text model
+        text version
+        vector_1536 embedding
+    }
+
+    EVALUATION_JUDGE_RUNS {
+        uuid id PK
+        text query
+        text claim
+        bigint chunk_id FK
+        float score
+        text verdict
+        timestamptz created_at
+    }
+```
+
+### Evaluation & Calibration Flow
+
+```mermaid
+flowchart LR
+    A[15-paper corpus] --> B[Generate 120 queries<br/>GPT-4o-mini]
+    B --> C[Run assistant_answer<br/>both modes]
+    C --> D[3 human coders<br/>label 530 pairs]
+    D --> E[Cohen's κ + majority vote]
+    E --> F[Gold labels]
+    F --> G[Extract M S A features]
+    G --> H[Fit logistic + 5-fold CV]
+    H --> I[Calibration row in DB]
+    I --> J[Online confidence scoring]
+
+    classDef step fill:#f1f5f9,stroke:#475569,color:#0f172a
+    classDef gold fill:#fef9c3,stroke:#a16207,color:#3f3f46
+    classDef live fill:#dcfce7,stroke:#15803d,color:#14532d
+    class A,B,C,D,E,G,H step
+    class F gold
+    class I,J live
+```
 
 ---
 
