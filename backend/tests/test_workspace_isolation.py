@@ -114,3 +114,53 @@ def test_digest_isolated_per_workspace(client: TestClient):
     assert any(d["query"] == "beta-digest-keyword" for d in b)
     assert not any(d["query"] == "beta-digest-keyword" for d in a)
     assert not any(d["query"] == "alpha-digest-keyword" for d in b)
+
+
+def test_doc_delete_blocked_across_workspaces(client: TestClient):
+    """Workspace alpha cannot delete a document that lives in workspace beta,
+    even when alpha calls DELETE with beta's doc id."""
+    payload = ("test-cross-delete.txt", BytesIO(b"beta-only doc body for cross-delete"), "text/plain")
+    rb = client.post("/documents/upload", files={"file": payload}, headers=_ws("beta-cross-delete"))
+    assert rb.status_code == 200
+    beta_id = rb.json()["document_id"]
+
+    # alpha attempts to delete beta's doc — must be silently a no-op
+    res = client.delete(f"/documents/{beta_id}", headers=_ws("alpha-cross-delete"))
+    assert res.status_code == 200
+    assert res.json()["deleted_ids"] == [], "alpha was able to delete beta's doc"
+
+    # beta still sees its doc
+    listing = client.get("/documents", headers=_ws("beta-cross-delete")).json()["documents"]
+    assert beta_id in {d["id"] for d in listing}, "beta lost its own doc to a cross-tenant delete"
+
+
+def test_doc_type_update_blocked_across_workspaces(client: TestClient):
+    """PUT /documents/{id}/type must not update a doc owned by another tenant."""
+    payload = ("test-cross-update.txt", BytesIO(b"beta type-update target"), "text/plain")
+    rb = client.post("/documents/upload", files={"file": payload}, headers=_ws("beta-cross-update"))
+    beta_id = rb.json()["document_id"]
+
+    res = client.put(
+        f"/documents/{beta_id}/type",
+        json={"doc_type": "resume"},
+        headers=_ws("alpha-cross-update"),
+    )
+    # Endpoint returns 200 either way; isolation is enforced via WHERE clause.
+    assert res.status_code == 200
+
+    listing = client.get("/documents", headers=_ws("beta-cross-update")).json()["documents"]
+    beta_row = next((d for d in listing if d["id"] == beta_id), None)
+    assert beta_row is not None
+    assert beta_row.get("doc_type") != "resume", "alpha mutated beta's doc_type"
+
+
+def test_calibration_isolated_per_workspace(client: TestClient):
+    """`/confidence/calibration` returns the tenant's own row when present;
+    otherwise falls back to the global `default` workspace's row."""
+    # Default tenant should always resolve (defaults shipped with the app).
+    default_resp = client.get("/confidence/calibration").json()
+    assert default_resp["weights"]["w1"] is not None
+
+    # Unknown tenant falls back to default — no row planted here, no leak.
+    novel = client.get("/confidence/calibration", headers=_ws("never-calibrated-tenant")).json()
+    assert novel["weights"]["w1"] is not None

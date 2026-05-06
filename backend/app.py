@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-from fastapi import Body, FastAPI, HTTPException, Query
+from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from openai import OpenAI
@@ -21,7 +21,7 @@ from backend import agents, auth, chat, memory, pdf_ingest
 from backend.confidence import build_confidence, score_percent
 from backend.eval_metrics import aggregate_metrics
 from backend.intent_resolver import is_offtopic_by_intent, resolve_query_intent
-from backend.middleware import RequestIDMiddleware, SecurityHeadersMiddleware, WorkspaceMiddleware
+from backend.middleware import RequestIDMiddleware, SecurityHeadersMiddleware, WorkspaceMiddleware, current_workspace
 from backend.pdf_ingest import search_chunks as search_uploaded_chunks
 from backend.public_search import public_live_search
 from backend.public_web import public_web_search
@@ -392,7 +392,8 @@ def metrics_prometheus():
 
 
 @app.post("/assistant/answer")
-def assistant_answer(
+def assistant_answer_route(
+    request: Request,
     payload: dict = Body(
         ...,
         examples={
@@ -408,6 +409,17 @@ def assistant_answer(
         },
     ),
 ):
+    """HTTP entry point.
+
+    Pulls workspace_id from the request (set by `WorkspaceMiddleware`),
+    then delegates to `assistant_answer`. Internal callers (tests, the
+    SSE wrapper, the eval pipeline) call `assistant_answer(payload, ...)`
+    directly without needing a Request object.
+    """
+    return assistant_answer(payload, workspace_id=current_workspace(request))
+
+
+def assistant_answer(payload: dict, *, workspace_id: str = "default"):
     """
     Unified QA endpoint for uploaded docs (chunk RAG) or public papers (FAISS/external).
     Returns answer plus lightweight citations.
@@ -677,9 +689,10 @@ def assistant_answer(
             # concept-heavy queries where the right paper is not in the vector top-k
             # but is present slightly lower in the candidate list.
             candidate_k = max(int(k), min(120, int(k) * 10))
-            results = search_uploaded_chunks({"q": q, "k": candidate_k, "doc_id": doc_id, "doc_ids": doc_ids})[
-                "results"
-            ]
+            results = search_uploaded_chunks(
+                payload={"q": q, "k": candidate_k, "doc_id": doc_id, "doc_ids": doc_ids},
+                workspace_id=workspace_id,
+            )["results"]
             distances = [float(r.get("distance", 1.0) or 1.0) for r in results] or [1.0]
             cosines = [max(-1.0, min(1.0, 1.0 - d)) for d in distances] or [0.0]
             min_s, max_s = min(cosines), max(cosines)
@@ -1956,7 +1969,7 @@ def assistant_answer(
 
 
 @app.post("/assistant/answer/stream", tags=["chat"])
-def assistant_answer_stream(payload: dict = Body(...)):
+def assistant_answer_stream(request: Request, payload: dict = Body(...)):
     """Server-Sent Events variant of `/assistant/answer`.
 
     Wire format (one SSE event per line, all `data:` JSON):
@@ -1987,7 +2000,7 @@ def assistant_answer_stream(payload: dict = Body(...)):
         # the model can cite. Streaming the LLM generation in front of
         # retrieval would defeat the abstain guard.
         try:
-            settled = assistant_answer(payload)
+            settled = assistant_answer(payload, workspace_id=current_workspace(request))
         except HTTPException as exc:
             yield _sse("error", {"detail": exc.detail})
             return
@@ -2027,7 +2040,8 @@ def assistant_answer_stream(payload: dict = Body(...)):
 
 
 @app.post("/assistant/resolve_sense")
-def assistant_resolve_sense(payload: dict = Body(...)):
+def assistant_resolve_sense(request: Request, payload: dict = Body(...)):
+    ws = current_workspace(request)
     query = (payload.get("query") or "").strip()
     scope = payload.get("scope") or "uploaded"
     k = int(payload.get("k") or 8)
@@ -2035,7 +2049,10 @@ def assistant_resolve_sense(payload: dict = Body(...)):
         raise HTTPException(status_code=400, detail="query is required")
     chunks = []
     if scope == "uploaded":
-        rows = search_uploaded_chunks(query, k=k, doc_id=payload.get("doc_id"))["results"]
+        rows = search_uploaded_chunks(
+            payload={"q": query, "k": k, "doc_id": payload.get("doc_id")},
+            workspace_id=ws,
+        )["results"]
         for r in rows:
             chunks.append(
                 {
@@ -2097,9 +2114,13 @@ def _eval_candidates_for_query(
     k: int,
     doc_id: int | None = None,
     doc_ids: list[int] | None = None,
+    workspace_id: str = "default",
 ) -> tuple[list[dict], list[dict], dict]:
     t_retrieve = time.perf_counter()
-    raw = search_uploaded_chunks({"q": query, "k": max(10, k), "doc_id": doc_id, "doc_ids": doc_ids})["results"]
+    raw = search_uploaded_chunks(
+        payload={"q": query, "k": max(10, k), "doc_id": doc_id, "doc_ids": doc_ids},
+        workspace_id=workspace_id,
+    )["results"]
     retrieve_ms = (time.perf_counter() - t_retrieve) * 1000
 
     retrieval_only = []
@@ -2484,7 +2505,8 @@ def list_judge_runs(limit: int = 20):
 
 
 @app.post("/confidence/calibrate")
-def calibrate_confidence(payload: dict = Body(...)):
+def calibrate_confidence(request: Request, payload: dict = Body(...)):
+    ws = current_workspace(request)
     records = payload.get("records") or []
     if not isinstance(records, list) or not records:
         raise HTTPException(status_code=400, detail="records must be a non-empty list")
@@ -2497,17 +2519,18 @@ def calibrate_confidence(payload: dict = Body(...)):
     row = fetchone(
         """
         INSERT INTO confidence_calibration
-        (model_name, label, weights, metrics, dataset_size)
-        VALUES (%s, %s, %s::jsonb, %s::jsonb, %s)
+        (model_name, label, weights, metrics, dataset_size, workspace_id)
+        VALUES (%s, %s, %s::jsonb, %s::jsonb, %s, %s)
         RETURNING id, created_at
         """,
-        [model_name, label, json.dumps(weights), json.dumps(metrics), len(msarecords)],
+        [model_name, label, json.dumps(weights), json.dumps(metrics), len(msarecords), ws],
     )
     return {
         "run_id": row.get("id") if row else None,
         "created_at": row.get("created_at").isoformat() if row and row.get("created_at") else None,
         "model_name": model_name,
         "label": label,
+        "workspace_id": ws,
         "records_used": len(msarecords),
         "weights": weights,
         "metrics": metrics,
@@ -2519,27 +2542,56 @@ def calibrate_confidence(payload: dict = Body(...)):
     response_model=CalibrationResponse,
     tags=["confidence"],
 )
-def get_latest_calibration(label: str | None = None):
+def get_latest_calibration(request: Request, label: str | None = None):
+    ws = current_workspace(request)
+    # Tenant lookup precedence:
+    #   1. tenant-specific row matching the requested label
+    #   2. tenant-specific most-recent row
+    #   3. global (`default` workspace) matching label
+    #   4. uniform default
     if label:
         row = fetchone(
             """
             SELECT id, model_name, label, weights, metrics, dataset_size, created_at
             FROM confidence_calibration
-            WHERE label = %s
+            WHERE label = %s AND workspace_id = %s
             ORDER BY created_at DESC
             LIMIT 1
             """,
-            (label,),
+            (label, ws),
         )
+        if not row and ws != "default":
+            row = fetchone(
+                """
+                SELECT id, model_name, label, weights, metrics, dataset_size, created_at
+                FROM confidence_calibration
+                WHERE label = %s AND workspace_id = 'default'
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (label,),
+            )
     else:
         row = fetchone(
             """
             SELECT id, model_name, label, weights, metrics, dataset_size, created_at
             FROM confidence_calibration
+            WHERE workspace_id = %s
             ORDER BY created_at DESC
             LIMIT 1
-            """
+            """,
+            (ws,),
         )
+        if not row and ws != "default":
+            row = fetchone(
+                """
+                SELECT id, model_name, label, weights, metrics, dataset_size, created_at
+                FROM confidence_calibration
+                WHERE workspace_id = 'default'
+                ORDER BY created_at DESC
+                LIMIT 1
+                """
+            )
     if not row:
         return {
             "model_name": "msa_logistic_v1",

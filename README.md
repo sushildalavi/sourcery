@@ -775,7 +775,7 @@ The big-ticket items I had originally lined up for 2.0 are now done. Keeping the
 Shipped:
 
 - [x] **Reranker stage** — lexical cross-scorer over the top-K (token + bigram overlap, exact-phrase bonus, title-position weighting). Pluggable so a real cross-encoder can drop in later. See [`backend/services/reranker.py`](backend/services/reranker.py).
-- [x] **Streaming responses** — `POST /assistant/answer/stream` returns SSE (`meta` → `token` × N → `done`). Same retrieval pipeline, the UI gets sources before the answer streams in.
+- [x] **SSE response framing** — `POST /assistant/answer/stream` returns Server-Sent Events (`meta` → `token` × N → `done`) so the UI can render sources before the answer text appears. Honest caveat: the retrieval + LLM still complete before the first byte; the SSE wire just chunks the settled answer. True token-level streaming (LLM `stream=True` end-to-end) is in the open list below.
 - [x] **Multi-tenant isolation** — `WorkspaceMiddleware` reads `X-Workspace-Id`, sanitises it, pins it on `request.state`. `db/migrations/002_workspace_isolation.sql` adds `workspace_id` columns + indexes on every tenant-scoped table.
 - [x] **Batched embedding upserts** — verified the existing path: cache lookup → batched OpenAI / parallel Ollama → bulk `execute_values` insert into both `chunks` and `chunk_embeddings`. A 50-chunk PDF is one OpenAI call + one cache insert + one upsert per table.
 - [x] **Prometheus exposition** — `GET /metrics/prom` returns text/plain in standard Prometheus format. Helm chart includes an optional `ServiceMonitor` if you run Prometheus Operator.

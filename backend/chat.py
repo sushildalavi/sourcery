@@ -26,9 +26,12 @@ STORAGE_DIR = Path(os.getenv("STORAGE_DIR", "storage"))
 CHAT_UPLOAD_DIR = STORAGE_DIR / "chat_uploads"
 
 
-def _create_session() -> int:
+def _create_session(workspace_id: str = "default") -> int:
     _ensure_chat_tables()
-    row = fetchone("INSERT INTO chat_sessions DEFAULT VALUES RETURNING id")
+    row = fetchone(
+        "INSERT INTO chat_sessions (workspace_id) VALUES (%s) RETURNING id",
+        [workspace_id],
+    )
     return row["id"]
 
 
@@ -38,11 +41,14 @@ def _ensure_chat_tables():
         """
         CREATE TABLE IF NOT EXISTS chat_sessions (
             id SERIAL PRIMARY KEY,
+            workspace_id TEXT NOT NULL DEFAULT 'default',
             created_at TIMESTAMP DEFAULT now(),
             updated_at TIMESTAMP DEFAULT now()
         );
         """
     )
+    # In case the table existed before workspace_id was added.
+    execute("ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS workspace_id TEXT NOT NULL DEFAULT 'default'")
     execute(
         """
         CREATE TABLE IF NOT EXISTS chat_messages (
@@ -82,10 +88,19 @@ def _store_message(session_id: int, role: str, content: str, citations: Optional
     )
 
 
-def _get_history(session_id: int):
+def _get_history(session_id: int, workspace_id: str = "default"):
+    """Fetch a session's history, joining through chat_sessions to enforce
+    that the requesting workspace owns the session — otherwise an attacker
+    who guessed a session_id could read another tenant's chat."""
     rows = fetchall(
-        "SELECT id, role, content, citations, created_at FROM chat_messages WHERE session_id=%s ORDER BY id ASC",
-        [session_id],
+        """
+        SELECT m.id, m.role, m.content, m.citations, m.created_at
+        FROM chat_messages m
+        JOIN chat_sessions s ON s.id = m.session_id
+        WHERE m.session_id = %s AND s.workspace_id = %s
+        ORDER BY m.id ASC
+        """,
+        [session_id, workspace_id],
     )
     return rows
 
@@ -145,9 +160,10 @@ def _ingest_upload(session_id: int, upload: UploadFile, workspace_id: str = "def
 
 
 @router.get("/{session_id}")
-def get_chat(session_id: int):
+def get_chat(session_id: int, request: Request):
     _ensure_chat_tables()
-    history = _get_history(session_id)
+    ws = current_workspace(request)
+    history = _get_history(session_id, workspace_id=ws)
     return {"session_id": session_id, "messages": history}
 
 
@@ -160,8 +176,9 @@ async def upload_to_chat(session_id: int, request: Request, file: UploadFile = F
 
 
 @router.post("")
-def chat(payload: dict = None):
+def chat(request: Request, payload: dict = None):
     _ensure_chat_tables()
+    ws = current_workspace(request)
     if payload is None:
         payload = {}
     if isinstance(payload, str):
@@ -171,10 +188,10 @@ def chat(payload: dict = None):
 
     # Support creating a chat session without sending a message (for uploads)
     if payload.get("session_only"):
-        session_id = _create_session()
+        session_id = _create_session(workspace_id=ws)
         return {"session_id": session_id, "messages": []}
 
-    session_id = payload.get("session_id") or _create_session()
+    session_id = payload.get("session_id") or _create_session(workspace_id=ws)
     message = payload.get("message") or ""
     scope = payload.get("scope") or "public"
     doc_id = payload.get("doc_id")
@@ -189,7 +206,10 @@ def chat(payload: dict = None):
     context_blocks = []
     citations: List[Dict[str, Any]] = []
     if scope == "uploaded":
-        results = search_uploaded_chunks(message, k=k, doc_id=doc_id)["results"]
+        results = search_uploaded_chunks(
+            payload={"q": message, "k": k, "doc_id": doc_id},
+            workspace_id=ws,
+        )["results"]
         for r in results:
             citations.append(
                 {
@@ -238,5 +258,5 @@ def chat(payload: dict = None):
     )
     answer = completion.choices[0].message.content
     _store_message(session_id, "assistant", answer, citations)
-    history = _get_history(session_id)
+    history = _get_history(session_id, workspace_id=ws)
     return {"session_id": session_id, "messages": history}

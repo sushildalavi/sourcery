@@ -63,6 +63,10 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # init.sql is the canonical schema and includes workspace_id columns,
+      # so a fresh Compose volume is fully wired. Existing DBs upgrade via
+      # `_ensure_workspace_columns()` which the FastAPI lifespan calls on
+      # startup — see backend/pdf_ingest.py.
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U scholarrag -d scholarrag_db"]

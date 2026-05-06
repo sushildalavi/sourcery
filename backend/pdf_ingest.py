@@ -49,6 +49,7 @@ def _ensure_doc_type_schema() -> None:
         )
     except Exception:
         logger.warning("Could not create HNSW index on chunk_embeddings (may already exist or insufficient data)")
+    _ensure_workspace_columns()
     # Backfill obvious research-paper docs for older rows.
     execute(
         """
@@ -61,6 +62,29 @@ def _ensure_doc_type_schema() -> None:
           )
         """
     )
+
+
+def _ensure_workspace_columns() -> None:
+    """Idempotent forward-migration for tenant isolation.
+
+    Mirrors db/migrations/002_workspace_isolation.sql so deployments that
+    pre-date the migration get the columns added on next startup. Fresh
+    deploys get the columns from db/init.sql (canonical schema).
+    """
+    targets = [
+        "documents",
+        "chunks",
+        "chat_sessions",
+        "user_memory",
+        "digests",
+        "confidence_calibration",
+    ]
+    for table in targets:
+        try:
+            execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS workspace_id TEXT NOT NULL DEFAULT 'default'")
+            execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_workspace ON {table}(workspace_id)")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("workspace_id migration on %s skipped: %s", table, exc)
 
 
 def _hash_bytes(data: bytes) -> str:
@@ -613,17 +637,27 @@ def search_chunks(
 
 
 @router.delete("/{doc_id}")
-def delete_document(doc_id: int):
+def delete_document(doc_id: int, request: Request):
     """
-    Delete a document and its chunks/embeddings. Also delete from chat_uploads if present.
+    Delete a document and its chunks/embeddings. Tenant-scoped: a request
+    in workspace A cannot delete a document that lives in workspace B,
+    even if the IDs collide. Hash-based companion deletion (same content
+    uploaded twice) is also tenant-scoped.
     """
-    row = fetchone("SELECT id, hash_sha256, source_path FROM documents WHERE id=%s", [doc_id])
+    ws = current_workspace(request)
+    row = fetchone(
+        "SELECT id, hash_sha256, source_path FROM documents WHERE id=%s AND workspace_id=%s",
+        [doc_id, ws],
+    )
     if not row:
         return {"ok": True, "document_id": doc_id, "deleted_ids": []}
 
     hash_sha = row.get("hash_sha256")
     if hash_sha:
-        rel = fetchall("SELECT id, source_path FROM documents WHERE hash_sha256=%s", [hash_sha])
+        rel = fetchall(
+            "SELECT id, source_path FROM documents WHERE hash_sha256=%s AND workspace_id=%s",
+            [hash_sha, ws],
+        )
     else:
         rel = [row]
     ids = [int(r.get("id")) for r in rel if r.get("id") is not None]
@@ -635,7 +669,7 @@ def delete_document(doc_id: int):
         )
         execute("DELETE FROM chunks WHERE document_id=%s", [did])
         execute("DELETE FROM chat_uploads WHERE doc_id=%s", [did])
-        execute("DELETE FROM documents WHERE id=%s", [did])
+        execute("DELETE FROM documents WHERE id=%s AND workspace_id=%s", [did, ws])
 
     for r in rel:
         sp = r.get("source_path")
@@ -652,11 +686,15 @@ def delete_document(doc_id: int):
 
 
 @router.put("/{doc_id}/type")
-def update_document_type(doc_id: int, payload: dict):
+def update_document_type(doc_id: int, payload: dict, request: Request):
+    ws = current_workspace(request)
     doc_type = (payload.get("doc_type") or "").strip().lower()
     if doc_type not in DOC_TYPES:
         raise HTTPException(status_code=400, detail=f"doc_type must be one of {sorted(DOC_TYPES)}")
-    execute("UPDATE documents SET doc_type=%s WHERE id=%s", [doc_type, doc_id])
+    execute(
+        "UPDATE documents SET doc_type=%s WHERE id=%s AND workspace_id=%s",
+        [doc_type, doc_id, ws],
+    )
     return {"ok": True, "document_id": doc_id, "doc_type": doc_type}
 
 

@@ -123,7 +123,13 @@ export const api = {
   },
 
   async deleteDoc(docId: number): Promise<{ ok: boolean }> {
-    const res = await fetch(`${API_BASE}/documents/${docId}`, { method: 'DELETE' });
+    // Must include the workspace header — otherwise the backend rejects
+    // the delete (or, worse, falls back to "default" and deletes a
+    // doc the caller doesn't own).
+    const res = await fetch(`${API_BASE}/documents/${docId}`, {
+      method: 'DELETE',
+      headers: buildHeaders(undefined, false),
+    });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },

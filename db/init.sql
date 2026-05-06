@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS documents (
     bytes BIGINT,
     hash_sha256 TEXT,
     status TEXT DEFAULT 'ready',
+    workspace_id TEXT NOT NULL DEFAULT 'default',
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );
@@ -73,6 +74,7 @@ CREATE TABLE IF NOT EXISTS chunks (
     tokens INT,
     modality TEXT DEFAULT 'text',
     heading_path TEXT,
+    workspace_id TEXT NOT NULL DEFAULT 'default',
     created_at TIMESTAMP DEFAULT now()
 );
 
@@ -88,6 +90,8 @@ CREATE TABLE IF NOT EXISTS chunk_embeddings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(document_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_workspace ON chunks(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_documents_workspace ON documents(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_chunk_embeddings_chunk ON chunk_embeddings(chunk_id);
 CREATE INDEX IF NOT EXISTS idx_chunk_embeddings_model_version ON chunk_embeddings(provider, model, embedding_version);
 -- HNSW ANN index for fast chunk vector search
@@ -96,6 +100,7 @@ CREATE INDEX IF NOT EXISTS idx_chunk_embeddings_hnsw ON chunk_embeddings USING h
 -- --- Chat sessions/messages/uploads ---
 CREATE TABLE IF NOT EXISTS chat_sessions (
     id SERIAL PRIMARY KEY,
+    workspace_id TEXT NOT NULL DEFAULT 'default',
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );
@@ -120,6 +125,7 @@ CREATE TABLE IF NOT EXISTS chat_uploads (
 
 CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id);
 CREATE INDEX IF NOT EXISTS idx_chat_uploads_session ON chat_uploads(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_workspace ON chat_sessions(workspace_id);
 
 -- --- Evaluation runs ---
 CREATE TABLE IF NOT EXISTS eval_runs (
@@ -143,8 +149,11 @@ CREATE TABLE IF NOT EXISTS confidence_calibration (
     weights JSONB NOT NULL,
     metrics JSONB,
     dataset_size INT DEFAULT 0,
+    workspace_id TEXT NOT NULL DEFAULT 'default',
     created_at TIMESTAMP DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS idx_calibration_workspace
+  ON confidence_calibration(workspace_id, label, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS evidence_scores (
     id SERIAL PRIMARY KEY,
@@ -174,8 +183,10 @@ CREATE TABLE IF NOT EXISTS digests (
     user_id TEXT NOT NULL DEFAULT 'guest',
     query TEXT NOT NULL,
     frequency TEXT NOT NULL DEFAULT 'weekly',
+    workspace_id TEXT NOT NULL DEFAULT 'default',
     created_at TIMESTAMP DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS idx_digests_workspace ON digests(workspace_id);
 
 -- --- User memory/history ---
 CREATE TABLE IF NOT EXISTS user_memory (
@@ -184,7 +195,9 @@ CREATE TABLE IF NOT EXISTS user_memory (
     query TEXT,
     answer TEXT,
     notes TEXT DEFAULT '',
+    workspace_id TEXT NOT NULL DEFAULT 'default',
     created_at TIMESTAMP DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_memory_user ON user_memory(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_memory_workspace ON user_memory(workspace_id);
