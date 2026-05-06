@@ -26,10 +26,21 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture(scope="module")
 def client() -> TestClient:
-    os.environ.setdefault("EMBEDDING_PROVIDER", "stub")
+    # Force-pin the stub provider AND reload the embeddings module so the
+    # module-level `EMBEDDING_PROVIDER` constant picks it up. Other tests
+    # in the suite (`test_stub_embedding.py`) intentionally delete the env
+    # var on teardown and reload to default "ollama"; without this re-pin
+    # we'd inherit that and try to hit the real Ollama at 11434.
+    import importlib
+
+    os.environ["EMBEDDING_PROVIDER"] = "stub"
     os.environ.setdefault("OPENAI_API_KEY", "test")
+    import backend.services.embeddings as emb
+
+    importlib.reload(emb)
     from backend import app as app_module
 
+    importlib.reload(app_module)
     return TestClient(app_module.app)
 
 
