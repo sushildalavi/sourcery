@@ -699,12 +699,13 @@ def update_document_type(doc_id: int, payload: dict, request: Request):
 
 
 @router.post("/qa")
-def qa_over_chunks(q: str, k: int = 8, doc_id: Optional[int] = None):
+def qa_over_chunks(request: Request, q: str, k: int = 8, doc_id: Optional[int] = None):
     """
     Run RAG over uploaded documents (chunk store) and answer with GPT-4o-mini.
-    Returns answer and citations (chunk ids + doc ids).
+    Returns answer and citations (chunk ids + doc ids). Workspace-scoped.
     """
-    res = search_chunks(q, k=k, doc_id=doc_id)["results"]
+    ws = current_workspace(request)
+    res = search_chunks(payload={"q": q, "k": k, "doc_id": doc_id}, workspace_id=ws)["results"]
     if not res:
         return {"answer": "No relevant chunks found.", "chunks_used": []}
     context = ""

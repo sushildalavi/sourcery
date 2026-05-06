@@ -6,7 +6,7 @@ A scholarly RAG app I built because I kept getting plausible-but-uncited answers
 
 <br clear="left"/>
 
-[![CI](https://img.shields.io/github/actions/workflow/status/sushildalavi/citelens/ci.yml?branch=main&label=CI&logo=github)](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml) [![Tests](https://img.shields.io/badge/tests-191-15803d?logo=pytest&logoColor=white)](https://github.com/sushildalavi/citelens/actions) [![Coverage](https://img.shields.io/badge/coverage-48%25-15803d)](.github/workflows/ci.yml) [![Python](https://img.shields.io/badge/python-3.11-1d4ed8?logo=python&logoColor=white)](https://www.python.org/) [![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-15803d?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![React](https://img.shields.io/badge/React-18-1d4ed8?logo=react&logoColor=white)](https://react.dev/) [![pgvector](https://img.shields.io/badge/Postgres%2016-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector) [![License](https://img.shields.io/badge/License-MIT-15803d)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/sushildalavi/citelens/ci.yml?branch=main&label=CI&logo=github)](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml) [![Tests](https://img.shields.io/badge/tests-198%20%E2%80%A2%2092%25%20unit-15803d?logo=pytest&logoColor=white)](https://github.com/sushildalavi/citelens/actions) [![Coverage](https://img.shields.io/badge/coverage-50%25-15803d)](.github/workflows/ci.yml) [![Python](https://img.shields.io/badge/python-3.11-1d4ed8?logo=python&logoColor=white)](https://www.python.org/) [![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-15803d?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![React](https://img.shields.io/badge/React-18-1d4ed8?logo=react&logoColor=white)](https://react.dev/) [![pgvector](https://img.shields.io/badge/Postgres%2016-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector) [![License](https://img.shields.io/badge/License-MIT-15803d)](LICENSE)
 
 [Quick start](#quick-start) · [Architecture](#architecture) · [Benchmarks](#benchmark-results) · [API examples](docs/examples/curl.md) · [Helm chart](helm/README.md) · [Security](SECURITY.md)
 
@@ -23,7 +23,7 @@ A few things that make it different from "throw the PDF at GPT and pray":
 
 ## Where it stands today
 
-- 191 backend tests passing, coverage 48%, ruff + format clean.
+- 198 backend tests (191 unit + 7 cross-tenant integration that need a live DB; both run in CI), coverage 50%, ruff + format clean.
 - 32 typed FastAPI routes (try `/docs` after booting).
 - Frontend: TypeScript strict, ESLint zero warnings, ~78 KB initial JS (gzipped ~22 KB) after lazy-loading the analytics route.
 - Security headers + tenant-scoped middleware on every response. CI runs Trivy + gitleaks + SBOM on every push.
@@ -730,7 +730,8 @@ Every response carries `X-Request-ID` (echoed if the caller sent one, freshly mi
 
 | Gate | Command | Status |
 |---|---|---|
-| Backend tests | `make test` | **191 passing** |
+| Backend tests | `make test` | **198 collected · 191 unit pass · 7 isolation skip without DB** |
+| Isolation tests | `make test-isolation` | spins pgvector container, runs cross-tenant suite |
 | Coverage | `make test` (gate 45%) | **48%** |
 | Backend lint + format | `make lint && ruff format --check` | clean |
 | Frontend typecheck | `make frontend-typecheck` | clean |
@@ -776,7 +777,7 @@ Shipped:
 
 - [x] **Reranker stage** — lexical cross-scorer over the top-K (token + bigram overlap, exact-phrase bonus, title-position weighting). Pluggable so a real cross-encoder can drop in later. See [`backend/services/reranker.py`](backend/services/reranker.py).
 - [x] **SSE response framing** — `POST /assistant/answer/stream` returns Server-Sent Events (`meta` → `token` × N → `done`) so the UI can render sources before the answer text appears. Honest caveat: the retrieval + LLM still complete before the first byte; the SSE wire just chunks the settled answer. True token-level streaming (LLM `stream=True` end-to-end) is in the open list below.
-- [x] **Multi-tenant isolation** — `WorkspaceMiddleware` reads `X-Workspace-Id`, sanitises it, pins it on `request.state`. `db/migrations/002_workspace_isolation.sql` adds `workspace_id` columns + indexes on every tenant-scoped table.
+- [x] **Multi-tenant isolation** — `WorkspaceMiddleware` reads `X-Workspace-Id`, sanitises it, pins it on `request.state`. Every INSERT/SELECT/UPDATE/DELETE on `documents`, `chunks`, `chat_sessions`, `user_memory`, `digests`, and `confidence_calibration` filters by `workspace_id`. `db/init.sql` is canonical (fresh deploys are wired); existing deploys upgrade via `_ensure_workspace_columns()` on FastAPI lifespan startup. Cross-tenant isolation is covered by 7 integration tests in `test_workspace_isolation.py` (run via `make test-isolation`).
 - [x] **Batched embedding upserts** — verified the existing path: cache lookup → batched OpenAI / parallel Ollama → bulk `execute_values` insert into both `chunks` and `chunk_embeddings`. A 50-chunk PDF is one OpenAI call + one cache insert + one upsert per table.
 - [x] **Prometheus exposition** — `GET /metrics/prom` returns text/plain in standard Prometheus format. Helm chart includes an optional `ServiceMonitor` if you run Prometheus Operator.
 - [x] **Helm chart** — `helm/citelens/` with backend + frontend Deployments, Postgres StatefulSet, optional Ingress + ServiceMonitor. Wired to the k8s-style `/health/live` + `/health/ready` probes.
@@ -786,7 +787,7 @@ Still open:
 
 - [ ] **Real cross-encoder reranker** — the lexical reranker above is stage-1 sound, but a fine-tuned cross-encoder on the 530-pair gold set should push MRR past 0.99.
 - [ ] **True token-level streaming** — current SSE chunks the settled answer; running OpenAI in `stream=True` mode through the citation-strict prompt is doable but needs a citation-rewrite pass at the tail end.
-- [ ] **Postgres RLS policies** — the `workspace_id` columns are in place, but actually ENABLING row-level security policies (and updating route handlers to filter by tenant) is a follow-up. Today the SQL queries do not yet filter by `workspace_id`.
+- [ ] **Postgres RLS policies** — application-level `WHERE workspace_id = ...` filters are in place on every route, but ENABLING database-side row-level security policies (so a SQL injection in any one route can't bypass tenant isolation) is a future hardening step.
 
 ## Local development
 
@@ -796,7 +797,8 @@ make compose-up           # postgres + adminer
 cp backend/.env.example backend/.env
 
 make lint                 # ruff
-make test                 # pytest (191 tests, ~3s)
+make test                 # pytest (~3s, 191 unit + 7 isolation skip without DB)
+make test-isolation       # spin up pgvector container + run cross-tenant tests
 make frontend-typecheck   # tsc --noEmit
 make frontend-lint        # eslint, 0 warnings
 make frontend-build       # vite build

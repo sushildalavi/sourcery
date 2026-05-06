@@ -1917,11 +1917,24 @@ def _extract_sentence_citation_ids(sentence: str) -> list[int]:
     return ids
 
 
-def _stability_lookup_uploaded(q: str, k: int, doc_id: int | None, perturb: bool = False) -> set[str]:
+def _stability_lookup_uploaded(
+    q: str,
+    k: int,
+    doc_id: int | None,
+    perturb: bool = False,
+    workspace_id: str = "default",
+) -> set[str]:
     query = q if q else ""
     if perturb:
         query = (query + " methods overview").strip()
-    results = search_uploaded_chunks(query, k=k, doc_id=doc_id).get("results", []) if query else []
+    results = (
+        search_uploaded_chunks(
+            payload={"q": query, "k": k, "doc_id": doc_id},
+            workspace_id=workspace_id,
+        ).get("results", [])
+        if query
+        else []
+    )
     out = set()
     for r in results:
         c = {

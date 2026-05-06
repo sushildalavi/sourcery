@@ -91,3 +91,33 @@ def test_no_import_time_db_calls():
     if offenders:
         report = "\n".join(f"  {p.relative_to(BACKEND.parent)}:{n}: {s}" for p, n, s in offenders)
         pytest.fail("Import-time DB DDL calls found (must be moved into FastAPI lifespan startup):\n" + report)
+
+
+# ────────────────── search_chunks call-shape guard ──────────────────────
+
+
+# `search_chunks` accepts a JSON body as the first arg. Calling it
+# positionally with a query string — `search_chunks("hello", k=1)` — is
+# treated as `payload="hello"` and raises HTTP 400 "q (query) is required".
+# Catch any internal caller making that mistake before it ships.
+_BAD_SEARCH = re.compile(r"\bsearch_(?:uploaded_)?chunks\(\s*[\"']")
+
+
+def test_no_positional_search_chunks_callers():
+    """Callers must use `search_chunks(payload={...}, workspace_id=...)`
+    or pass `q=...` explicitly. A positional string slips past validation.
+    """
+    offenders: list[tuple[Path, int, str]] = []
+    for f in _python_files(BACKEND):
+        # Skip the definition file itself.
+        if f.name == "pdf_ingest.py":
+            continue
+        for lineno, line in enumerate(f.read_text().splitlines(), start=1):
+            if _BAD_SEARCH.search(line):
+                offenders.append((f, lineno, line.strip()))
+    if offenders:
+        report = "\n".join(f"  {p.relative_to(BACKEND.parent)}:{n}: {s}" for p, n, s in offenders)
+        pytest.fail(
+            "Positional string passed to search_chunks(...) — use "
+            "`payload={'q': ..., 'k': ..., 'doc_id': ...}` instead:\n" + report
+        )

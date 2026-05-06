@@ -4,9 +4,21 @@ These tests boot the FastAPI app against a live Postgres, write data into
 two different workspaces via the same routes, and assert that one tenant
 cannot read the other's documents, chunks, memory, or digests.
 
-Codex flagged that the migration + middleware were in place but the actual
-SQL still ignored workspace_id. These tests are the contract that fix has
-to satisfy: cross-workspace reads MUST return zero rows.
+These ARE integration tests — they need a real DB. They run automatically:
+  - in CI (workflow sets `DATABASE_URL`).
+  - locally via `make test-isolation` (brings up Postgres on port 5433).
+
+When DATABASE_URL isn't set they skip with a clear message rather than
+failing. To run by hand:
+
+    docker run -d --name citelens-iso-db \\
+      -e POSTGRES_USER=scholarrag -e POSTGRES_PASSWORD=scholarrag \\
+      -e POSTGRES_DB=scholarrag -p 5433:5432 pgvector/pgvector:pg16
+    sleep 5
+    docker exec -i citelens-iso-db psql -U scholarrag -d scholarrag < db/init.sql
+    DATABASE_URL=postgresql://scholarrag:scholarrag@127.0.0.1:5433/scholarrag \\
+      EMBEDDING_PROVIDER=stub OPENAI_API_KEY=test \\
+      pytest backend/tests/test_workspace_isolation.py -v
 """
 
 from __future__ import annotations
@@ -20,7 +32,11 @@ from fastapi.testclient import TestClient
 DB_URL = os.getenv("DATABASE_URL")
 pytestmark = pytest.mark.skipif(
     not DB_URL,
-    reason="DATABASE_URL not set; skipping live-DB isolation tests",
+    reason=(
+        "Integration test — needs a live Postgres. "
+        "Run `make test-isolation` (auto-spins a container) "
+        "or set DATABASE_URL to a pgvector-enabled DB."
+    ),
 )
 
 
