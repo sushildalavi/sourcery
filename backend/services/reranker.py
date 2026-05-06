@@ -122,7 +122,11 @@ def rerank_candidates(
     """
     items: list[ScoredCandidate] = []
     for c in candidates:
-        cid = c.get("chunk_id") if "chunk_id" in c else c.get("id")
+        raw_cid = c.get("chunk_id") if "chunk_id" in c else c.get("id")
+        # Coerce to a stable str id when callers don't supply one — keeps
+        # ScoredCandidate.chunk_id non-Optional so downstream code can index
+        # without nullable-checking every access.
+        cid: int | str = raw_cid if isinstance(raw_cid, (int, str)) else str(raw_cid or id(c))
         text = c.get("text") or c.get("snippet") or ""
         stage1 = float(c.get("score") or c.get("sim_score") or 0.0)
         title = c.get("title")

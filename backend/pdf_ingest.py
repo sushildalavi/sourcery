@@ -8,11 +8,12 @@ import time
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from openai import OpenAI
 from pypdf import PdfReader
 
+from backend.middleware import current_workspace
 from backend.services.db import execute, execute_values, fetchall, fetchone
 from backend.services.embeddings import (
     embed_documents,
@@ -296,7 +297,12 @@ def _infer_doc_type(name: str) -> str:
     return "other"
 
 
-def _embed_and_store_chunks(document_id: int, chunks: List[Tuple[int, int, str]]) -> int:
+def _embed_and_store_chunks(
+    document_id: int,
+    chunks: List[Tuple[int, int, str]],
+    *,
+    workspace_id: str = "default",
+) -> int:
     clean_chunks: List[Tuple[int, int, str]] = []
     for page_no, chunk_idx, text in chunks:
         text = _sanitize_text(text)
@@ -313,11 +319,14 @@ def _embed_and_store_chunks(document_id: int, chunks: List[Tuple[int, int, str]]
     version = get_embedding_version()
     raw_dim = get_raw_embedding_dims()
 
+    # Denormalise workspace_id onto chunks so retrieval can filter without
+    # joining documents — the hot search query stays a single-table scan.
     chunk_values = [
-        (document_id, page_no, chunk_idx, text, len(text.split())) for page_no, chunk_idx, text in clean_chunks
+        (document_id, page_no, chunk_idx, text, len(text.split()), workspace_id)
+        for page_no, chunk_idx, text in clean_chunks
     ]
     returned = execute_values(
-        "INSERT INTO chunks (document_id, page_no, chunk_index, text, tokens) VALUES %s RETURNING id",
+        "INSERT INTO chunks (document_id, page_no, chunk_index, text, tokens, workspace_id) VALUES %s RETURNING id",
         chunk_values,
         fetch=True,
     )
@@ -332,21 +341,24 @@ def _embed_and_store_chunks(document_id: int, chunks: List[Tuple[int, int, str]]
 
 
 @router.get("")
-def list_documents():
-    # Show unique titles (best-effort) ordered by recency
+def list_documents(request: Request):
+    ws = current_workspace(request)
     docs = fetchall(
         """
         SELECT DISTINCT ON (COALESCE(hash_sha256, title)) id, title, status, doc_type, pages, bytes, created_at
         FROM documents
+        WHERE workspace_id = %s
         ORDER BY COALESCE(hash_sha256, title), created_at DESC
         LIMIT 100
-        """
+        """,
+        [ws],
     )
     return {"documents": docs}
 
 
 @router.get("/latest")
-def latest_documents(limit: int = 10):
+def latest_documents(request: Request, limit: int = 10):
+    ws = current_workspace(request)
     docs = fetchall(
         """
         SELECT id, title, status, doc_type, pages, bytes, created_at
@@ -354,20 +366,25 @@ def latest_documents(limit: int = 10):
             SELECT DISTINCT ON (COALESCE(hash_sha256, title))
                 id, title, status, doc_type, pages, bytes, created_at
             FROM documents
+            WHERE workspace_id = %s
             ORDER BY COALESCE(hash_sha256, title), created_at DESC
         ) t
         ORDER BY created_at DESC
         LIMIT %s
         """,
-        [limit],
+        [ws, limit],
     )
     return {"documents": docs}
 
 
 @router.post("/upload")
 async def upload_document(
-    file: UploadFile = File(...), title: Optional[str] = None, background_tasks: BackgroundTasks = None
+    request: Request,
+    file: UploadFile = File(...),
+    title: Optional[str] = None,
+    background_tasks: BackgroundTasks = None,
 ):
+    ws = current_workspace(request)
     data = await file.read()
     if not data:
         raise HTTPException(status_code=400, detail="Empty file")
@@ -384,15 +401,17 @@ async def upload_document(
     fpath.write_bytes(data)
 
     sha = _hash_bytes(data)
+    # Dedupe is per-workspace: same content uploaded into a different
+    # workspace must produce a separate document row so isolation holds.
     existing = fetchone(
         """
         SELECT id, status
         FROM documents
-        WHERE hash_sha256=%s AND status IN ('processing','ready')
+        WHERE hash_sha256=%s AND workspace_id=%s AND status IN ('processing','ready')
         ORDER BY created_at DESC
         LIMIT 1
         """,
-        [sha],
+        [sha, ws],
     )
     if existing:
         # Duplicate upload of the same file bytes: keep canonical doc context.
@@ -412,24 +431,31 @@ async def upload_document(
     inferred_doc_type = _infer_doc_type(title or file.filename or "")
     doc_row = fetchone(
         """
-        INSERT INTO documents (title, source_path, mime_type, bytes, hash_sha256, status, doc_type)
-        VALUES (%s, %s, %s, %s, %s, 'processing', %s)
+        INSERT INTO documents (title, source_path, mime_type, bytes, hash_sha256, status, doc_type, workspace_id)
+        VALUES (%s, %s, %s, %s, %s, 'processing', %s, %s)
         RETURNING id
         """,
-        [title or file.filename, str(fpath), mime, len(data), sha, inferred_doc_type],
+        [title or file.filename, str(fpath), mime, len(data), sha, inferred_doc_type, ws],
     )
     doc_id = doc_row["id"]
 
     # Offload heavy parsing/embedding to background to return fast
     if background_tasks is not None:
-        background_tasks.add_task(_ingest_document, doc_id, data, mime, file.filename, title)
+        background_tasks.add_task(_ingest_document, doc_id, data, mime, file.filename, title, ws)
     else:
-        _ingest_document(doc_id, data, mime, file.filename, title)
+        _ingest_document(doc_id, data, mime, file.filename, title, ws)
 
     return JSONResponse({"document_id": doc_id, "status": "processing"})
 
 
-def _ingest_document(doc_id: int, data: bytes, mime: str, filename: str, title: Optional[str]):
+def _ingest_document(
+    doc_id: int,
+    data: bytes,
+    mime: str,
+    filename: str,
+    title: Optional[str],
+    workspace_id: str = "default",
+):
     try:
         is_pdf = mime == "application/pdf" or filename.lower().endswith(".pdf")
         if is_pdf:
@@ -457,7 +483,7 @@ def _ingest_document(doc_id: int, data: bytes, mime: str, filename: str, title: 
                 chunk_tuples.append((page_no, idx, chunk))
 
         if chunk_tuples:
-            inserted = _embed_and_store_chunks(doc_id, chunk_tuples)
+            inserted = _embed_and_store_chunks(doc_id, chunk_tuples, workspace_id=workspace_id)
             if inserted > 0:
                 execute("UPDATE documents SET pages=%s, status='ready' WHERE id=%s", [len(pages), doc_id])
             else:
@@ -471,18 +497,35 @@ def _ingest_document(doc_id: int, data: bytes, mime: str, filename: str, title: 
 
 @router.post("/search/chunks")
 def search_chunks(
-    payload: dict = None, q: str = None, k: int = 10, doc_id: Optional[int] = None, doc_ids: Optional[list[int]] = None
+    request: Request = None,  # noqa: B008 — also called internally w/o request
+    payload: dict = None,
+    q: str = None,
+    k: int = 10,
+    doc_id: Optional[int] = None,
+    doc_ids: Optional[list[int]] = None,
+    workspace_id: Optional[str] = None,
 ):
     """
     Accepts JSON body {q, k, doc_id}. Allows query param q fallback.
+
+    Workspace scoping: when called via HTTP, `request.state.workspace_id`
+    pins the tenant. When called internally (e.g. from `chat.py` or the
+    assistant pipeline), `workspace_id` can be passed explicitly. Defaults
+    to `"default"` so legacy callers keep working.
     """
-    # Normalize payload to dict
-    if payload is None:
-        payload = {}
-    elif isinstance(payload, str):
+    if isinstance(payload, str):
         payload = {"q": payload}
+    elif payload is None:
+        payload = {}
     elif not isinstance(payload, dict):
         raise HTTPException(status_code=400, detail="Invalid payload")
+
+    if workspace_id:
+        ws = workspace_id
+    elif request is not None:
+        ws = current_workspace(request)
+    else:
+        ws = "default"
 
     q = (payload.get("q") or q or "").strip()
     if not q:
@@ -523,6 +566,7 @@ def search_chunks(
               JOIN chunks ON chunk_embeddings.chunk_id = chunks.id
               JOIN documents ON documents.id = chunks.document_id
               WHERE documents.status = 'ready'
+                AND chunks.workspace_id = %s
                 AND chunk_embeddings.provider = %s
                 AND chunk_embeddings.model = %s
                 AND chunk_embeddings.embedding_version = %s
@@ -534,11 +578,12 @@ def search_chunks(
             ORDER BY distance ASC
             LIMIT {int(k)}
             """,
-            [qvec, qvec, provider, model, version, doc_ids],
+            [qvec, qvec, ws, provider, model, version, doc_ids],
         )
     else:
         params = [qvec]
-        where_clauses = ["documents.status = 'ready'"]
+        where_clauses = ["documents.status = 'ready'", "chunks.workspace_id = %s"]
+        params.append(ws)
         where_clauses.extend(
             [
                 "chunk_embeddings.provider = %s",

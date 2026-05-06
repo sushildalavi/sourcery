@@ -17,14 +17,53 @@ export const API_BASE =
   import.meta.env.VITE_API_BASE ||
   'http://127.0.0.1:8000';
 
+const WORKSPACE_STORAGE_KEY = 'citelens-workspace-id';
+
+/**
+ * Resolve the active workspace id for outbound requests, in this order:
+ *   1. VITE_WORKSPACE_ID (build-time pin — useful for single-tenant deploys)
+ *   2. localStorage[citelens-workspace-id] (set via setWorkspaceId())
+ * Falls back to undefined, in which case the backend uses "default".
+ */
+export function getWorkspaceId(): string | undefined {
+  const fromEnv = import.meta.env.VITE_WORKSPACE_ID as string | undefined;
+  if (fromEnv) return fromEnv;
+  if (typeof window === 'undefined') return undefined;
+  try {
+    return window.localStorage.getItem(WORKSPACE_STORAGE_KEY) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function setWorkspaceId(id: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (id) window.localStorage.setItem(WORKSPACE_STORAGE_KEY, id);
+    else window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+  } catch {
+    /* localStorage disabled — silently no-op */
+  }
+}
+
+function buildHeaders(extra: HeadersInit | undefined, includeJson: boolean): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (includeJson) headers['Content-Type'] = 'application/json';
+  const ws = getWorkspaceId();
+  if (ws) headers['X-Workspace-Id'] = ws;
+  if (extra) {
+    for (const [k, v] of Object.entries(extra as Record<string, string>)) {
+      headers[k] = v;
+    }
+  }
+  return headers;
+}
+
 async function jsonRequest<T>(path: string, opts: RequestInit = {}): Promise<T> {
   try {
     const res = await fetch(`${API_BASE}${path}`, {
       ...opts,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(opts.headers || {}),
-      },
+      headers: buildHeaders(opts.headers, true),
     });
     if (!res.ok) {
       throw new Error((await res.text()) || res.statusText);
@@ -47,9 +86,12 @@ export const api = {
   async uploadFile(file: File): Promise<{ document_id: number; pages: number; chunks: number }> {
     const form = new FormData();
     form.append('file', file);
+    // Multipart: don't set Content-Type (the browser writes the boundary).
+    // We still want the workspace header to flow.
     const res = await fetch(`${API_BASE}/documents/upload`, {
       method: 'POST',
       body: form,
+      headers: buildHeaders(undefined, false),
     });
     if (!res.ok) throw new Error(await res.text());
     return res.json();

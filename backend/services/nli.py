@@ -98,7 +98,7 @@ def _cached_entailment(hypothesis: str, premise: str) -> float:
 
 
 @lru_cache(maxsize=2000)
-def _cached_entailment_meta(hypothesis: str, premise: str) -> Dict[str, float]:
+def _cached_entailment_meta(hypothesis: str, premise: str) -> Dict[str, float | str]:
     """Bounded cache for full entailment payload."""
     return _call_entailment_model_meta(hypothesis, premise)
 
@@ -111,7 +111,7 @@ def _call_entailment_model(hypothesis: str, premise: str) -> float:
     return float(payload.get("entailment", 0.0))
 
 
-def _call_entailment_model_meta(hypothesis: str, premise: str) -> Dict[str, float]:
+def _call_entailment_model_meta(hypothesis: str, premise: str) -> Dict[str, float | str]:
     if not hypothesis or not premise:
         return {"entailment": 0.0, "neutral": 0.0, "contradiction": 0.0}
 
@@ -194,7 +194,7 @@ def support_prob(hypothesis: str, premise: str, neutral_weight: float = 0.3) -> 
     return max(0.0, min(1.0, p_e + neutral_weight * p_n))
 
 
-def entailment_meta(hypothesis: str, premise: str) -> Dict[str, float]:
+def entailment_meta(hypothesis: str, premise: str) -> Dict[str, float | str]:
     """Returns full entailment score set."""
     raw = _cache_key(hypothesis, premise)
     payload = _cached_entailment_meta(hypothesis, premise)

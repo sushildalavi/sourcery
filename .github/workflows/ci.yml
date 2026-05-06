@@ -152,6 +152,46 @@ jobs:
           sarif_file: trivy-results.sarif
         continue-on-error: true
 
+  helm:
+    name: helm (lint + template)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.3
+
+      - name: helm lint
+        run: helm lint helm/citelens
+
+      - name: helm template (dry render)
+        run: helm template citelens helm/citelens --debug | head -200
+
+  pyright:
+    name: pyright (typecheck)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: pyright (typed core only — see pyproject.toml)
+        run: pyright
+
   sbom:
     name: sbom (cyclonedx)
     runs-on: ubuntu-latest

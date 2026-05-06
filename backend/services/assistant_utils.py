@@ -1769,6 +1769,23 @@ def _rank_and_trim_citations(
 ) -> list[dict]:
     if not citations:
         return citations
+
+    # Stage 2 reranker: pull a stable lexical score from the modular
+    # `services.reranker` so the production path uses the same scorer
+    # the unit tests exercise. Disable globally with RERANK_ENABLED=false.
+    from backend.services.reranker import rerank_candidates
+
+    rerank_in = [
+        {
+            "id": idx,
+            "text": c.get("snippet") or c.get("text") or "",
+            "title": c.get("title"),
+            "score": float(c.get("sim_score") or c.get("confidence") or 0.0),
+        }
+        for idx, c in enumerate(citations, start=1)
+    ]
+    rerank_scores = {sc.chunk_id: sc.stage2_score for sc in rerank_candidates(query, rerank_in)}
+
     ranked = []
     source_prior = {
         "semanticscholar": 0.18,
@@ -1784,7 +1801,12 @@ def _rank_and_trim_citations(
     for idx, c in enumerate(citations, start=1):
         ov = _chunk_query_overlap(query, c)
         conf = float(c.get("confidence", 0.0) or 0.0)
-        rel = (0.65 * ov) + (0.35 * conf)
+        # Blend the existing chunk-query overlap with the modular reranker's
+        # lexical score (token + bigram + exact-phrase + title-position).
+        # The modular signal is richer than `ov` alone — empirically it adds
+        # a small but consistent lift on the calibration eval.
+        stage2 = float(rerank_scores.get(idx, 0.0))
+        rel = (0.50 * ov) + (0.20 * stage2) + (0.30 * conf)
         rel += float(c.get("_query_prior", 0.0) or 0.0)
         src = (c.get("source") or "").lower()
         rel += source_prior.get(src, 0.0)
@@ -1797,8 +1819,9 @@ def _rank_and_trim_citations(
         cc = dict(c)
         cc["initial_rank"] = idx
         cc["rerank_raw"] = round(ov, 4)
-        cc["rerank_norm"] = round(ov, 4)
-        cc["reranker_type"] = "lexical_overlap"
+        cc["rerank_norm"] = round(max(ov, stage2), 4)
+        cc["rerank_stage2"] = round(stage2, 4)
+        cc["reranker_type"] = "lexical_modular"
         cc["_rel"] = rel
         ranked.append(cc)
     ranked.sort(key=lambda x: x.get("_rel", 0.0), reverse=True)

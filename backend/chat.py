@@ -4,8 +4,9 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
+from backend.middleware import current_workspace
 from backend.pdf_ingest import (
     _chunk_text,
     _embed_and_store_chunks,
@@ -89,7 +90,7 @@ def _get_history(session_id: int):
     return rows
 
 
-def _ingest_upload(session_id: int, upload: UploadFile) -> Optional[int]:
+def _ingest_upload(session_id: int, upload: UploadFile, workspace_id: str = "default") -> Optional[int]:
     data = upload.file.read()
     if not data:
         return None
@@ -101,19 +102,15 @@ def _ingest_upload(session_id: int, upload: UploadFile) -> Optional[int]:
     fpath = CHAT_UPLOAD_DIR / fname
     fpath.write_bytes(data)
 
-    # Real content SHA so duplicate-upload detection (and any downstream code
-    # keying on hash_sha256) sees identical content as identical, regardless
-    # of filename. Previously this stored the timestamped filename, which
-    # broke document identity semantics.
     sha = _hash_bytes(data)
 
     doc_row = fetchone(
         """
-        INSERT INTO documents (title, source_path, mime_type, bytes, hash_sha256, status)
-        VALUES (%s, %s, %s, %s, %s, 'processing')
+        INSERT INTO documents (title, source_path, mime_type, bytes, hash_sha256, status, workspace_id)
+        VALUES (%s, %s, %s, %s, %s, 'processing', %s)
         RETURNING id
         """,
-        [upload.filename, str(fpath), mime, len(data), sha],
+        [upload.filename, str(fpath), mime, len(data), sha, workspace_id],
     )
     doc_id = doc_row["id"]
 
@@ -132,7 +129,7 @@ def _ingest_upload(session_id: int, upload: UploadFile) -> Optional[int]:
             chunk_tuples.append((page_no, idx, chunk))
 
     if chunk_tuples:
-        inserted = _embed_and_store_chunks(doc_id, chunk_tuples)
+        inserted = _embed_and_store_chunks(doc_id, chunk_tuples, workspace_id=workspace_id)
         if inserted > 0:
             execute("UPDATE documents SET pages=%s, status='ready' WHERE id=%s", [len(pages), doc_id])
         else:
@@ -155,9 +152,10 @@ def get_chat(session_id: int):
 
 
 @router.post("/{session_id}/upload")
-async def upload_to_chat(session_id: int, file: UploadFile = File(...)):
+async def upload_to_chat(session_id: int, request: Request, file: UploadFile = File(...)):
     _ensure_chat_tables()
-    doc_id = _ingest_upload(session_id, file)
+    ws = current_workspace(request)
+    doc_id = _ingest_upload(session_id, file, workspace_id=ws)
     return {"session_id": session_id, "doc_id": doc_id}
 
 

@@ -82,7 +82,11 @@ def build_confidence(
 
     msa_score = None
     if isinstance(msa, dict):
-        msa_score = compute_msa_score(msa.get("M", 0.0), msa.get("S", 0.0), msa.get("A", 0.0), msa.get("weights"))
+        weights = msa.get("weights")
+        # `weights` may legitimately be a dict, None, or (in legacy callers)
+        # a scalar — coerce to the typed shape compute_msa_score expects.
+        weights_arg: dict | None = weights if isinstance(weights, dict) else None
+        msa_score = compute_msa_score(msa.get("M", 0.0), msa.get("S", 0.0), msa.get("A", 0.0), weights_arg)
 
     if msa_score is not None:
         score = clamp01(msa_score)

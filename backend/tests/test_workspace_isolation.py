@@ -1,0 +1,105 @@
+"""End-to-end isolation tests for tenant data.
+
+These tests boot the FastAPI app against a live Postgres, write data into
+two different workspaces via the same routes, and assert that one tenant
+cannot read the other's documents, chunks, memory, or digests.
+
+Codex flagged that the migration + middleware were in place but the actual
+SQL still ignored workspace_id. These tests are the contract that fix has
+to satisfy: cross-workspace reads MUST return zero rows.
+"""
+
+from __future__ import annotations
+
+import os
+from io import BytesIO
+
+import pytest
+from fastapi.testclient import TestClient
+
+DB_URL = os.getenv("DATABASE_URL")
+pytestmark = pytest.mark.skipif(
+    not DB_URL,
+    reason="DATABASE_URL not set; skipping live-DB isolation tests",
+)
+
+
+@pytest.fixture(scope="module")
+def client() -> TestClient:
+    os.environ.setdefault("EMBEDDING_PROVIDER", "stub")
+    os.environ.setdefault("OPENAI_API_KEY", "test")
+    from backend import app as app_module
+
+    return TestClient(app_module.app)
+
+
+def _ws(name: str) -> dict:
+    return {"X-Workspace-Id": name}
+
+
+def test_document_upload_isolated_per_workspace(client: TestClient):
+    """A doc uploaded to workspace A must not appear in workspace B's list."""
+    a_payload = ("test-isolation-A.txt", BytesIO(b"alpha tenant content"), "text/plain")
+    b_payload = ("test-isolation-B.txt", BytesIO(b"beta tenant content"), "text/plain")
+
+    ra = client.post("/documents/upload", files={"file": a_payload}, headers=_ws("alpha-tenant"))
+    rb = client.post("/documents/upload", files={"file": b_payload}, headers=_ws("beta-tenant"))
+    assert ra.status_code == 200, ra.text
+    assert rb.status_code == 200, rb.text
+    a_id = ra.json()["document_id"]
+    b_id = rb.json()["document_id"]
+    assert a_id != b_id
+
+    list_a = client.get("/documents", headers=_ws("alpha-tenant")).json()["documents"]
+    list_b = client.get("/documents", headers=_ws("beta-tenant")).json()["documents"]
+
+    a_ids = {d["id"] for d in list_a}
+    b_ids = {d["id"] for d in list_b}
+    assert a_id in a_ids, "alpha doesn't see its own doc"
+    assert b_id in b_ids, "beta doesn't see its own doc"
+    assert b_id not in a_ids, "alpha can see beta's doc — ISOLATION BROKEN"
+    assert a_id not in b_ids, "beta can see alpha's doc — ISOLATION BROKEN"
+
+
+def test_memory_log_isolated_per_workspace(client: TestClient):
+    """`/memory/log` writes per workspace; `/memory/history` reads per workspace."""
+    client.post(
+        "/memory/log",
+        json={"user_id": "ada", "query": "alpha-only-question", "answer": "x"},
+        headers=_ws("alpha-tenant"),
+    )
+    client.post(
+        "/memory/log",
+        json={"user_id": "ada", "query": "beta-only-question", "answer": "y"},
+        headers=_ws("beta-tenant"),
+    )
+
+    a = client.get("/memory/history?user_id=ada", headers=_ws("alpha-tenant")).json()["history"]
+    b = client.get("/memory/history?user_id=ada", headers=_ws("beta-tenant")).json()["history"]
+
+    a_qs = {row["query"] for row in a}
+    b_qs = {row["query"] for row in b}
+    assert "alpha-only-question" in a_qs
+    assert "beta-only-question" in b_qs
+    assert "beta-only-question" not in a_qs
+    assert "alpha-only-question" not in b_qs
+
+
+def test_digest_isolated_per_workspace(client: TestClient):
+    client.post(
+        "/agents/digest",
+        json={"user_id": "ada", "query": "alpha-digest-keyword", "frequency": "weekly"},
+        headers=_ws("alpha-tenant"),
+    )
+    client.post(
+        "/agents/digest",
+        json={"user_id": "ada", "query": "beta-digest-keyword", "frequency": "weekly"},
+        headers=_ws("beta-tenant"),
+    )
+
+    a = client.get("/agents/digest?user_id=ada", headers=_ws("alpha-tenant")).json()["digests"]
+    b = client.get("/agents/digest?user_id=ada", headers=_ws("beta-tenant")).json()["digests"]
+    assert any(d["query"] == "alpha-digest-keyword" for d in a)
+    assert any(d["query"] == "beta-digest-keyword" for d in b)
+    assert not any(d["query"] == "beta-digest-keyword" for d in a)
+    assert not any(d["query"] == "alpha-digest-keyword" for d in b)

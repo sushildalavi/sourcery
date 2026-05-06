@@ -18,6 +18,23 @@ REQUEST_ID_HEADER = "X-Request-ID"
 WORKSPACE_HEADER = "X-Workspace-Id"
 DEFAULT_WORKSPACE = "default"
 
+
+def current_workspace(request) -> str:
+    """Resolve the workspace for the current request.
+
+    Reads `request.state.workspace_id` (set by `WorkspaceMiddleware`).
+    Returns `DEFAULT_WORKSPACE` if state is missing or empty so route
+    handlers never have to special-case startup-time / test scenarios.
+    """
+    try:
+        ws = getattr(request.state, "workspace_id", None)
+    except Exception:
+        ws = None
+    if not ws:
+        return DEFAULT_WORKSPACE
+    return str(ws)
+
+
 _access_log = logging.getLogger("scholarrag.access")
 
 
