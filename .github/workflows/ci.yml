@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend (lint + tests)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: scholarrag
+          POSTGRES_PASSWORD: scholarrag
+          POSTGRES_DB: scholarrag
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U scholarrag"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://scholarrag:scholarrag@127.0.0.1:5432/scholarrag
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: scholarrag
+      PGPASSWORD: scholarrag
+      PGDATABASE: scholarrag
+      EMBEDDING_PROVIDER: stub
+      OPENAI_API_KEY: test-key
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Init schema
+        run: |
+          PGPASSWORD=$PGPASSWORD psql -h 127.0.0.1 -U $PGUSER -d $PGDATABASE -f db/init.sql
+
+      - name: Lint (ruff)
+        run: ruff check backend/ scripts/
+
+      - name: Tests
+        run: pytest backend/tests -q --maxfail=5
+
+  frontend:
+    name: frontend (lint + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run build
