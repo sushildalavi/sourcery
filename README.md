@@ -557,7 +557,6 @@ citelens/
 ├── scripts/
 │   ├── eval_retrieval.py            # Retrieval metrics harness
 │   └── reindex_embeddings.py        # Re-embed chunks after model change
-├── images/                          # Architecture + pipeline diagrams
 ├── Evaluation/
 │   ├── papers/                      # 15-paper corpus (PDFs gitignored)
 │   │   ├── download_corpus.sh       # Reproducible multi-source downloader
@@ -600,9 +599,7 @@ Cosine similarity measures only retrieval proximity, not answer faithfulness. M 
 
 ## Evaluation
 
-![Evaluation Framework](images/evaluation_framework.png)
-
-All evaluation data, scripts, and generated figures live in the [`Evaluation/`](Evaluation/) directory. See [`Evaluation/README.md`](Evaluation/README.md) for the full directory layout.
+The full evaluation framework — five branches, 1,272 labeled claims, 5-fold CV, and live multi-API benchmark — is rendered as a [mermaid diagram in the Architecture section](#evaluation-framework). All raw data, scripts, and generated figures live in the [`Evaluation/`](Evaluation/) directory. See [`Evaluation/README.md`](Evaluation/README.md) for the full directory layout.
 
 ### Calibration pipeline (end-to-end reproduction)
 
