@@ -18,6 +18,7 @@ from fastapi.responses import Response
 from openai import OpenAI
 
 from backend import agents, auth, chat, memory, pdf_ingest
+from backend.middleware import RequestIDMiddleware
 from backend.confidence import build_confidence, score_percent
 from backend.eval_metrics import aggregate_metrics
 from backend.intent_resolver import is_offtopic_by_intent, resolve_query_intent
@@ -130,7 +131,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
 )
+app.add_middleware(RequestIDMiddleware)
 
 app.include_router(auth.router)
 app.include_router(memory.router)
