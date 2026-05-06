@@ -2452,6 +2452,31 @@ def home():
     }
 
 
+@app.get("/health/live", tags=["health"])
+def liveness():
+    """Kubernetes-style liveness probe.
+
+    Returns 200 as long as the process can serve a request. Does NOT check
+    deps — failing this should restart the container, not delist it.
+    """
+    return {"status": "ok", "uptime_seconds": round(time.time() - _BOOT_TS, 1)}
+
+
+@app.get("/health/ready", tags=["health"])
+def readiness():
+    """Kubernetes-style readiness probe.
+
+    Returns 200 with `status: ok` only when all critical deps are live.
+    Returns 503 when degraded — failing this delists from load balancers
+    without restarting the pod.
+    """
+    from fastapi.responses import JSONResponse as _JSONResponse
+
+    body = health_full()
+    code = 200 if body["status"] == "ok" else 503
+    return _JSONResponse(status_code=code, content=body)
+
+
 @app.get("/health/full", response_model=HealthFullResponse, tags=["health"])
 def health_full():
     """Aggregated readiness: db reachable, embedding provider live.
