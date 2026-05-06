@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import time
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -98,9 +99,24 @@ from backend.services.research_feed import latest_research_feed
 from backend.utils.config import get_openai_api_key
 from backend.utils.logging_utils import log_json, setup_file_logger
 
-# Initialize FastAPI app
-app = FastAPI(title="ScholarRAG: Scholarly Retrieval-Augmented Generation System", version="1.0")
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    try:
+        _initialize_database_schema()
+    except Exception as exc:
+        logger.warning("Database schema initialization skipped: %s", exc)
+    yield
+
+
+# Initialize FastAPI app
+app = FastAPI(
+    title="ScholarRAG: Scholarly Retrieval-Augmented Generation System",
+    version="1.0",
+    lifespan=_lifespan,
+)
 
 _cors_env = os.environ.get("CORS_ORIGINS", "")
 _cors_origins = (
@@ -199,14 +215,6 @@ def _initialize_database_schema() -> None:
     pdf_ingest._ensure_doc_type_schema()
     _ensure_eval_schema()
     _ensure_msa_schema()
-
-
-@app.on_event("startup")
-def _startup_initialize_database_schema() -> None:
-    try:
-        _initialize_database_schema()
-    except Exception as exc:
-        logger.warning("Database schema initialization skipped: %s", exc)
 
 
 def _chat_answer(query: str) -> str:
