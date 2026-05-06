@@ -2364,9 +2364,17 @@ def trust_score(sim: float, has_doi: bool) -> float:
 # Endpoints
 # ------------------------------
 
+_BOOT_TS = time.time()
+
+
 @app.get("/")
 def home():
-    return {"message": "ScholarRAG backend is live!"}
+    return {
+        "message": "ScholarRAG backend is live!",
+        "service": "scholarrag-backend",
+        "version": app.version,
+        "uptime_seconds": round(time.time() - _BOOT_TS, 1),
+    }
 
 
 @app.get("/health/embeddings")
