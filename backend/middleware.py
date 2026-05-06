@@ -49,9 +49,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self._headers = dict(_DEFAULT_SECURITY_HEADERS)
         if _env_flag("ENABLE_HSTS", default=False):
-            self._headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
-            )
+            self._headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
     async def dispatch(
         self,

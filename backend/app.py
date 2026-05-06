@@ -22,15 +22,15 @@ from backend.confidence import build_confidence, score_percent
 from backend.eval_metrics import aggregate_metrics
 from backend.intent_resolver import is_offtopic_by_intent, resolve_query_intent
 from backend.middleware import RequestIDMiddleware, SecurityHeadersMiddleware
+from backend.pdf_ingest import search_chunks as search_uploaded_chunks
+from backend.public_search import public_live_search
+from backend.public_web import public_web_search
 from backend.schemas import (
     CalibrationResponse,
     EmbeddingHealthResponse,
     HealthFullResponse,
     LivenessResponse,
 )
-from backend.pdf_ingest import search_chunks as search_uploaded_chunks
-from backend.public_search import public_live_search
-from backend.public_web import public_web_search
 from backend.sense_resolver import (
     expand_query_for_ml_sense,
     filter_citations_by_sense,
