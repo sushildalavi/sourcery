@@ -60,6 +60,8 @@ flowchart LR
         SCH[6 Scholarly APIs<br/>OpenAlex · arXiv · S2<br/>Crossref · Springer<br/>Elsevier]
     end
 
+    %% Brand palette: indigo (client) · emerald (api) · amber (data) · violet (external)
+
     UI -->|REST + SSE| ROUTE
     AN -->|metrics| ROUTE
     ROUTE --> IR --> SR
@@ -73,10 +75,10 @@ flowchart LR
     ING --> OL
     OL --> PG
 
-    classDef client fill:#dbeafe,stroke:#1d4ed8,color:#0f172a
-    classDef api fill:#ecfccb,stroke:#65a30d,color:#0f172a
-    classDef data fill:#fef3c7,stroke:#b45309,color:#0f172a
-    classDef ext fill:#fce7f3,stroke:#be185d,color:#0f172a
+    classDef client fill:#dbeafe,stroke:#1d4ed8,color:#0c4a6e
+    classDef api fill:#dcfce7,stroke:#15803d,color:#14532d
+    classDef data fill:#fef3c7,stroke:#b45309,color:#3f3f46
+    classDef ext fill:#ede9fe,stroke:#6d28d9,color:#4c1d95
     class UI,AN client
     class ROUTE,IR,SR,ING,AGG,CONF,JUDGE api
     class PG,OL data
@@ -223,27 +225,50 @@ erDiagram
     }
 ```
 
-### Evaluation & Calibration Flow
+### Evaluation Framework
+
+Five independent evaluation branches feed the production confidence model. Every number in the [Benchmark Results](#benchmark-results) section is reproducible from this pipeline.
 
 ```mermaid
 flowchart LR
-    A[15-paper corpus] --> B[Generate 120 queries<br/>GPT-4o-mini]
-    B --> C[Run assistant_answer<br/>both modes]
-    C --> D[3 human coders<br/>label 530 pairs]
-    D --> E[Cohen's κ + majority vote]
-    E --> F[Gold labels]
-    F --> G[Extract M S A features]
-    G --> H[Fit logistic + 5-fold CV]
-    H --> I[Calibration row in DB]
-    I --> J[Online confidence scoring]
+    INPUT["**Input**<br/>15 landmark NLP/ML papers<br/>(DPR · ColBERT · RAG · BEIR · SQuAD …)<br/>+ 120 expert-style queries"]
 
-    classDef step fill:#f1f5f9,stroke:#475569,color:#0f172a
-    classDef gold fill:#fef9c3,stroke:#a16207,color:#3f3f46
-    classDef live fill:#dcfce7,stroke:#15803d,color:#14532d
-    class A,B,C,D,E,G,H step
-    class F gold
-    class I,J live
+    INPUT --> B1H["Cross-document retrieval<br/>(no doc_id constraint)"]
+    B1H --> B1M["Measure Recall@5/10/20<br/>MRR · nDCG@5/10/20"]
+    B1M --> B1R["**Branch 1 — Retrieval**<br/>Recall@10 = 0.82<br/>MRR = 0.76 · nDCG@10 = 0.71"]
+
+    INPUT --> B2A["Generate answers<br/>GPT-4o-mini · context from Branch 1"]
+    B2A --> B2J["LLM judge extracts<br/>per-claim atoms"]
+    B2J --> B2L["Supported / Unsupported<br/>label per claim"]
+    B2L --> B2R["**Branch 2 — Faithfulness**<br/>638 claims · 90.9% supported<br/>9.1% unsupported"]
+
+    INPUT --> B3D["1,272 labeled claims<br/>634 human + 638 LLM-judge"]
+    B3D --> B3F["Fit logistic on M / S / A features<br/>(stage 2 of calibration)"]
+    B3F --> B3S["70/30 train-test split<br/>Test all 7 feature combinations<br/>(M · S · A · MS · MA · SA · MSA)"]
+    B3S --> B3R["**Branch 3 — Calibration**<br/>Full MSA · Accuracy 83.1%<br/>Brier 0.134 · ECE 0.072"]
+
+    INPUT --> B4D["150-claim subset"]
+    B4D --> B4S["Simulated second annotator"]
+    B4S --> B4R["**Branch 4 — IAA**<br/>Cohen's κ = 0.72<br/>(substantial agreement)"]
+
+    INPUT --> B5Q["20 diverse public queries"]
+    B5Q --> B5P["Public Research<br/>6-API concurrent fan-out"]
+    B5P --> B5R["**Branch 5 — Public Search**<br/>Provider diversity · latency<br/>keyword precision @ 5/10"]
+
+    classDef input fill:#f1f5f9,stroke:#475569,color:#0f172a,font-weight:bold
+    classDef step fill:#dbeafe,stroke:#1d4ed8,color:#0c4a6e
+    classDef judge fill:#fef3c7,stroke:#b45309,color:#3f3f46
+    classDef calib fill:#dcfce7,stroke:#15803d,color:#14532d
+    classDef result fill:#ede9fe,stroke:#6d28d9,color:#4c1d95,font-weight:bold
+
+    class INPUT input
+    class B1H,B1M,B2A,B2J,B2L,B3D,B3F,B3S,B4D,B4S,B5Q,B5P step
+    class B2J judge
+    class B3F,B3S calib
+    class B1R,B2R,B3R,B4R,B5R result
 ```
+
+All evaluation data, scripts, and generated figures live in [`Evaluation/`](Evaluation/). See [`Evaluation/README.md`](Evaluation/README.md) for the full directory layout.
 
 ---
 
