@@ -1,14 +1,9 @@
-"""ASGI middleware for request tracing + structured access logging.
-
-Each request gets an `X-Request-ID` (preserved from upstream if present, else
-freshly minted). The same id is logged with the access line and echoed in
-the response header so an operator can correlate UI traces, backend logs,
-and downstream service calls.
-"""
+"""ASGI middleware for request tracing, security headers, and structured access logging."""
 
 from __future__ import annotations
 
 import logging
+import os
 import time
 import uuid
 from typing import Awaitable, Callable
@@ -21,6 +16,52 @@ from starlette.types import ASGIApp
 REQUEST_ID_HEADER = "X-Request-ID"
 
 _access_log = logging.getLogger("scholarrag.access")
+
+
+# OWASP-aligned security header defaults. Tunable via env so a deployment
+# behind a CDN that already injects HSTS doesn't double-set headers.
+_DEFAULT_SECURITY_HEADERS: dict[str, str] = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "geolocation=(), camera=(), microphone=(), payment=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-site",
+    # HSTS is only meaningful behind TLS — opt in via env when serving over https.
+    # "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+}
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name, "").strip().lower()
+    if not raw:
+        return default
+    return raw in {"1", "true", "yes", "on"}
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Apply security response headers on every response.
+
+    Set ENABLE_HSTS=true (only behind TLS) to add Strict-Transport-Security.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        super().__init__(app)
+        self._headers = dict(_DEFAULT_SECURITY_HEADERS)
+        if _env_flag("ENABLE_HSTS", default=False):
+            self._headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
+
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        response = await call_next(request)
+        for k, v in self._headers.items():
+            response.headers.setdefault(k, v)
+        return response
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):

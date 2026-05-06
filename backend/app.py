@@ -21,7 +21,7 @@ from backend import agents, auth, chat, memory, pdf_ingest
 from backend.confidence import build_confidence, score_percent
 from backend.eval_metrics import aggregate_metrics
 from backend.intent_resolver import is_offtopic_by_intent, resolve_query_intent
-from backend.middleware import RequestIDMiddleware
+from backend.middleware import RequestIDMiddleware, SecurityHeadersMiddleware
 from backend.pdf_ingest import search_chunks as search_uploaded_chunks
 from backend.public_search import public_live_search
 from backend.public_web import public_web_search
@@ -144,10 +144,14 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
     expose_headers=["X-Request-ID"],
+    max_age=600,
 )
+# Order: outermost first. Security headers wrap everything. RequestID needs
+# to wrap so the access log line includes status code from inner middlewares.
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
 app.include_router(auth.router)
