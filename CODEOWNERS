@@ -1,9 +1,10 @@
-# Default owner for everything in this repo.
-*                          @sushildalavi
+# CODEOWNERS — only critical paths.
+#
+# Intentionally NOT setting a global "*" owner. A global owner makes GitHub
+# auto-request review on every Dependabot / bot PR, which floods email.
+# Owners listed below trigger review only when those specific paths change.
 
-# Critical paths that always need a careful look.
-/backend/app.py            @sushildalavi
-/backend/confidence.py     @sushildalavi
-/backend/services/         @sushildalavi
 /db/                       @sushildalavi
 /.github/workflows/        @sushildalavi
+/backend/confidence.py     @sushildalavi
+/backend/services/         @sushildalavi

@@ -1,98 +1,48 @@
 version: 2
+# Conservative cadence — monthly, tight PR limits, single grouped PR per
+# ecosystem, no major bumps, no auto-review-request floods.
 updates:
-  # ── Python (backend) ─────────────────────────────────────────────
   - package-ecosystem: pip
     directory: "/"
     schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 3
+      interval: monthly
+    open-pull-requests-limit: 1
     groups:
-      python-runtime:
+      python:
         applies-to: version-updates
         update-types: [minor, patch]
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "ruff"
-          - "pyright"
-          - "pytest*"
-          - "coverage"
-      python-dev:
-        applies-to: version-updates
-        update-types: [minor, patch]
-        patterns:
-          - "ruff"
-          - "pyright"
-          - "pytest*"
-          - "coverage"
+        patterns: ["*"]
     ignore:
-      # Major bumps require manual review; let security alerts take priority.
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
-    labels:
-      - dependencies
-      - python
+    labels: [dependencies, python]
 
-  # ── npm (frontend) ───────────────────────────────────────────────
   - package-ecosystem: npm
     directory: "/frontend"
     schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 3
+      interval: monthly
+    open-pull-requests-limit: 1
     versioning-strategy: increase-if-necessary
     groups:
-      react:
+      npm:
         applies-to: version-updates
         update-types: [minor, patch]
-        patterns:
-          - "react"
-          - "react-*"
-          - "@types/react*"
-      build-tooling:
-        applies-to: version-updates
-        update-types: [minor, patch]
-        patterns:
-          - "vite*"
-          - "@vitejs/*"
-          - "eslint*"
-          - "@eslint/*"
-          - "typescript"
-          - "@typescript-eslint/*"
-      ui:
-        applies-to: version-updates
-        update-types: [minor, patch]
-        patterns:
-          - "lucide-react"
-          - "framer-motion"
-          - "tailwindcss"
-          - "postcss"
-          - "autoprefixer"
-          - "tailwind-merge"
-          - "clsx"
+        patterns: ["*"]
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
-    labels:
-      - dependencies
-      - javascript
+    labels: [dependencies, javascript]
 
-  # ── GitHub Actions ───────────────────────────────────────────────
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: monthly
-    open-pull-requests-limit: 2
+    open-pull-requests-limit: 1
     groups:
       actions:
-        patterns:
-          - "*"
-    labels:
-      - dependencies
-      - ci
+        patterns: ["*"]
+    labels: [dependencies, ci]
 
-  # ── Docker base images (root + frontend) ─────────────────────────
   - package-ecosystem: docker
     directory: "/"
     schedule:
@@ -101,9 +51,7 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
-    labels:
-      - dependencies
-      - docker
+    labels: [dependencies, docker]
 
   - package-ecosystem: docker
     directory: "/frontend"
@@ -113,6 +61,4 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
-    labels:
-      - dependencies
-      - docker
+    labels: [dependencies, docker]
