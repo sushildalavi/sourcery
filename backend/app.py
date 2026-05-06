@@ -115,8 +115,23 @@ async def _lifespan(_app: FastAPI):
 # Initialize FastAPI app
 app = FastAPI(
     title="ScholarRAG: Scholarly Retrieval-Augmented Generation System",
+    description=(
+        "Hybrid retrieval over uploaded PDFs + 7 live scholarly APIs, with "
+        "MSA calibrated confidence and LLM-as-judge faithfulness scoring."
+    ),
     version="1.0",
     lifespan=_lifespan,
+    openapi_tags=[
+        {"name": "health", "description": "Liveness, readiness, and self-diagnostic endpoints."},
+        {"name": "chat", "description": "Multi-turn assistant conversations."},
+        {"name": "documents", "description": "Upload + manage the user's PDF corpus."},
+        {"name": "search", "description": "Live aggregation across public scholarly APIs."},
+        {"name": "evaluation", "description": "LLM judge runs and retrieval metrics."},
+        {"name": "confidence", "description": "MSA calibration weights + scoring."},
+        {"name": "metrics", "description": "Operational counters and request latencies."},
+    ],
+    contact={"name": "Sushil Dalavi", "email": "sushildalavi@gmail.com"},
+    license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
 )
 
 _cors_env = os.environ.get("CORS_ORIGINS", "")
