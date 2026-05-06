@@ -22,6 +22,7 @@ from backend.services.embeddings import (
     get_provider,
     get_raw_embedding_dims,
 )
+from backend.utils.config import get_openai_api_key
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 logger = logging.getLogger(__name__)
@@ -483,7 +484,7 @@ def search_chunks(
     elif not isinstance(payload, dict):
         raise HTTPException(status_code=400, detail="Invalid payload")
 
-    q = payload.get("q") or q or ""
+    q = (payload.get("q") or q or "").strip()
     if not q:
         raise HTTPException(status_code=400, detail="q (query) is required")
     k = int(payload.get("k") or k or 10)
@@ -627,7 +628,10 @@ def qa_over_chunks(q: str, k: int = 8, doc_id: Optional[int] = None):
     for r in res:
         context += f"### Document {r['document_id']} - Chunk {r['id']} (page {r.get('page_no', '?')})\n{r['text']}\n\n"
 
-    client = OpenAI()
+    # Centralized client construction so this RAG endpoint honors the
+    # same `.env` / Streamlit / AWS Secrets Manager fallback chain as
+    # `/assistant/answer` and `/assistant/chat`.
+    client = OpenAI(api_key=get_openai_api_key())
     prompt = (
         "You are a research assistant. Answer concisely and cite the document/chunk ids you used.\n\n"
         f"Question: {q}\n\nContext:\n{context}"

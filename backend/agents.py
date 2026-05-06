@@ -33,7 +33,7 @@ def ensure_digests_table() -> None:
 @router.post("/agents/digest")
 def create_digest(payload: dict):
     user_id = payload.get("user_id") or "guest"
-    query = payload.get("query")
+    query = (payload.get("query") or "").strip()
     frequency = payload.get("frequency", "weekly")
     if not query:
         raise HTTPException(status_code=400, detail="Missing query")

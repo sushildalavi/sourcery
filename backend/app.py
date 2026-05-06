@@ -2637,7 +2637,7 @@ def ask(payload: dict = Body(...)):
     if client is None:
         raise HTTPException(status_code=503, detail="OpenAI client not configured.")
 
-    query = payload.get("query")
+    query = (payload.get("query") or "").strip()
     if not query:
         raise HTTPException(status_code=400, detail="Missing 'query'.")
 

@@ -30,7 +30,7 @@ def ensure_memory_table() -> None:
 @router.post("/memory/log")
 def log_interaction(payload: dict):
     user_id = payload.get("user_id") or "guest"
-    query = payload.get("query")
+    query = (payload.get("query") or "").strip()
     answer = payload.get("answer")
     notes = payload.get("notes", "")
     if not query:
