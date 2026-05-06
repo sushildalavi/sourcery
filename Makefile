@@ -1,0 +1,145 @@
+.PHONY: test lint typecheck run run-frontend install install-dev clean help
+
+# ── Environment ───────────────────────────────────────────────────────────────
+PYTHON  := python3
+VENV    := .venv
+PIP     := $(VENV)/bin/pip
+PYTEST  := $(VENV)/bin/pytest
+RUFF    := $(VENV)/bin/ruff
+UVICORN := $(VENV)/bin/uvicorn
+PYTHONPATH_ENV := PYTHONPATH=.
+
+# ── Setup ─────────────────────────────────────────────────────────────────────
+
+install: $(VENV)/bin/activate
+	$(PIP) install --upgrade pip
+	$(PIP) install -r requirements.txt
+
+install-dev: install
+	$(PIP) install -r requirements-dev.txt
+
+$(VENV)/bin/activate:
+	$(PYTHON) -m venv $(VENV)
+
+# ── Test ──────────────────────────────────────────────────────────────────────
+
+test:
+	$(PYTEST) backend/tests/ -v --tb=short
+
+test-fast:
+	$(PYTEST) backend/tests/ -x --tb=short -q
+
+test-coverage:
+	$(PYTEST) backend/tests/ --cov=backend --cov-report=term-missing --cov-report=html
+
+# ── Lint ──────────────────────────────────────────────────────────────────────
+
+lint:
+	$(RUFF) check backend/ scripts/ --ignore E501,F401,E402
+
+lint-fix:
+	$(RUFF) check backend/ scripts/ --fix --ignore E501,F401,E402
+
+typecheck:
+	$(VENV)/bin/pyright backend/confidence.py backend/eval_metrics.py backend/services/nli.py
+
+# ── Run ───────────────────────────────────────────────────────────────────────
+
+run:
+	$(UVICORN) backend.app:app --reload --host 127.0.0.1 --port 8000
+
+run-prod:
+	$(UVICORN) backend.app:app --host 0.0.0.0 --port 8000 --workers 4
+
+run-frontend:
+	cd frontend && npm run dev
+
+# ── Database ──────────────────────────────────────────────────────────────────
+
+db-up:
+	docker compose up -d db adminer
+
+db-down:
+	docker compose down
+
+# ── Reindex ───────────────────────────────────────────────────────────────────
+
+reindex:
+	$(PYTHONPATH_ENV) $(PYTHON) scripts/reindex_embeddings.py --purge-all
+
+eval:
+	$(PYTHONPATH_ENV) $(PYTHON) scripts/eval_retrieval.py \
+		--k 10 \
+		--output Evaluation/data/retrieval_run_$(shell date +%Y%m%d).json
+
+# ── Calibration pipeline (full reproduction in 6 steps) ─────────────────────
+#
+# 1. make ingest-corpus      — pull the 15 PDFs into the documents table
+# 2. make generate-queries   — emit 120 LLM-generated queries
+# 3. make build-codebooks    — run assistant_answer, emit 3 coder xlsx files
+# 4. Coders fill supported/unsupported via the dropdown, hand files back
+# 5. make compute-iaa        — Cohen's kappa + majority-vote gold labels
+# 6. make extract-features   — M/S/A per gold pair
+# 7. make fit-calibration    — fit unified logistic + write DB row
+#
+# Then set CONFIDENCE_USE_FITTED_WEIGHTS=true to use the fitted row in prod.
+
+ingest-corpus:
+	$(PYTHONPATH_ENV) $(PYTHON) -m backend.scripts.ingest_corpus
+
+generate-queries:
+	$(PYTHONPATH_ENV) $(PYTHON) -m backend.scripts.generate_queries
+
+build-codebooks:
+	CODEBOOK_MAX_QUERIES=80 CODEBOOK_INCLUDE_PUBLIC=true PUBLIC_IEEE_LIMIT=0 \
+		$(PYTHONPATH_ENV) $(PYTHON) -m backend.scripts.build_codebooks
+
+compute-iaa:
+	$(PYTHONPATH_ENV) $(PYTHON) -m backend.scripts.compute_iaa_majority
+
+extract-features:
+	PUBLIC_IEEE_LIMIT=0 \
+		$(PYTHONPATH_ENV) $(PYTHON) -m backend.scripts.extract_msa_features
+
+fit-calibration:
+	$(PYTHONPATH_ENV) $(PYTHON) -m backend.scripts.fit_unified_calibration --write-db
+
+# ── Clean ─────────────────────────────────────────────────────────────────────
+
+clean:
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete
+	rm -rf .pytest_cache htmlcov .coverage
+
+# ── Help ──────────────────────────────────────────────────────────────────────
+
+help:
+	@echo "ScholarRAG Makefile targets:"
+	@echo ""
+	@echo "  Setup:"
+	@echo "    make install       Install runtime dependencies"
+	@echo "    make install-dev   Install runtime + dev dependencies"
+	@echo ""
+	@echo "  Test:"
+	@echo "    make test          Run full test suite"
+	@echo "    make test-fast     Run tests, stop on first failure"
+	@echo "    make test-coverage Run tests with coverage report"
+	@echo ""
+	@echo "  Lint:"
+	@echo "    make lint          Run ruff linter"
+	@echo "    make lint-fix      Run ruff with auto-fix"
+	@echo "    make typecheck     Run pyright on core modules"
+	@echo ""
+	@echo "  Run:"
+	@echo "    make run           Start backend (dev, auto-reload)"
+	@echo "    make run-prod      Start backend (production, 4 workers)"
+	@echo "    make run-frontend  Start frontend dev server"
+	@echo ""
+	@echo "  Calibration pipeline:"
+	@echo "    make reindex           Rebuild all chunk embeddings"
+	@echo "    make ingest-corpus     Ingest the 15-paper PDF corpus"
+	@echo "    make generate-queries  Generate 120 GPT-4o-mini queries"
+	@echo "    make build-codebooks   Run assistant_answer + emit 3 coder xlsx files"
+	@echo "    make compute-iaa       Pairwise Cohen's kappa + majority-vote gold labels"
+	@echo "    make extract-features  Compute M / S / A per gold pair"
+	@echo "    make fit-calibration   Fit unified logistic + ablation + DB write"
