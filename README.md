@@ -657,12 +657,15 @@ cd frontend && npm run dev
 ## Healthcheck
 
 ```bash
-GET /                      # liveness — returns {"message":"...live!"}
-GET /health/embeddings     # embedding-provider readiness, never 5xx
-GET /metrics               # rolling latency p50/p95/p99 + counts
+GET /                       # liveness — version, uptime, service id
+GET /health/embeddings      # embedding-provider readiness, never 5xx
+GET /health/full            # aggregated db + embeddings, never 5xx
+GET /metrics                # rolling latency p50/p95/p99 + counts
 ```
 
-`/health/embeddings` returns `{ok: false, error: "..."}` with HTTP 200 when the embedding provider is unreachable, so uptime monitors get a clean degraded signal instead of a noisy 5xx.
+`/health/full` and `/health/embeddings` return HTTP **200** with `status: degraded` and `ok: false` in the body when a dependency is down — uptime monitors read `status` / `ok`, not the HTTP code, so they get a clean degraded signal instead of a noisy 5xx.
+
+Every response carries `X-Request-ID` (echoed if the caller sends one, freshly minted otherwise) and one structured access-log line is emitted per request — chase a UI trace through the backend in one grep.
 
 ---
 
@@ -670,15 +673,27 @@ GET /metrics               # rolling latency p50/p95/p99 + counts
 
 | Gate | Command | Status |
 |---|---|---|
-| Backend tests | `make test` | **160 / 160 passing** |
+| Backend tests | `make test` | **167 / 167 passing** |
 | Backend lint | `make lint` | **clean** (ruff E/F/W/I) |
 | Frontend typecheck | `make frontend-typecheck` | **clean** (`tsc --noEmit`) |
-| Frontend lint | `make frontend-lint` | **clean** (eslint flat config) |
-| Frontend build | `make frontend-build` | **passes** (vendor-chunked, no size warnings) |
+| Frontend lint | `make frontend-lint` | **clean** (eslint flat config, 0 warnings) |
+| Frontend build | `make frontend-build` | **clean** (vendor-chunked, lazy routes) |
 | API smoke | `make health` after `make stack-up` | 32 routes, key endpoints 200 |
-| CI | `.github/workflows/ci.yml` | runs both jobs on push + PR |
+| CI | `.github/workflows/ci.yml` | runs both jobs on push + PR, uploads coverage |
 
-The CI workflow stands up a `pgvector/pgvector:pg16` service container, applies `db/init.sql`, then runs ruff + the full pytest suite for the backend job and `tsc --noEmit` + `vite build` for the frontend job.
+The CI workflow spins up `pgvector/pgvector:pg16` as a service container, applies `db/init.sql`, runs `EMBEDDING_PROVIDER=stub` so no Ollama / OpenAI is required, then runs ruff + pytest with coverage for the backend job and `tsc --noEmit` + `vite build` for the frontend job.
+
+### Frontend bundle (after vendor split + route lazy-loading)
+
+```mermaid
+xychart-beta
+    title "Initial JS payload (gzipped KB) — lazy-loaded chunks excluded"
+    x-axis ["index", "react", "framer-motion", "icons"]
+    y-axis "Gzipped KB" 0 --> 65
+    bar [22, 59, 42, 3]
+```
+
+Initial bundle: **~78 KB gzipped** (down from 236 KB before splitting). The `/analytics` chunk (112 KB gz) downloads only when the user navigates there.
 
 ---
 
