@@ -14,9 +14,9 @@ import {
   CommandPalette,
   MessageSquarePlus as PaletteNewIcon,
   Sparkles as PaletteEvidenceIcon,
-  useDefaultPaletteActions,
   type PaletteAction,
 } from './CommandPalette';
+import { useDefaultPaletteActions } from './usePaletteActions';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/cn';
