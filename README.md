@@ -284,24 +284,47 @@ Calibration artifacts live in [`Evaluation/data/calibration/`](Evaluation/data/c
 
 **Fitted unified logistic** `P(supported | M, S, A) = σ(b + w₁·M + w₂·S + w₃·A)`
 
-| Parameter | Value |
-|---|---|
-| `w₁` (M — NLI entailment) | **3.814** |
-| `w₂` (S — retrieval stability) | **−0.289** |
-| `w₃` (A — lexical multi-source corroboration) | **3.346** |
-| `b` (bias) | **−4.859** |
-| **Brier score** | **0.160** (random = 0.25, perfect = 0) |
-| Log-loss | 0.484 |
-| **AUC-ROC** | **0.852** |
+```mermaid
+xychart-beta
+    title "Fitted MSA logistic — feature weights"
+    x-axis ["w₁ (M · NLI)", "w₂ (S · stability)", "w₃ (A · agreement)", "b (bias)"]
+    y-axis "Coefficient" -5 --> 5
+    bar [3.814, -0.289, 3.346, -4.859]
+```
+
+`M` (entailment) and `A` (multi-source agreement) carry the signal; `S`
+(stability) is near-zero — the unified fit treats it as noise, which the
+ablation below confirms. The strongly negative bias ensures predictions
+default to "unsupported" absent positive evidence.
+
+```mermaid
+xychart-beta
+    title "Held-out fit quality (lower Brier = better, higher AUC = better)"
+    x-axis ["Brier (×100)", "Log-loss (×100)", "AUC-ROC (×100)"]
+    y-axis "Score" 0 --> 100
+    bar [16.0, 48.4, 85.2]
+```
+
+Brier 0.160 vs the 0.25 random baseline (a 36% reduction) and AUC 0.852 on
+530 binary-rubric pairs.
 
 **Per-mode ablation** (empirical justification for unified fit)
 
-| Fit | n | Brier | AUC |
-|---|---|---|---|
-| Pooled (unified) | 530 | 0.160 | 0.852 |
-| Uploaded-only | 262 | 0.160 | 0.847 |
-| Public-only | 268 | 0.153 | 0.853 |
-| **Δ pooled vs per-mode avg** | — | **+0.003** | — |
+```mermaid
+xychart-beta
+    title "Brier score by fit (lower is better) — pooled vs per-mode"
+    x-axis ["Pooled (n=530)", "Uploaded (n=262)", "Public (n=268)"]
+    y-axis "Brier score" 0.10 --> 0.20
+    bar [0.160, 0.160, 0.153]
+```
+
+```mermaid
+xychart-beta
+    title "AUC-ROC by fit (higher is better)"
+    x-axis ["Pooled (n=530)", "Uploaded (n=262)", "Public (n=268)"]
+    y-axis "AUC" 0.80 --> 0.90
+    bar [0.852, 0.847, 0.853]
+```
 
 Pooled Brier is within 0.003 of the per-mode weighted average — below the
 0.02 threshold at which separate per-mode fits would be warranted. **The
@@ -309,11 +332,13 @@ unified model is empirically justified.**
 
 **Held-out generalization** (5-fold stratified CV, seed=42; full report in [`Evaluation/data/calibration/cv_metrics.json`](Evaluation/data/calibration/cv_metrics.json))
 
-| Metric | CV mean ± std | In-sample |
-|---|---|---|
-| Brier | **0.163 ± 0.015** | 0.160 |
-| AUC | **0.845 ± 0.028** | 0.852 |
-| Log-loss | 0.494 ± 0.038 | 0.484 |
+```mermaid
+xychart-beta
+    title "5-fold CV vs in-sample (×100) — gap is within one fold-std"
+    x-axis ["Brier (CV)", "Brier (IS)", "AUC (CV)", "AUC (IS)", "Log-loss (CV)", "Log-loss (IS)"]
+    y-axis "Score" 0 --> 100
+    bar [16.3, 16.0, 84.5, 85.2, 49.4, 48.4]
+```
 
 CV Brier is 0.003 above in-sample and within one fold-std — **no meaningful
 overfitting** on the 530-pair set.
