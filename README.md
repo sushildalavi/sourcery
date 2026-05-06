@@ -1,16 +1,50 @@
-# ScholarRAG: Scholarly Retrieval-Augmented Generation System
+<div align="center">
 
-[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-green.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18.3-61DAFB.svg?logo=react)](https://react.dev/)
-[![pgvector](https://img.shields.io/badge/pgvector-0.7-336791.svg)](https://github.com/pgvector/pgvector)
-[![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg?logo=docker)](https://www.docker.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml/badge.svg)](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml)
+<img src="frontend/favicon.svg" width="72" alt="citelens logo" />
 
-**ScholarRAG** is a production-architecture Retrieval-Augmented Generation (RAG) system for scientific literature discovery, multi-document question answering, and calibrated answer confidence scoring.
+# citelens
 
-It aggregates **6 live scholarly APIs** (OpenAlex, arXiv, Semantic Scholar, Crossref, Springer, Elsevier), performs **hybrid dense + sparse retrieval** using pgvector and `mxbai-embed-large` (1024-d), and delivers citation-grounded answers with per-claim faithfulness scores via an LLM judge. Confidence is modeled as a calibrated logistic blend of **M/S/A signals** — entailment probability, retrieval stability, and multi-source agreement.
+**Calibrated retrieval-augmented generation for scientific literature.**
+
+Hybrid dense + sparse retrieval over your PDFs and **6 live scholarly APIs**, with **per-claim faithfulness scoring** via an LLM judge and **calibrated M/S/A confidence** that's empirically tracked against a 530-pair human-labeled gold set.
+
+[![CI](https://img.shields.io/github/actions/workflow/status/sushildalavi/citelens/ci.yml?branch=main&label=CI&logo=github)](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-170%20passing-15803d?logo=pytest&logoColor=white)](https://github.com/sushildalavi/citelens/actions)
+[![Coverage](https://img.shields.io/badge/coverage%20gate-55%25-15803d)](.github/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11-1d4ed8?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-15803d?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18.3-1d4ed8?logo=react&logoColor=white)](https://react.dev/)
+[![pgvector](https://img.shields.io/badge/Postgres%2016-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
+[![Docker](https://img.shields.io/badge/Docker-ready-1d4ed8?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-15803d)](LICENSE)
+[![Security](https://img.shields.io/badge/security-OWASP%20headers%20%2B%20Trivy%20%2B%20gitleaks-6d28d9)](SECURITY.md)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-1d4ed8)](https://www.conventionalcommits.org)
+
+[**Quick Start**](#quick-start) · [**Architecture**](#architecture) · [**Benchmarks**](#benchmark-results) · [**API Reference**](docs/examples/curl.md) · [**Contributing**](CONTRIBUTING.md) · [**Security**](SECURITY.md)
+
+</div>
+
+---
+
+## Why citelens
+
+Most RAG demos stop at "we retrieved a passage and pasted it into a prompt." That ships a plausible-sounding answer with no honest signal of whether it's actually grounded. Citelens is built for the next step:
+
+- **Cite or abstain.** Every claim is tied to a chunk we can re-render. When evidence is too thin, the system says so instead of generating.
+- **Calibrated confidence, not vibes.** A logistic over three orthogonal signals (M/S/A — entailment, retrieval stability, multi-source agreement) hits Brier 0.160 / AUC 0.852 on a held-out human-labeled set.
+- **Hybrid retrieval that actually works.** pgvector ANN combined with sparse token overlap surfaces the target document in the top-10 for **100% of 120 benchmark queries**.
+- **Production-grade by default.** OWASP security headers, k8s-style liveness/readiness probes, X-Request-ID tracing, structured access logs, OpenAPI-typed responses, CI with coverage gate + Trivy + gitleaks + SBOM, and a `stub` embedding provider so tests run zero-dependency.
+- **Local-first, cloud-optional.** Docker + Ollama on a laptop runs the full stack offline. Cloud (OpenAI, scholarly APIs) is additive, not load-bearing.
+
+## Status
+
+| | |
+|---|---|
+| **Backend** | 170 / 170 tests passing · ruff clean · 32 routes typed via OpenAPI |
+| **Frontend** | TypeScript strict · ESLint 0 warnings · 78 KB initial bundle (gz 22 KB) |
+| **Security** | OWASP headers wired · CORS allowlisted · Trivy + gitleaks in CI · vuln alerts on |
+| **Reproducibility** | Calibration pipeline reproducible from `make ingest-corpus → make fit-calibration` |
+| **Stack** | Python 3.11 · FastAPI · React 18 · Postgres 16 · pgvector · Ollama · Docker |
 
 ---
 
@@ -26,6 +60,8 @@ It aggregates **6 live scholarly APIs** (OpenAlex, arXiv, Semantic Scholar, Cros
 - [Evaluation](#evaluation)
 - [Re-indexing after Model Change](#re-indexing-after-model-change)
 - [Local Runtime](#local-runtime)
+- [Operations](#healthcheck)
+- [Documentation](#documentation)
 
 ---
 
@@ -718,22 +754,56 @@ Initial bundle: **~78 KB gzipped** (down from 236 KB before splitting). The `/an
 
 ---
 
+## Documentation
+
+| Doc | Purpose |
+|---|---|
+| [README.md](README.md) | You're here — overview, benchmarks, quick start. |
+| [docs/architecture.md](docs/architecture.md) | Layered architecture, design decisions, code map. |
+| [docs/adr/](docs/adr/) | Architecture Decision Records (MADR format). |
+| [docs/examples/curl.md](docs/examples/curl.md) | Curl recipes for every public endpoint. |
+| [Evaluation/README.md](Evaluation/README.md) | Calibration pipeline, gold set construction, IAA. |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Local setup, commit style, PR checklist. |
+| [SECURITY.md](SECURITY.md) | Reporting vulnerabilities, scope, hardening already in place. |
+| [SUPPORT.md](SUPPORT.md) | How to get help, response times, versioning policy. |
+| [CHANGELOG.md](CHANGELOG.md) | What changed, when, why. |
+| [NOTICE](NOTICE) | Third-party attribution. |
+
+## Roadmap
+
+Items below are what we'd want before a 2.0 cut. None are blocking 1.x.
+
+- [ ] **Reranker stage** — second-stage cross-encoder over the top-50 to push MRR past 0.99.
+- [ ] **Streaming responses** — SSE for `/assistant/answer` so the UI shows tokens as they arrive instead of waiting on the full citation contract.
+- [ ] **Multi-tenant isolation** — per-workspace API keys + row-level security in pgvector so a deployment can serve multiple research groups safely.
+- [ ] **Batched embedding upserts** — current path is one chunk per call; batch upsert would cut PDF ingest time by ~3×.
+- [ ] **Prometheus exposition** — `/metrics` currently emits app-shape JSON; add a parallel `/metrics/prom` in Prometheus exposition format.
+- [ ] **Helm chart** — alongside the existing Docker Compose for k8s deployments.
+- [ ] **Per-tenant calibration** — re-fit M/S/A weights against a customer's own corpus instead of the shared 530-pair gold set.
+
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. Quick loop:
+
 ```bash
-make lint       # check code style (ruff)
-make lint-fix   # auto-fix
-make test       # run full test suite
-make eval       # run retrieval evaluation
+make install-dev          # install + dev deps
+make compose-up           # postgres + adminer
+cp backend/.env.example backend/.env
+
+make lint                 # ruff
+make test                 # pytest (170 tests, ~2s)
+make frontend-typecheck   # tsc --noEmit
+make frontend-lint        # eslint, 0 warnings
+make frontend-build       # vite build
 ```
 
-- Python 3.11+ type hints on all public functions
-- No bare `except:` — always catch specific exceptions
-- Run `make lint && make test` before submitting changes
-- Report Recall@5, MRR, and nDCG@10 in PRs that affect retrieval
+PRs that change retrieval should include `Recall@5 / MRR / nDCG@10` from `make eval`.
+PRs that change calibration should re-run `make fit-calibration` and attach the cv summary.
 
----
+## Security
+
+See [SECURITY.md](SECURITY.md). Don't open public issues for security findings — email `sushildalavi@gmail.com`.
 
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 Sushil Dalavi, Parvathi Sanjana Pericherla, Eshna Gupta. Third-party attribution in [NOTICE](NOTICE).
