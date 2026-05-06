@@ -357,7 +357,7 @@ def resolve_sense(query: str, top_chunks: List[Dict], chosen_sense: str | None =
         }
 
     options = AMBIGUOUS_TERMS.get(term, [])
-    snippets = [f"{c.get('title','')} {c.get('snippet','')}" for c in (top_chunks or [])[:8]]
+    snippets = [f"{c.get('title', '')} {c.get('snippet', '')}" for c in (top_chunks or [])[:8]]
 
     sense_scores = [(opt, _score_sense(opt, snippets)) for opt in options]
     sense_scores.sort(key=lambda x: x[1], reverse=True)
@@ -433,7 +433,7 @@ def filter_citations_by_sense(citations: List[Dict], sense: str | None) -> List[
         return citations
     out = []
     for c in citations:
-        hay = f"{c.get('title','')} {c.get('snippet','')}".lower()
+        hay = f"{c.get('title', '')} {c.get('snippet', '')}".lower()
         if any(k in hay for k in keys):
             out.append(c)
     return out or citations
@@ -470,7 +470,7 @@ def is_offtopic_public_result(query: str, citation: dict) -> bool:
     for s in wrong_senses:
         wrong_keys |= set(SENSE_KEYWORDS.get(s, ()))
 
-    hay_text = f"{citation.get('title','')} {citation.get('snippet','')}".lower()
+    hay_text = f"{citation.get('title', '')} {citation.get('snippet', '')}".lower()
     hay_tokens = _tokens(hay_text)
     ml_hits = sum(1 for k in ml_keys if _word_hit(hay_tokens, hay_text, k))
     wrong_hits = sum(1 for k in wrong_keys if _word_hit(hay_tokens, hay_text, k))

@@ -196,7 +196,7 @@ def chat(payload: dict = None):
                 }
             )
             context_blocks.append(
-                f"[doc {r.get('document_id')} chunk {r.get('id')} page {r.get('page_no','?')}] {r.get('text','')}"
+                f"[doc {r.get('document_id')} chunk {r.get('id')} page {r.get('page_no', '?')}] {r.get('text', '')}"
             )
     else:
         docs = public_live_search(message, k=min(k, 8))
@@ -209,7 +209,7 @@ def chat(payload: dict = None):
                     "url": d.get("url") or d.get("doi"),
                 }
             )
-            context_blocks.append(f"[{d.get('title','')}] {d.get('abstract') or d.get('summary') or ''}")
+            context_blocks.append(f"[{d.get('title', '')}] {d.get('abstract') or d.get('summary') or ''}")
 
     context = "\n\n".join(context_blocks) if context_blocks else "No context found."
     prompt = (

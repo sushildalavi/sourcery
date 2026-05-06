@@ -1,6 +1,6 @@
-.PHONY: test lint typecheck run run-frontend install install-dev clean help \
+.PHONY: test lint lint-fix format format-check typecheck run run-frontend install install-dev clean help \
         compose-up compose-down compose-logs compose-rebuild stack-up stack-down \
-        health frontend-build frontend-lint frontend-typecheck pre-commit-install
+        health frontend-build frontend-lint frontend-typecheck pre-commit-install ci-local
 
 # ── Environment ───────────────────────────────────────────────────────────────
 PYTHON  := python3
@@ -37,13 +37,23 @@ test-coverage:
 # ── Lint ──────────────────────────────────────────────────────────────────────
 
 lint:
-	$(RUFF) check backend/ scripts/ --ignore E501,F401,E402
+	$(RUFF) check backend/ scripts/
 
 lint-fix:
-	$(RUFF) check backend/ scripts/ --fix --ignore E501,F401,E402
+	$(RUFF) check backend/ scripts/ --fix
+
+format:
+	$(RUFF) format backend/ scripts/
+
+format-check:
+	$(RUFF) format --check backend/ scripts/
 
 typecheck:
 	$(VENV)/bin/pyright backend/confidence.py backend/eval_metrics.py backend/services/nli.py
+
+# Run the EXACT same gates CI runs. If this passes locally, CI passes.
+ci-local: lint format-check test
+	@echo "✓ ci-local clean — pushing should succeed"
 
 # ── Run ───────────────────────────────────────────────────────────────────────
 

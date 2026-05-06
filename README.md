@@ -10,7 +10,7 @@ Hybrid dense + sparse retrieval over your PDFs and **6 live scholarly APIs**, wi
 
 [![CI](https://img.shields.io/github/actions/workflow/status/sushildalavi/citelens/ci.yml?branch=main&label=CI&logo=github)](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-170%20passing-15803d?logo=pytest&logoColor=white)](https://github.com/sushildalavi/citelens/actions)
-[![Coverage](https://img.shields.io/badge/coverage%20gate-55%25-15803d)](.github/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-47%25%20%E2%80%A2%20gate%2045%25-15803d)](.github/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11-1d4ed8?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-15803d?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18.3-1d4ed8?logo=react&logoColor=white)](https://react.dev/)
@@ -198,6 +198,18 @@ flowchart TB
 ### Database Schema
 
 ```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#fef3c7",
+    "primaryBorderColor": "#b45309",
+    "primaryTextColor": "#3f3f46",
+    "lineColor": "#475569",
+    "secondaryColor": "#fde68a",
+    "tertiaryColor": "#fffbeb",
+    "fontFamily": "Inter, ui-sans-serif, system-ui"
+  }
+}}%%
 erDiagram
     PAPERS ||--o{ CHUNKS : "(public)"
     DOCUMENTS ||--o{ CHUNKS : has

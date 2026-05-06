@@ -288,7 +288,7 @@ def is_offtopic_by_intent(intent: Optional[Dict], citation: Dict) -> bool:
     hints = intent.get("disambiguation_hints") or []
     if not hints:
         return False
-    hay = f"{citation.get('title','')} {citation.get('snippet','')}".lower()
+    hay = f"{citation.get('title', '')} {citation.get('snippet', '')}".lower()
     if not hay.strip():
         return False
     hay_tokens = _tokenize(hay)

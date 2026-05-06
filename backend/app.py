@@ -851,7 +851,7 @@ def assistant_answer(
                 if concept_terms:
                     filtered = []
                     for c in uploaded_probe:
-                        hay = f"{c.get('title','')} {c.get('snippet','')}".lower()
+                        hay = f"{c.get('title', '')} {c.get('snippet', '')}".lower()
                         if any(term and term in hay for term in concept_terms):
                             filtered.append(c)
                     uploaded_probe = filtered
@@ -1079,7 +1079,7 @@ def assistant_answer(
         primary = _primary_anchor_term(query)
         has_public_primary = any(
             (c.get("source") or "").lower() != "uploaded"
-            and (primary in f"{c.get('title','')} {c.get('snippet','')}".lower() if primary else True)
+            and (primary in f"{c.get('title', '')} {c.get('snippet', '')}".lower() if primary else True)
             for c in citations
         )
         if not has_public_primary:
@@ -1367,13 +1367,13 @@ def assistant_answer(
         conf = float(c.get("confidence", 0.5))
         if c.get("source") == "uploaded":
             context_lines.append(
-                f"[S{i}] doc {c.get('doc_id')} chunk {c.get('chunk_id')} page {c.get('page','?')} "
+                f"[S{i}] doc {c.get('doc_id')} chunk {c.get('chunk_id')} page {c.get('page', '?')} "
                 f"(scope={c.get('scope')}, confidence={conf:.2f}): "
-                f"{c.get('snippet','')}"
+                f"{c.get('snippet', '')}"
             )
         else:
             context_lines.append(
-                f"[S{i}] {c.get('title','')} (scope={c.get('scope')}, confidence={conf:.2f}): {c.get('snippet','')}"
+                f"[S{i}] {c.get('title', '')} (scope={c.get('scope')}, confidence={conf:.2f}): {c.get('snippet', '')}"
             )
 
     context = "\n\n".join(context_lines)

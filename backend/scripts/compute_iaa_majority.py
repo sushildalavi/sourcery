@@ -309,10 +309,10 @@ def main() -> int:
     print(f"Total claims:              {n}")
     print(f"Average pairwise kappa:    {avg_kappa:.4f} ({_interpret_kappa(avg_kappa)})")
     print(
-        f"Unanimous agreement:       {iaa['majority_vote_summary']['unanimous']} / {n}  ({iaa['majority_vote_summary']['unanimous']/n:.1%})"
+        f"Unanimous agreement:       {iaa['majority_vote_summary']['unanimous']} / {n}  ({iaa['majority_vote_summary']['unanimous'] / n:.1%})"
     )
     print(f"Gold label distribution:   {dict(gold_dist)}")
-    print(f"Gold supported rate:       {gold_dist['supported']/n:.1%}")
+    print(f"Gold supported rate:       {gold_dist['supported'] / n:.1%}")
     return 0
 
 

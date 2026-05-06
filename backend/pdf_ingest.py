@@ -583,7 +583,7 @@ def qa_over_chunks(q: str, k: int = 8, doc_id: Optional[int] = None):
         return {"answer": "No relevant chunks found.", "chunks_used": []}
     context = ""
     for r in res:
-        context += f"### Document {r['document_id']} - Chunk {r['id']} (page {r.get('page_no','?')})\n{r['text']}\n\n"
+        context += f"### Document {r['document_id']} - Chunk {r['id']} (page {r.get('page_no', '?')})\n{r['text']}\n\n"
 
     client = OpenAI()
     prompt = (

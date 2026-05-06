@@ -101,7 +101,7 @@ def public_web_search(query: str, k: int = 6) -> List[Dict]:
 
     scored = []
     for c in candidates:
-        text = f"{c.get('title','')} {c.get('snippet','')}"
+        text = f"{c.get('title', '')} {c.get('snippet', '')}"
         sim = _overlap_score(query, text)
         if sim <= 0:
             continue

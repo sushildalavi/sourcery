@@ -846,7 +846,7 @@ def _specific_target_phrases(query: str) -> list[str]:
 def _citations_cover_specific_targets(citations: list[dict], targets: list[str]) -> bool:
     if not targets:
         return True
-    haystack = " ".join(f"{c.get('title','')} {c.get('snippet','')}" for c in citations).lower()
+    haystack = " ".join(f"{c.get('title', '')} {c.get('snippet', '')}" for c in citations).lower()
     hay_tokens = _normalize_tokens(haystack)
     generic = {"paper", "papers", "study", "studies", "the", "exact", "sentence", "score", "value"}
     for target in targets:
@@ -911,7 +911,7 @@ def _citations_support_requested_metric(query: str, citations: list[dict]) -> bo
     q = (query or "").lower()
     if not _query_requests_exact_metric_value(query):
         return True
-    haystack = " ".join(f"{c.get('title','')} {c.get('snippet','')}" for c in citations).lower()
+    haystack = " ".join(f"{c.get('title', '')} {c.get('snippet', '')}" for c in citations).lower()
     metric_tokens = []
     for token in ("f1", "accuracy", "recall", "mrr", "ndcg", "exact match", "top-20", "top 20"):
         if token in q:
@@ -929,7 +929,7 @@ def _query_mentions_unseen_system(query: str, citations: list[dict]) -> bool:
     mentioned = [term for term in candidate_terms if term in q]
     if not mentioned:
         return False
-    haystack = " ".join(f"{c.get('title','')} {c.get('snippet','')}" for c in citations).lower()
+    haystack = " ".join(f"{c.get('title', '')} {c.get('snippet', '')}" for c in citations).lower()
     return not any(term in haystack for term in mentioned)
 
 
@@ -1007,7 +1007,7 @@ def _query_mentions_unseen_terms(query: str, citations: list[dict]) -> bool:
     if not terms:
         return False
 
-    haystack = " ".join(f"{c.get('title','')} {c.get('snippet','')}" for c in citations).lower()
+    haystack = " ".join(f"{c.get('title', '')} {c.get('snippet', '')}" for c in citations).lower()
     return any(term not in haystack for term in terms)
 
 
@@ -1044,7 +1044,7 @@ def _citations_support_entity_benchmark_pair(query: str, citations: list[dict]) 
     exact_requested = _query_requests_exact_metric_value(query) or "benchmark score" in q
     metric_tokens = [t for t in ("top-20", "top 20", "retrieval", "accuracy", "f1", "exact match") if t in q]
     for c in citations:
-        text = f"{c.get('title','')} {c.get('snippet','')}".lower()
+        text = f"{c.get('title', '')} {c.get('snippet', '')}".lower()
         text_tokens = _normalize_tokens(text)
         has_entity = len(entity_tokens & text_tokens) / max(1, len(entity_tokens)) >= 0.5
         has_bench = len(bench_tokens & text_tokens) / max(1, len(bench_tokens)) >= 0.6
@@ -1121,7 +1121,7 @@ def _has_anchor_match(query: str, citation: dict) -> bool:
     anchors = _query_anchor_terms(query)
     if not anchors:
         return True
-    hay = f"{citation.get('title','')} {citation.get('snippet','')}".lower()
+    hay = f"{citation.get('title', '')} {citation.get('snippet', '')}".lower()
     primary = _primary_anchor_term(query)
     if primary and primary not in hay:
         return False
@@ -1151,7 +1151,7 @@ def _query_has_disambiguator(query: str) -> bool:
 
 
 def _infer_domain(citation: dict) -> str:
-    hay = f"{citation.get('title','')} {citation.get('snippet','')}".lower()
+    hay = f"{citation.get('title', '')} {citation.get('snippet', '')}".lower()
     domain_rules = {
         "nlp_ai": ("nlp", "language model", "llm", "gpt", "bert", "token", "text"),
         "vision_ai": ("computer vision", "image", "segmentation", "detection"),
@@ -1222,7 +1222,7 @@ def _prune_public_citations(query: str, citations: list[dict]) -> list[dict]:
         if not _has_anchor_match(query, c):
             continue
         ov = _chunk_query_overlap(query, c)
-        hay = f"{c.get('title','')} {c.get('snippet','')}".lower()
+        hay = f"{c.get('title', '')} {c.get('snippet', '')}".lower()
         has_exact_query_token = any(t in hay for t in q_tokens) if q_tokens else False
         if ov >= 0.12 or has_exact_query_token or _definition_relevance_boost(query, c) > 0.0:
             kept.append(c)
@@ -1233,7 +1233,7 @@ def _chunk_query_overlap(query: str, citation: dict) -> float:
     q = _normalize_tokens(query)
     if not q:
         return 0.0
-    hay = f"{citation.get('title','')} {citation.get('snippet','')}"
+    hay = f"{citation.get('title', '')} {citation.get('snippet', '')}"
     s = _normalize_tokens(hay)
     if not s:
         return 0.0
@@ -1270,7 +1270,7 @@ def _prune_uploaded_citations(query: str, citations: list[dict], doc_ids: list[i
 
 
 def _source_scope(citation: dict) -> str:
-    hay = f"{citation.get('title','')} {citation.get('snippet','')}".lower()
+    hay = f"{citation.get('title', '')} {citation.get('snippet', '')}".lower()
     if any(k in hay for k in ("resume", "curriculum vitae", "experience", "co-op", "intern")):
         return "personal_profile"
     if any(k in hay for k in ("assignment", "lecture", "coursework", "homework")):
@@ -1519,7 +1519,7 @@ STYLE RULES:
 def _definition_relevance_boost(query: str, citation: dict) -> float:
     if not _is_definition_style_query(query):
         return 0.0
-    hay = f"{citation.get('title','')} {citation.get('snippet','')} {(citation.get('source') or '')}".lower()
+    hay = f"{citation.get('title', '')} {citation.get('snippet', '')} {(citation.get('source') or '')}".lower()
     boost = 0.0
     if any(term in hay for term in ("survey", "overview", "introduction", "intro", "tutorial")):
         boost += 0.18
