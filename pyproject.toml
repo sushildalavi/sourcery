@@ -5,6 +5,11 @@ python_classes = ["*Tests", "Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
 pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::DeprecationWarning:PyPDF2",
+]
 
 [tool.ruff]
 line-length = 120
