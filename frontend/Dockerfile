@@ -1,5 +1,5 @@
 # --- build stage ---------------------------------------------------------
-FROM node:20-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 
 # Pull deps first so the npm install layer caches across source edits.
