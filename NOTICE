@@ -1,0 +1,48 @@
+Citelens
+Copyright (c) 2026 Sushil Dalavi, Parvathi Sanjana Pericherla, Eshna Gupta
+
+This product includes software developed by the citelens authors and is
+licensed under the MIT License (see LICENSE).
+
+This product makes runtime use of the following third-party services and
+libraries. Each remains under its own license; this file lists them so
+operators of the deployed product can satisfy attribution and audit
+requirements.
+
+Backend (Python)
+  - FastAPI                  https://github.com/tiangolo/fastapi
+  - Uvicorn                  https://github.com/encode/uvicorn
+  - Pydantic                 https://github.com/pydantic/pydantic
+  - psycopg2-binary          https://github.com/psycopg/psycopg2
+  - python-dotenv            https://github.com/theskumar/python-dotenv
+  - pypdf                    https://github.com/py-pdf/pypdf
+  - openai                   https://github.com/openai/openai-python
+  - python-multipart         https://github.com/Kludex/python-multipart
+  - numpy                    https://numpy.org/
+  - requests                 https://github.com/psf/requests
+  - google-auth              https://github.com/googleapis/google-auth-library-python
+
+Storage / models
+  - PostgreSQL               https://www.postgresql.org/
+  - pgvector                 https://github.com/pgvector/pgvector
+  - Ollama (mxbai-embed-large) https://ollama.com/
+  - OpenAI GPT-4o-mini (network call only; no model included)
+
+Frontend (Node)
+  - React, React DOM, React Router    https://react.dev/
+  - Vite, @vitejs/plugin-react        https://vitejs.dev/
+  - TypeScript                        https://www.typescriptlang.org/
+  - Tailwind CSS                      https://tailwindcss.com/
+  - lucide-react                      https://lucide.dev/
+  - framer-motion                     https://www.framer.com/motion/
+
+Scholarly data sources accessed at runtime
+  - OpenAlex                 https://openalex.org/
+  - arXiv                    https://arxiv.org/
+  - Semantic Scholar         https://www.semanticscholar.org/
+  - Crossref                 https://www.crossref.org/
+  - Springer Nature API      https://dev.springernature.com/
+  - Elsevier API             https://dev.elsevier.com/
+
+Third-party trademarks remain the property of their respective owners and
+their inclusion in this file does not imply endorsement.
