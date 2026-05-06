@@ -10,10 +10,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   backend:
-    name: backend (lint + tests)
+    name: backend (lint + tests + format)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     services:
       postgres:
@@ -39,6 +43,7 @@ jobs:
       PGDATABASE: scholarrag
       EMBEDDING_PROVIDER: stub
       OPENAI_API_KEY: test-key
+      COVERAGE_MIN: "55"
 
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +57,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
+          pip install coverage pytest-cov
 
       - name: Init schema
         run: |
@@ -60,12 +66,17 @@ jobs:
       - name: Lint (ruff)
         run: ruff check backend/ scripts/
 
-      - name: Tests + coverage
+      - name: Format check (ruff)
+        run: ruff format --check backend/ scripts/
+
+      - name: Tests + coverage gate
         run: |
-          pip install coverage pytest-cov
-          pytest backend/tests --cov=backend --cov-report=term-missing --cov-report=xml --maxfail=5
+          pytest backend/tests \
+            --cov=backend --cov-report=term-missing --cov-report=xml \
+            --cov-fail-under=$COVERAGE_MIN --maxfail=5
 
       - name: Upload coverage report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
@@ -73,8 +84,9 @@ jobs:
           retention-days: 14
 
   frontend:
-    name: frontend (lint + build)
+    name: frontend (lint + typecheck + build)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: frontend
@@ -89,5 +101,70 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - run: npm ci
-      - run: npx tsc --noEmit
-      - run: npm run build
+      - name: Lint
+        run: npx eslint . --max-warnings 0
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+
+  security:
+    name: security (secret scan + filesystem scan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks (committed-secret scan)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Trivy filesystem scan (deps + IaC)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "0"
+        continue-on-error: true
+
+      - name: Upload Trivy SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+        continue-on-error: true
+
+  sbom:
+    name: sbom (cyclonedx)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate Python SBOM (CycloneDX)
+        run: |
+          pip install cyclonedx-bom
+          cyclonedx-py requirements -i requirements.txt -o sbom-python.json --output-format JSON
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom-python.json
+          retention-days: 90
