@@ -1,50 +1,35 @@
-<div align="center">
-
-<img src="frontend/favicon.svg" width="72" alt="citelens logo" />
-
 # citelens
 
-**Calibrated retrieval-augmented generation for scientific literature.**
+<img src="frontend/favicon.svg" width="56" alt="citelens" align="left" hspace="12" />
 
-Hybrid dense + sparse retrieval over your PDFs and **6 live scholarly APIs**, with **per-claim faithfulness scoring** via an LLM judge and **calibrated M/S/A confidence** that's empirically tracked against a 530-pair human-labeled gold set.
+A scholarly RAG app I built because I kept getting plausible-but-uncited answers from off-the-shelf chatbots. It does hybrid retrieval over your uploaded PDFs and six live scholarly APIs, then scores every generated claim for whether it's actually supported by the cited evidence.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/sushildalavi/citelens/ci.yml?branch=main&label=CI&logo=github)](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-170%20passing-15803d?logo=pytest&logoColor=white)](https://github.com/sushildalavi/citelens/actions)
-[![Coverage](https://img.shields.io/badge/coverage-47%25%20%E2%80%A2%20gate%2045%25-15803d)](.github/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-3.11-1d4ed8?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-15803d?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18.3-1d4ed8?logo=react&logoColor=white)](https://react.dev/)
-[![pgvector](https://img.shields.io/badge/Postgres%2016-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
-[![Docker](https://img.shields.io/badge/Docker-ready-1d4ed8?logo=docker&logoColor=white)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-15803d)](LICENSE)
-[![Security](https://img.shields.io/badge/security-OWASP%20headers%20%2B%20Trivy%20%2B%20gitleaks-0e7490)](SECURITY.md)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-1d4ed8)](https://www.conventionalcommits.org)
+<br clear="left"/>
 
-[**Quick Start**](#quick-start) · [**Architecture**](#architecture) · [**Benchmarks**](#benchmark-results) · [**API Reference**](docs/examples/curl.md) · [**Security**](SECURITY.md)
+[![CI](https://img.shields.io/github/actions/workflow/status/sushildalavi/citelens/ci.yml?branch=main&label=CI&logo=github)](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml) [![Tests](https://img.shields.io/badge/tests-191-15803d?logo=pytest&logoColor=white)](https://github.com/sushildalavi/citelens/actions) [![Coverage](https://img.shields.io/badge/coverage-48%25-15803d)](.github/workflows/ci.yml) [![Python](https://img.shields.io/badge/python-3.11-1d4ed8?logo=python&logoColor=white)](https://www.python.org/) [![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-15803d?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![React](https://img.shields.io/badge/React-18-1d4ed8?logo=react&logoColor=white)](https://react.dev/) [![pgvector](https://img.shields.io/badge/Postgres%2016-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector) [![License](https://img.shields.io/badge/License-MIT-15803d)](LICENSE)
 
-</div>
+[Quick start](#quick-start) · [Architecture](#architecture) · [Benchmarks](#benchmark-results) · [API examples](docs/examples/curl.md) · [Helm chart](helm/README.md) · [Security](SECURITY.md)
 
 ---
 
-## Why citelens
+## What it actually does
 
-Most RAG demos stop at "we retrieved a passage and pasted it into a prompt." That ships a plausible-sounding answer with no honest signal of whether it's actually grounded. Citelens is built for the next step:
+A few things that make it different from "throw the PDF at GPT and pray":
 
-- **Cite or abstain.** Every claim is tied to a chunk we can re-render. When evidence is too thin, the system says so instead of generating.
-- **Calibrated confidence, not vibes.** A logistic over three orthogonal signals (M/S/A — entailment, retrieval stability, multi-source agreement) hits Brier 0.160 / AUC 0.852 on a held-out human-labeled set.
-- **Hybrid retrieval that actually works.** pgvector ANN combined with sparse token overlap surfaces the target document in the top-10 for **100% of 120 benchmark queries**.
-- **Production-grade by default.** OWASP security headers, k8s-style liveness/readiness probes, X-Request-ID tracing, structured access logs, OpenAPI-typed responses, CI with coverage gate + Trivy + gitleaks + SBOM, and a `stub` embedding provider so tests run zero-dependency.
-- **Local-first, cloud-optional.** Docker + Ollama on a laptop runs the full stack offline. Cloud (OpenAI, scholarly APIs) is additive, not load-bearing.
+- **Cite or abstain.** Every sentence in the answer is tied back to a specific chunk. If retrieval doesn't surface anything strong enough, the system says "insufficient evidence" instead of inventing one.
+- **A confidence number that means something.** I labeled 530 claim/evidence pairs with three coders, fit a small logistic over M/S/A signals (entailment, retrieval stability, multi-source agreement), and now every answer ships with a calibrated score. Brier 0.160, AUC 0.852 on the held-out set — i.e. the number tracks whether the claim is actually supported.
+- **Hybrid retrieval (dense + sparse).** Pure dense was great for paraphrases but missed exact-acronym queries; combining with token overlap got Recall@10 from 0.71 to 0.82 on the 120-query benchmark. The target doc shows up in the top-10 for **every** query.
+- **It runs offline.** Docker + Ollama on a laptop, no cloud needed. OpenAI and the scholarly APIs are additive — when keys are present they help, when they're not the system degrades to local.
 
-## Status
+## Where it stands today
 
-| | |
-|---|---|
-| **Backend** | 170 / 170 tests passing · ruff clean · 32 routes typed via OpenAPI |
-| **Frontend** | TypeScript strict · ESLint 0 warnings · 78 KB initial bundle (gz 22 KB) |
-| **Security** | OWASP headers wired · CORS allowlisted · Trivy + gitleaks in CI · vuln alerts on |
-| **Reproducibility** | Calibration pipeline reproducible from `make ingest-corpus → make fit-calibration` |
-| **Stack** | Python 3.11 · FastAPI · React 18 · Postgres 16 · pgvector · Ollama · Docker |
+- 191 backend tests passing, coverage 48%, ruff + format clean.
+- 32 typed FastAPI routes (try `/docs` after booting).
+- Frontend: TypeScript strict, ESLint zero warnings, ~78 KB initial JS (gzipped ~22 KB) after lazy-loading the analytics route.
+- Security headers + tenant-scoped middleware on every response. CI runs Trivy + gitleaks + SBOM on every push.
+- Postgres + pgvector schema + Helm chart for k8s deploys.
+
+If you want to see the deeper design choices, [docs/architecture.md](docs/architecture.md) walks through them, and [docs/adr/](docs/adr/) has the architecture decision records.
 
 ---
 
@@ -201,12 +186,12 @@ flowchart TB
 %%{init: {
   "theme": "base",
   "themeVariables": {
-    "primaryColor": "#fef3c7",
-    "primaryBorderColor": "#b45309",
-    "primaryTextColor": "#3f3f46",
-    "lineColor": "#475569",
-    "secondaryColor": "#fde68a",
-    "tertiaryColor": "#fffbeb",
+    "primaryColor": "#dcfce7",
+    "primaryBorderColor": "#15803d",
+    "primaryTextColor": "#14532d",
+    "lineColor": "#0f172a",
+    "secondaryColor": "#bbf7d0",
+    "tertiaryColor": "#f0fdf4",
     "fontFamily": "Inter, ui-sans-serif, system-ui"
   }
 }}%%
@@ -727,14 +712,17 @@ cd frontend && npm run dev
 
 ```bash
 GET /                       # liveness — version, uptime, service id
-GET /health/embeddings      # embedding-provider readiness, never 5xx
-GET /health/full            # aggregated db + embeddings, never 5xx
-GET /metrics                # rolling latency p50/p95/p99 + counts
+GET /health/live            # k8s liveness — process is up
+GET /health/ready           # k8s readiness — db + embeddings, returns 503 if degraded
+GET /health/full            # same as /ready but always 200 (status in body)
+GET /health/embeddings      # embedding-provider self-test
+GET /metrics                # JSON: counts + rolling latency
+GET /metrics/prom           # Prometheus exposition format (for scraping)
 ```
 
-`/health/full` and `/health/embeddings` return HTTP **200** with `status: degraded` and `ok: false` in the body when a dependency is down — uptime monitors read `status` / `ok`, not the HTTP code, so they get a clean degraded signal instead of a noisy 5xx.
+`/health/embeddings` and `/health/full` always return HTTP 200 with `ok` / `status` in the body. `/health/ready` returns 503 when degraded, so a load balancer can delist without restarting the pod.
 
-Every response carries `X-Request-ID` (echoed if the caller sends one, freshly minted otherwise) and one structured access-log line is emitted per request — chase a UI trace through the backend in one grep.
+Every response carries `X-Request-ID` (echoed if the caller sent one, freshly minted otherwise) and `X-Workspace-Id` (resolved from the request, defaulting to `default`). One structured access-log line per request — grep for the request id end-to-end.
 
 ---
 
@@ -742,13 +730,14 @@ Every response carries `X-Request-ID` (echoed if the caller sends one, freshly m
 
 | Gate | Command | Status |
 |---|---|---|
-| Backend tests | `make test` | **167 / 167 passing** |
-| Backend lint | `make lint` | **clean** (ruff E/F/W/I) |
-| Frontend typecheck | `make frontend-typecheck` | **clean** (`tsc --noEmit`) |
-| Frontend lint | `make frontend-lint` | **clean** (eslint flat config, 0 warnings) |
-| Frontend build | `make frontend-build` | **clean** (vendor-chunked, lazy routes) |
-| API smoke | `make health` after `make stack-up` | 32 routes, key endpoints 200 |
-| CI | `.github/workflows/ci.yml` | runs both jobs on push + PR, uploads coverage |
+| Backend tests | `make test` | **191 passing** |
+| Coverage | `make test` (gate 45%) | **48%** |
+| Backend lint + format | `make lint && ruff format --check` | clean |
+| Frontend typecheck | `make frontend-typecheck` | clean |
+| Frontend lint | `make frontend-lint` | clean (0 warnings) |
+| Frontend build | `make frontend-build` | clean, lazy-loaded |
+| API smoke | `make health` after `make stack-up` | 33 routes |
+| CI | `.github/workflows/ci.yml` | backend + frontend + security + sbom |
 
 The CI workflow spins up `pgvector/pgvector:pg16` as a service container, applies `db/init.sql`, runs `EMBEDDING_PROVIDER=stub` so no Ollama / OpenAI is required, then runs ruff + pytest with coverage for the backend job and `tsc --noEmit` + `vite build` for the frontend job.
 
@@ -781,15 +770,23 @@ Initial bundle: **~78 KB gzipped** (down from 236 KB before splitting). The `/an
 
 ## Roadmap
 
-Items below are what we'd want before a 2.0 cut. None are blocking 1.x.
+The big-ticket items I had originally lined up for 2.0 are now done. Keeping the list here as a record of what landed and what's still open.
 
-- [ ] **Reranker stage** — second-stage cross-encoder over the top-50 to push MRR past 0.99.
-- [ ] **Streaming responses** — SSE for `/assistant/answer` so the UI shows tokens as they arrive instead of waiting on the full citation contract.
-- [ ] **Multi-tenant isolation** — per-workspace API keys + row-level security in pgvector so a deployment can serve multiple research groups safely.
-- [ ] **Batched embedding upserts** — current path is one chunk per call; batch upsert would cut PDF ingest time by ~3×.
-- [ ] **Prometheus exposition** — `/metrics` currently emits app-shape JSON; add a parallel `/metrics/prom` in Prometheus exposition format.
-- [ ] **Helm chart** — alongside the existing Docker Compose for k8s deployments.
-- [ ] **Per-tenant calibration** — re-fit M/S/A weights against a customer's own corpus instead of the shared 530-pair gold set.
+Shipped:
+
+- [x] **Reranker stage** — lexical cross-scorer over the top-K (token + bigram overlap, exact-phrase bonus, title-position weighting). Pluggable so a real cross-encoder can drop in later. See [`backend/services/reranker.py`](backend/services/reranker.py).
+- [x] **Streaming responses** — `POST /assistant/answer/stream` returns SSE (`meta` → `token` × N → `done`). Same retrieval pipeline, the UI gets sources before the answer streams in.
+- [x] **Multi-tenant isolation** — `WorkspaceMiddleware` reads `X-Workspace-Id`, sanitises it, pins it on `request.state`. `db/migrations/002_workspace_isolation.sql` adds `workspace_id` columns + indexes on every tenant-scoped table.
+- [x] **Batched embedding upserts** — verified the existing path: cache lookup → batched OpenAI / parallel Ollama → bulk `execute_values` insert into both `chunks` and `chunk_embeddings`. A 50-chunk PDF is one OpenAI call + one cache insert + one upsert per table.
+- [x] **Prometheus exposition** — `GET /metrics/prom` returns text/plain in standard Prometheus format. Helm chart includes an optional `ServiceMonitor` if you run Prometheus Operator.
+- [x] **Helm chart** — `helm/citelens/` with backend + frontend Deployments, Postgres StatefulSet, optional Ingress + ServiceMonitor. Wired to the k8s-style `/health/live` + `/health/ready` probes.
+- [x] **Per-tenant calibration** — `_load_latest_calibration_weights(workspace_id=...)` looks up tenant-specific MSA weights in the calibration table and falls back gracefully (tenant→global→default).
+
+Still open:
+
+- [ ] **Real cross-encoder reranker** — the lexical reranker above is stage-1 sound, but a fine-tuned cross-encoder on the 530-pair gold set should push MRR past 0.99.
+- [ ] **True token-level streaming** — current SSE chunks the settled answer; running OpenAI in `stream=True` mode through the citation-strict prompt is doable but needs a citation-rewrite pass at the tail end.
+- [ ] **Postgres RLS policies** — the `workspace_id` columns are in place, but actually ENABLING row-level security policies (and updating route handlers to filter by tenant) is a follow-up. Today the SQL queries do not yet filter by `workspace_id`.
 
 ## Local development
 
@@ -799,10 +796,11 @@ make compose-up           # postgres + adminer
 cp backend/.env.example backend/.env
 
 make lint                 # ruff
-make test                 # pytest (170 tests, ~2s)
+make test                 # pytest (191 tests, ~3s)
 make frontend-typecheck   # tsc --noEmit
 make frontend-lint        # eslint, 0 warnings
 make frontend-build       # vite build
+make ci-local             # everything CI runs, locally
 ```
 
 ## Security

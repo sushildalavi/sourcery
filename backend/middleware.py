@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import time
 import uuid
 from typing import Awaitable, Callable
@@ -14,6 +15,8 @@ from starlette.responses import Response
 from starlette.types import ASGIApp
 
 REQUEST_ID_HEADER = "X-Request-ID"
+WORKSPACE_HEADER = "X-Workspace-Id"
+DEFAULT_WORKSPACE = "default"
 
 _access_log = logging.getLogger("scholarrag.access")
 
@@ -102,4 +105,42 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
                 response.status_code,
                 elapsed_ms,
             )
+        return response
+
+
+_WORKSPACE_RE = re.compile(r"^[a-zA-Z0-9_.\-]{1,64}$")
+
+
+def _sanitized_workspace(raw: str | None) -> str:
+    """Return a safe workspace id; reject anything that looks injected."""
+    if not raw:
+        return DEFAULT_WORKSPACE
+    raw = raw.strip()
+    if not raw or not _WORKSPACE_RE.match(raw):
+        return DEFAULT_WORKSPACE
+    return raw
+
+
+class WorkspaceMiddleware(BaseHTTPMiddleware):
+    """Resolve the request's tenant from `X-Workspace-Id` and pin it on
+    `request.state.workspace_id`.
+
+    Workspace IDs:
+      - default to `"default"` when the header is absent (back-compat),
+      - are rejected (silently fall back to `"default"`) if they fail a
+        strict alphanumeric / `._-` allowlist — prevents header-injection
+        attacks against the SQL filter,
+      - are echoed back on the response so callers can confirm which
+        tenant they were resolved as.
+    """
+
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        workspace = _sanitized_workspace(request.headers.get(WORKSPACE_HEADER))
+        request.state.workspace_id = workspace
+        response = await call_next(request)
+        response.headers[WORKSPACE_HEADER] = workspace
         return response

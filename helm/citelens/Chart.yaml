@@ -1,0 +1,17 @@
+apiVersion: v2
+name: citelens
+description: Calibrated retrieval-augmented generation for scientific literature.
+type: application
+version: 0.1.0
+appVersion: "1.0"
+home: https://github.com/sushildalavi/citelens
+sources:
+  - https://github.com/sushildalavi/citelens
+keywords:
+  - rag
+  - retrieval-augmented-generation
+  - pgvector
+  - fastapi
+maintainers:
+  - name: Sushil Dalavi
+    email: sushildalavi@gmail.com

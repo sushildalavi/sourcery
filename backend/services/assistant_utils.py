@@ -41,22 +41,60 @@ def _coerce_weights(weights) -> dict:
     }
 
 
-def _load_latest_calibration_weights(scope: str | None = None) -> dict:
+def _load_latest_calibration_weights(scope: str | None = None, workspace_id: str | None = None) -> dict:
     """Return the active calibration weights.
 
-    The methodology uses a single unified logistic across both uploaded and
-    public modes (empirically validated — pooled vs per-mode Brier delta was
-    0.005). `scope` is accepted for backward compatibility but ignored.
+    Lookup precedence (highest first):
+      1. workspace-specific `unified` weights, if `workspace_id` was supplied
+         and a row exists for that tenant — supports per-tenant calibration.
+      2. workspace-specific most-recent row.
+      3. global `unified` weights (workspace_id = 'default').
+      4. global most-recent row.
+      5. uniform defaults.
 
-    By default this returns the uniform-prior weights (see `_use_fitted_weights`).
-    When CONFIDENCE_USE_FITTED_WEIGHTS=true, loads the row stored under
-    `label='unified'` (fit by backend.scripts.fit_unified_calibration); if
-    absent, falls back to the most-recent row, then to uniform defaults.
+    `scope` is accepted for backward compatibility (the methodology uses a
+    single unified logistic across both uploaded and public modes — pooled
+    vs per-mode Brier delta was 0.003).
+
+    By default this returns the uniform-prior weights (see
+    `_use_fitted_weights`); set `CONFIDENCE_USE_FITTED_WEIGHTS=true` to
+    activate the DB-fit lookup chain.
     """
     _ = scope  # deprecated — unified calibration applies to both modes
     if not _use_fitted_weights():
         return dict(_DEFAULT_CALIBRATION_WEIGHTS)
 
+    ws = (workspace_id or "default").strip() or "default"
+
+    # 1. tenant-specific `unified`
+    if ws != "default":
+        row = fetchone(
+            """
+            SELECT weights
+            FROM confidence_calibration
+            WHERE workspace_id = %s AND label = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            [ws, "unified"],
+        )
+        if row:
+            return _coerce_weights(row.get("weights"))
+        # 2. tenant-specific most-recent
+        row = fetchone(
+            """
+            SELECT weights
+            FROM confidence_calibration
+            WHERE workspace_id = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            [ws],
+        )
+        if row:
+            return _coerce_weights(row.get("weights"))
+
+    # 3. global `unified`
     row = fetchone(
         """
         SELECT weights
@@ -70,7 +108,7 @@ def _load_latest_calibration_weights(scope: str | None = None) -> dict:
     if row:
         return _coerce_weights(row.get("weights"))
 
-    # Fallback: most recent row regardless of label.
+    # 4. global most-recent fallback
     row = fetchone(
         """
         SELECT weights

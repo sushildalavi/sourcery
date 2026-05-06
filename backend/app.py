@@ -21,7 +21,7 @@ from backend import agents, auth, chat, memory, pdf_ingest
 from backend.confidence import build_confidence, score_percent
 from backend.eval_metrics import aggregate_metrics
 from backend.intent_resolver import is_offtopic_by_intent, resolve_query_intent
-from backend.middleware import RequestIDMiddleware, SecurityHeadersMiddleware
+from backend.middleware import RequestIDMiddleware, SecurityHeadersMiddleware, WorkspaceMiddleware
 from backend.pdf_ingest import search_chunks as search_uploaded_chunks
 from backend.public_search import public_live_search
 from backend.public_web import public_web_search
@@ -155,9 +155,14 @@ app.add_middleware(
     expose_headers=["X-Request-ID"],
     max_age=600,
 )
-# Order: outermost first. Security headers wrap everything. RequestID needs
-# to wrap so the access log line includes status code from inner middlewares.
+# Middleware order — outermost first:
+#   SecurityHeaders  : every response gets OWASP headers, no exceptions.
+#   Workspace        : resolves X-Workspace-Id -> request.state.workspace_id.
+#   RequestID        : mints/preserves X-Request-ID, emits access log.
+# Workspace before RequestID so the access log can pick up the resolved
+# tenant from request.state when we extend it later.
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(WorkspaceMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
 app.include_router(auth.router)
@@ -338,6 +343,47 @@ def metrics():
         "retrieval": retrieval,
         "latency_ms": latency_stats,
     }
+
+
+@app.get(
+    "/metrics/prom",
+    tags=["metrics"],
+    response_class=Response,
+    responses={200: {"content": {"text/plain; version=0.0.4": {}}}},
+)
+def metrics_prometheus():
+    """Prometheus exposition format for `/metrics`.
+
+    Scrape with a stock Prometheus job — same data as `GET /metrics`,
+    but in the line-oriented exposition format Prometheus speaks natively.
+    Avoids the `prometheus_client` dep so the import surface stays small.
+    """
+    payload = metrics()
+    lines: list[str] = []
+
+    def _emit(name: str, value, help_text: str, mtype: str = "gauge") -> None:
+        try:
+            num = float(value)
+        except (TypeError, ValueError):
+            return
+        lines.append(f"# HELP {name} {help_text}")
+        lines.append(f"# TYPE {name} {mtype}")
+        lines.append(f"{name} {num}")
+
+    _emit("citelens_documents_total", payload.get("documents"), "Documents in `ready` status.")
+    _emit("citelens_chunks_total", payload.get("chunks"), "Total chunks across all documents.")
+    _emit("citelens_eval_runs_total", payload.get("eval_runs"), "Recorded evaluation runs.")
+    retrieval = payload.get("retrieval") or {}
+    _emit("citelens_retrieval_recall_at_5", retrieval.get("recall_at_5"), "Recall@5 from latest eval run.")
+    _emit("citelens_retrieval_ndcg_at_10", retrieval.get("ndcg_at_10"), "nDCG@10 from latest eval run.")
+    _emit("citelens_retrieval_mrr", retrieval.get("mrr"), "Mean reciprocal rank from latest eval run.")
+    latency = payload.get("latency_ms") or {}
+    _emit("citelens_assistant_latency_ms_p50", latency.get("p50"), "Assistant answer latency p50 (ms).")
+    _emit("citelens_assistant_latency_ms_p95", latency.get("p95"), "Assistant answer latency p95 (ms).")
+    _emit("citelens_assistant_latency_ms_p99", latency.get("p99"), "Assistant answer latency p99 (ms).")
+
+    body = "\n".join(lines) + "\n" if lines else ""
+    return Response(content=body, media_type="text/plain; version=0.0.4; charset=utf-8")
 
 
 # ------------------------------
@@ -1907,6 +1953,77 @@ def assistant_answer(
             ),
         },
     }
+
+
+@app.post("/assistant/answer/stream", tags=["chat"])
+def assistant_answer_stream(payload: dict = Body(...)):
+    """Server-Sent Events variant of `/assistant/answer`.
+
+    Wire format (one SSE event per line, all `data:` JSON):
+        event: meta            payload: {citations, retrieval_policy, ...}
+        event: token           payload: {"text": "<delta>"}        (many)
+        event: done            payload: {citations: [...], confidence_obj, ...}
+        event: error           payload: {"detail": "..."}
+
+    The UI can render `meta` immediately (sources show up before the answer),
+    then stream tokens, then swap in the final settled payload on `done`.
+
+    Falls back to a single non-streaming `done` event when the OpenAI client
+    is not configured — keeps the contract uniform across deployments.
+    """
+    from fastapi.responses import StreamingResponse
+
+    query = (payload.get("query") or "").strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="query is required")
+
+    def _sse(event: str, data: dict) -> str:
+        return f"event: {event}\ndata: {json.dumps(data, default=str)}\n\n"
+
+    def _gen():
+        # Run the full non-streaming pipeline first so retrieval + citations
+        # are resolved before the first byte. This keeps the answer
+        # citation-grounded — we don't stream tokens before knowing what
+        # the model can cite. Streaming the LLM generation in front of
+        # retrieval would defeat the abstain guard.
+        try:
+            settled = assistant_answer(payload)
+        except HTTPException as exc:
+            yield _sse("error", {"detail": exc.detail})
+            return
+        except Exception as exc:  # noqa: BLE001
+            yield _sse("error", {"detail": f"{type(exc).__name__}: {exc}"})
+            return
+
+        # 1. meta: render sources immediately
+        meta = {
+            "citations": settled.get("citations") or [],
+            "retrieval_policy": settled.get("retrieval_policy"),
+            "scope": settled.get("scope") or settled.get("scope_label"),
+        }
+        yield _sse("meta", meta)
+
+        # 2. tokenize the settled answer and yield it in fixed-size chunks
+        # so the UI gets a streaming feel without a second LLM call. (When
+        # the OpenAI SDK supports stream=True end-to-end through our
+        # citation-strict prompt, we can swap the inner loop for real
+        # delta events; the wire format already supports it.)
+        answer = settled.get("answer") or ""
+        chunk_size = max(1, int(payload.get("stream_chunk_size") or 16))
+        for i in range(0, len(answer), chunk_size):
+            yield _sse("token", {"text": answer[i : i + chunk_size]})
+
+        # 3. done: full settled payload for the UI to swap in
+        yield _sse("done", settled)
+
+    return StreamingResponse(
+        _gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.post("/assistant/resolve_sense")

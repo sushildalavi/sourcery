@@ -389,6 +389,22 @@ def embed_query(text: str) -> List[float]:
 
 
 def embed_documents(texts: List[str]) -> List[List[float]]:
+    """Embed a batch of documents.
+
+    Performance characteristics:
+      - cache: every input is hashed and looked up first; cache hits skip
+        the network entirely.
+      - OpenAI: batched per call via ``_embed_batch_openai`` so one HTTP
+        request covers the whole miss list (subject to ``EMBEDDING_BATCH_SIZE``
+        on the OpenAI side).
+      - Ollama: parallelised across ``EMBEDDING_PARALLEL_WORKERS`` threads.
+      - cache write: bulk insert via ``execute_batch`` so the DB write is
+        one round-trip, not one-per-chunk.
+
+    Net effect on PDF ingest: a 50-chunk doc is one OpenAI call + one cache
+    insert + one ``execute_values`` upsert each into ``chunks`` and
+    ``chunk_embeddings``. No per-chunk DB chatter.
+    """
     if not texts:
         return []
     all_keys = [_cache_key(text, "document") for text in texts]
