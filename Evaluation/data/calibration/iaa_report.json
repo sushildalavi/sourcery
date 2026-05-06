@@ -1,0 +1,115 @@
+{
+  "n_pairs": 530,
+  "pairwise": {
+    "A-B": {
+      "po": 0.683,
+      "pe": 0.4966,
+      "kappa": 0.3704,
+      "n": 530,
+      "confusion": {
+        "supported": {
+          "supported": 180,
+          "unsupported": 62
+        },
+        "unsupported": {
+          "unsupported": 182,
+          "supported": 106
+        }
+      },
+      "interpretation": "fair"
+    },
+    "A-C": {
+      "po": 0.7208,
+      "pe": 0.5038,
+      "kappa": 0.4373,
+      "n": 530,
+      "confusion": {
+        "supported": {
+          "supported": 168,
+          "unsupported": 74
+        },
+        "unsupported": {
+          "unsupported": 214,
+          "supported": 74
+        }
+      },
+      "interpretation": "moderate"
+    },
+    "B-C": {
+      "po": 0.7925,
+      "pe": 0.4966,
+      "kappa": 0.5877,
+      "n": 530,
+      "confusion": {
+        "supported": {
+          "supported": 209,
+          "unsupported": 77
+        },
+        "unsupported": {
+          "unsupported": 211,
+          "supported": 33
+        }
+      },
+      "interpretation": "moderate"
+    }
+  },
+  "average_pairwise_kappa": 0.4651,
+  "average_interpretation": "moderate",
+  "per_coder_distribution": {
+    "A": {
+      "supported": 242,
+      "unsupported": 288
+    },
+    "B": {
+      "supported": 286,
+      "unsupported": 244
+    },
+    "C": {
+      "supported": 242,
+      "unsupported": 288
+    }
+  },
+  "majority_vote_summary": {
+    "unanimous": 317,
+    "majority_2_of_3": 213,
+    "three_way_tie": 0
+  },
+  "gold_distribution": {
+    "supported": 267,
+    "unsupported": 263
+  },
+  "gold_by_mode": {
+    "uploaded": {
+      "total": 262,
+      "supported": 114,
+      "unsupported": 148
+    },
+    "public": {
+      "total": 268,
+      "supported": 153,
+      "unsupported": 115
+    }
+  },
+  "gold_by_query_type": {
+    "definitional": {
+      "total": 15,
+      "supported": 14,
+      "unsupported": 1
+    },
+    "methodology": {
+      "total": 198,
+      "supported": 117,
+      "unsupported": 81
+    },
+    "factual": {
+      "total": 72,
+      "supported": 38,
+      "unsupported": 34
+    },
+    "limitations": {
+      "total": 245,
+      "supported": 98,
+      "unsupported": 147
+    }
+  }
+}

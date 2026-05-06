@@ -1,0 +1,57 @@
+{
+  "pooled": {
+    "label": "pooled",
+    "n": 530,
+    "n_supported": 267,
+    "n_unsupported": 263,
+    "base_rate_supported": 0.5038,
+    "weights": {
+      "w1": 3.8143,
+      "w2": -0.2895,
+      "w3": 3.3461,
+      "b": -4.8594
+    },
+    "brier": 0.159618,
+    "log_loss": 0.484267,
+    "auc": 0.8518
+  },
+  "uploaded_only": {
+    "label": "uploaded_only",
+    "n": 262,
+    "n_supported": 114,
+    "n_unsupported": 148,
+    "base_rate_supported": 0.4351,
+    "weights": {
+      "w1": 3.4151,
+      "w2": 1.6506,
+      "w3": 3.29,
+      "b": -5.8761
+    },
+    "brier": 0.159797,
+    "log_loss": 0.481696,
+    "auc": 0.8469
+  },
+  "public_only": {
+    "label": "public_only",
+    "n": 268,
+    "n_supported": 153,
+    "n_unsupported": 115,
+    "base_rate_supported": 0.5709,
+    "weights": {
+      "w1": 4.0824,
+      "w2": 0.0,
+      "w3": 3.4948,
+      "b": -4.9494
+    },
+    "brier": 0.152785,
+    "log_loss": 0.4649,
+    "auc": 0.8527
+  },
+  "ablation": {
+    "pooled_brier": 0.159618,
+    "per_mode_avg_brier": 0.156251,
+    "delta_pooled_minus_permode": 0.003367,
+    "pooled_is_unified_valid": true
+  },
+  "unified_valid": true
+}

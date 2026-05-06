@@ -1,0 +1,962 @@
+[
+  {
+    "query_id": "q1",
+    "query": "What is the residual learning framework and how does it facilitate the training of deeper neural networks?",
+    "target_doc_id": 17,
+    "target_doc_title": "01_ResNet.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q2",
+    "query": "What problem does the residual learning approach address in the context of training very deep convolutional neural networks?",
+    "target_doc_id": 17,
+    "target_doc_title": "01_ResNet.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q3",
+    "query": "How does the residual learning framework reformulate the layers for training deeper networks?",
+    "target_doc_id": 17,
+    "target_doc_title": "01_ResNet.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q4",
+    "query": "What is the role of shortcut connections in the residual learning architecture?",
+    "target_doc_id": 17,
+    "target_doc_title": "01_ResNet.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q5",
+    "query": "What depth of residual networks was evaluated on the ImageNet dataset?",
+    "target_doc_id": 17,
+    "target_doc_title": "01_ResNet.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q6",
+    "query": "What error rate did the ensemble of residual nets achieve on the ImageNet test set?",
+    "target_doc_id": 17,
+    "target_doc_title": "01_ResNet.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q7",
+    "query": "What are the limitations of the residual learning framework in terms of its applicability to very shallow networks?",
+    "target_doc_id": 17,
+    "target_doc_title": "01_ResNet.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q8",
+    "query": "In which scenarios do residual networks fail to outperform shallower architectures despite their increased depth?",
+    "target_doc_id": 17,
+    "target_doc_title": "01_ResNet.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q9",
+    "query": "What is the core concept behind Generative Adversarial Networks?",
+    "target_doc_id": 18,
+    "target_doc_title": "02_GAN.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q10",
+    "query": "How do Generative Adversarial Networks function in training generative and discriminative models simultaneously?",
+    "target_doc_id": 18,
+    "target_doc_title": "02_GAN.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q11",
+    "query": "How is the generative model G trained in the adversarial framework?",
+    "target_doc_id": 18,
+    "target_doc_title": "02_GAN.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q12",
+    "query": "What architecture do the generative model G and the discriminative model D utilize in this approach?",
+    "target_doc_id": 18,
+    "target_doc_title": "02_GAN.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q13",
+    "query": "What specific training algorithms are explored in the adversarial nets framework?",
+    "target_doc_id": 18,
+    "target_doc_title": "02_GAN.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q14",
+    "query": "What is the unique solution that exists in the space of arbitrary functions G and D?",
+    "target_doc_id": 18,
+    "target_doc_title": "02_GAN.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q15",
+    "query": "What are the limitations of the adversarial training framework in terms of convergence stability?",
+    "target_doc_id": 18,
+    "target_doc_title": "02_GAN.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q16",
+    "query": "In which scenarios do Generative Adversarial Networks struggle to produce high-quality samples?",
+    "target_doc_id": 18,
+    "target_doc_title": "02_GAN.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q17",
+    "query": "What is the main contribution of the Word2Vec models in the context of word representation?",
+    "target_doc_id": 19,
+    "target_doc_title": "03_Word2Vec.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q18",
+    "query": "How do the proposed architectures in Word2Vec improve the efficiency of learning word vectors from large datasets?",
+    "target_doc_id": 19,
+    "target_doc_title": "03_Word2Vec.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q19",
+    "query": "How is the feedforward neural net language model trained and what are its key architectural components?",
+    "target_doc_id": 19,
+    "target_doc_title": "03_Word2Vec.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q20",
+    "query": "What techniques are employed to reduce the computational complexity of the hierarchical softmax in the proposed models?",
+    "target_doc_id": 19,
+    "target_doc_title": "03_Word2Vec.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q21",
+    "query": "What is the size of the vocabulary used in the training set for the proposed models?",
+    "target_doc_id": 19,
+    "target_doc_title": "03_Word2Vec.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q22",
+    "query": "How long does it take to learn high quality word vectors from a 1.6 billion words data set?",
+    "target_doc_id": 19,
+    "target_doc_title": "03_Word2Vec.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q23",
+    "query": "What are the limitations of the proposed architectures in handling out-of-vocabulary words?",
+    "target_doc_id": 19,
+    "target_doc_title": "03_Word2Vec.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q24",
+    "query": "In which scenarios does the Word2Vec model underperform compared to more complex models like RNNs?",
+    "target_doc_id": 19,
+    "target_doc_title": "03_Word2Vec.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q25",
+    "query": "What is LLaMA 2 and how does it differ from previous large language models?",
+    "target_doc_id": 20,
+    "target_doc_title": "04_LLaMA2.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q26",
+    "query": "How does the fine-tuning process for LLaMA 2-Chat improve its performance in dialogue use cases?",
+    "target_doc_id": 20,
+    "target_doc_title": "04_LLaMA2.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q27",
+    "query": "What algorithms are used for fine-tuning the reward models in Llama 2-Chat?",
+    "target_doc_id": 20,
+    "target_doc_title": "04_LLaMA2.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q28",
+    "query": "How does the iterative fine-tuning process impact the performance of the reward models?",
+    "target_doc_id": 20,
+    "target_doc_title": "04_LLaMA2.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q29",
+    "query": "What is the range of model sizes for Llama 2, in terms of parameters?",
+    "target_doc_id": 20,
+    "target_doc_title": "04_LLaMA2.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q30",
+    "query": "What algorithms were explored for RLHF fine-tuning in the development of Llama 2-Chat?",
+    "target_doc_id": 20,
+    "target_doc_title": "04_LLaMA2.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q31",
+    "query": "What are the limitations of Llama 2-Chat in distinguishing between adversarial and safe prompts during training?",
+    "target_doc_id": 20,
+    "target_doc_title": "04_LLaMA2.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q32",
+    "query": "In which scenarios does Llama 2-Chat underperform compared to closed-source models, particularly in nuanced dialogue situations?",
+    "target_doc_id": 20,
+    "target_doc_title": "04_LLaMA2.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q33",
+    "query": "What is compute-optimal training for large language models?",
+    "target_doc_id": 21,
+    "target_doc_title": "05_Chinchilla.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q34",
+    "query": "How does the scaling of model size and training tokens affect the performance of language models?",
+    "target_doc_id": 21,
+    "target_doc_title": "05_Chinchilla.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q35",
+    "query": "How is the compute-optimal model Chinchilla trained in comparison to Gopher?",
+    "target_doc_id": 21,
+    "target_doc_title": "05_Chinchilla.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q36",
+    "query": "What specific training methodology is employed to determine the optimal scaling of model size and training tokens?",
+    "target_doc_id": 21,
+    "target_doc_title": "05_Chinchilla.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q37",
+    "query": "What is the average accuracy achieved by Chinchilla on the MMLU benchmark?",
+    "target_doc_id": 21,
+    "target_doc_title": "05_Chinchilla.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q38",
+    "query": "How many parameters does Chinchilla have?",
+    "target_doc_id": 21,
+    "target_doc_title": "05_Chinchilla.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q39",
+    "query": "What are the limitations of the compute-optimal training approach proposed for large language models?",
+    "target_doc_id": 21,
+    "target_doc_title": "05_Chinchilla.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q40",
+    "query": "In which scenarios might Chinchilla underperform compared to larger models like Gopher or Megatron-Turing NLG?",
+    "target_doc_id": 21,
+    "target_doc_title": "05_Chinchilla.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q41",
+    "query": "What is Constitutional AI and how does it aim to ensure harmlessness in AI systems?",
+    "target_doc_id": 22,
+    "target_doc_title": "06_ConstitutionalAI.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q42",
+    "query": "How does the training process of a harmless AI assistant using Constitutional AI differ from traditional methods?",
+    "target_doc_id": 22,
+    "target_doc_title": "06_ConstitutionalAI.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q43",
+    "query": "How is the preference model trained in the reinforcement learning phase?",
+    "target_doc_id": 22,
+    "target_doc_title": "06_ConstitutionalAI.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q44",
+    "query": "What specific principles are used to guide the training of the Constitutional AI model?",
+    "target_doc_id": 22,
+    "target_doc_title": "06_ConstitutionalAI.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q45",
+    "query": "What is the accuracy achieved by models in predicting the better response in the binary comparisons?",
+    "target_doc_id": 22,
+    "target_doc_title": "06_ConstitutionalAI.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q46",
+    "query": "How many binary comparison questions were used to evaluate the performance of the preference models?",
+    "target_doc_id": 22,
+    "target_doc_title": "06_ConstitutionalAI.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q47",
+    "query": "What are the limitations of using AI feedback as the sole mechanism for ensuring harmlessness in AI systems?",
+    "target_doc_id": 22,
+    "target_doc_title": "06_ConstitutionalAI.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q48",
+    "query": "In which scenarios does the Constitutional AI approach underperform compared to traditional human oversight methods?",
+    "target_doc_id": 22,
+    "target_doc_title": "06_ConstitutionalAI.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q49",
+    "query": "What is the role of deep neural networks in enhancing the performance of AlphaGo?",
+    "target_doc_id": 23,
+    "target_doc_title": "07_AlphaGo.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q50",
+    "query": "How does Monte Carlo tree search (MCTS) contribute to the strategy employed by AlphaGo?",
+    "target_doc_id": 23,
+    "target_doc_title": "07_AlphaGo.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q51",
+    "query": "How is the policy network trained using expert human moves?",
+    "target_doc_id": 23,
+    "target_doc_title": "07_AlphaGo.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q52",
+    "query": "What architecture does the value network use to predict game outcomes?",
+    "target_doc_id": 23,
+    "target_doc_title": "07_AlphaGo.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q53",
+    "query": "What MSE did the value network achieve on the test set after training on the self-play dataset?",
+    "target_doc_id": 23,
+    "target_doc_title": "07_AlphaGo.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q54",
+    "query": "How many distinct positions were included in the self-play dataset used for training the value network?",
+    "target_doc_id": 23,
+    "target_doc_title": "07_AlphaGo.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q55",
+    "query": "What are the limitations of using deep convolutional neural networks for position evaluation in Go, particularly regarding overfitting and generalization to new positions?",
+    "target_doc_id": 23,
+    "target_doc_title": "07_AlphaGo.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q56",
+    "query": "In which scenarios does the Monte Carlo tree search approach underperform compared to traditional search methods in games like Go?",
+    "target_doc_id": 23,
+    "target_doc_title": "07_AlphaGo.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q57",
+    "query": "What is the core concept behind learning transferable visual models from natural language supervision?",
+    "target_doc_id": 24,
+    "target_doc_title": "08_CLIP.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q58",
+    "query": "How does the approach of using natural language for visual model training differ from traditional supervised learning methods in computer vision?",
+    "target_doc_id": 24,
+    "target_doc_title": "08_CLIP.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q59",
+    "query": "What is the pre-training task used to learn image representations in the model?",
+    "target_doc_id": 24,
+    "target_doc_title": "08_CLIP.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q60",
+    "query": "How does the model utilize natural language to reference learned visual concepts for zero-shot transfer?",
+    "target_doc_id": 24,
+    "target_doc_title": "08_CLIP.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q61",
+    "query": "What is the size of the dataset used for training the model, in terms of the number of (image, text) pairs?",
+    "target_doc_id": 24,
+    "target_doc_title": "08_CLIP.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q62",
+    "query": "How much does the accuracy improve on ImageNet when using ensembling with 80 different context prompts compared to the single default prompt?",
+    "target_doc_id": 24,
+    "target_doc_title": "08_CLIP.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q63",
+    "query": "What are the limitations of using natural language supervision for training visual models?",
+    "target_doc_id": 24,
+    "target_doc_title": "08_CLIP.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q64",
+    "query": "In which scenarios does the zero-shot performance of the model significantly underperform compared to fully supervised models?",
+    "target_doc_id": 24,
+    "target_doc_title": "08_CLIP.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q65",
+    "query": "What is AlphaFold and how does it improve protein structure prediction?",
+    "target_doc_id": 25,
+    "target_doc_title": "09_AlphaFold.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q66",
+    "query": "What problem does AlphaFold address in the field of computational protein structure prediction?",
+    "target_doc_id": 25,
+    "target_doc_title": "09_AlphaFold.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q67",
+    "query": "What architecture does the AlphaFold network use for processing inputs?",
+    "target_doc_id": 25,
+    "target_doc_title": "09_AlphaFold.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q68",
+    "query": "How does AlphaFold incorporate evolutionary information into its predictions?",
+    "target_doc_id": 25,
+    "target_doc_title": "09_AlphaFold.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q69",
+    "query": "What accuracy does AlphaFold achieve in the CASP14 assessment compared to experimental structures?",
+    "target_doc_id": 25,
+    "target_doc_title": "09_AlphaFold.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q70",
+    "query": "What is the architecture of the neural network block used in AlphaFold, specifically referred to as Evoformer?",
+    "target_doc_id": 25,
+    "target_doc_title": "09_AlphaFold.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q71",
+    "query": "What are the limitations of AlphaFold in predicting protein structures for sequences with no homologous structures available?",
+    "target_doc_id": 25,
+    "target_doc_title": "09_AlphaFold.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q72",
+    "query": "In which scenarios does AlphaFold underperform compared to experimental methods in protein structure prediction?",
+    "target_doc_id": 25,
+    "target_doc_title": "09_AlphaFold.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q73",
+    "query": "What are latent diffusion models and how do they differ from traditional diffusion models?",
+    "target_doc_id": 26,
+    "target_doc_title": "10_StableDiffusion.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q74",
+    "query": "What problem do latent diffusion models address in high-resolution image synthesis?",
+    "target_doc_id": 26,
+    "target_doc_title": "10_StableDiffusion.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q75",
+    "query": "How is the latent diffusion model trained in the latent space of pretrained autoencoders?",
+    "target_doc_id": 26,
+    "target_doc_title": "10_StableDiffusion.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q76",
+    "query": "What architecture is employed in the latent diffusion model to incorporate cross-attention layers for conditioning inputs?",
+    "target_doc_id": 26,
+    "target_doc_title": "10_StableDiffusion.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q77",
+    "query": "What score do latent diffusion models achieve on class-conditional image synthesis?",
+    "target_doc_id": 26,
+    "target_doc_title": "10_StableDiffusion.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q78",
+    "query": "What is the spatial downsampling factor denoted by 'f' in the evaluation of reconstruction FIDs and PSNR?",
+    "target_doc_id": 26,
+    "target_doc_title": "10_StableDiffusion.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q79",
+    "query": "What are the limitations of latent diffusion models in terms of their ability to generalize across different image modalities?",
+    "target_doc_id": 26,
+    "target_doc_title": "10_StableDiffusion.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q80",
+    "query": "In which scenarios do latent diffusion models underperform compared to traditional pixel-based diffusion models?",
+    "target_doc_id": 26,
+    "target_doc_title": "10_StableDiffusion.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q81",
+    "query": "What is Long Short-Term Memory (LSTM) and how does it differ from traditional recurrent neural networks?",
+    "target_doc_id": 27,
+    "target_doc_title": "11_LSTM.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q82",
+    "query": "What problem does LSTM address in the context of learning long time dependencies in sequences?",
+    "target_doc_id": 27,
+    "target_doc_title": "11_LSTM.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q83",
+    "query": "How does LSTM enforce constant error flow through its architecture?",
+    "target_doc_id": 27,
+    "target_doc_title": "11_LSTM.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q84",
+    "query": "What specific training algorithm is utilized for optimizing the LSTM model?",
+    "target_doc_id": 27,
+    "target_doc_title": "11_LSTM.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q85",
+    "query": "What is the computational complexity per time step and weight for LSTM?",
+    "target_doc_id": 27,
+    "target_doc_title": "11_LSTM.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q86",
+    "query": "How many discrete time steps can LSTM learn to bridge in excess?",
+    "target_doc_id": 27,
+    "target_doc_title": "11_LSTM.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q87",
+    "query": "What are the limitations of LSTM in handling very long sequences compared to other architectures?",
+    "target_doc_id": 27,
+    "target_doc_title": "11_LSTM.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q88",
+    "query": "In which scenarios does LSTM underperform or fail to converge effectively?",
+    "target_doc_id": 27,
+    "target_doc_title": "11_LSTM.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q89",
+    "query": "What is a deep Q-network (DQN) and how does it integrate reinforcement learning with deep neural networks?",
+    "target_doc_id": 28,
+    "target_doc_title": "12_DQN.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q90",
+    "query": "What problem does the DQN aim to solve in the context of high-dimensional sensory inputs and reinforcement learning?",
+    "target_doc_id": 28,
+    "target_doc_title": "12_DQN.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q91",
+    "query": "What architecture does the deep Q-network (DQN) use to process high-dimensional sensory inputs?",
+    "target_doc_id": 28,
+    "target_doc_title": "12_DQN.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q92",
+    "query": "How does the DQN utilize replay memory and a separate target Q-network to stabilize learning during training?",
+    "target_doc_id": 28,
+    "target_doc_title": "12_DQN.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q93",
+    "query": "What is the maximum number of Atari 2600 games on which the deep Q-network agent was tested?",
+    "target_doc_id": 28,
+    "target_doc_title": "12_DQN.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q94",
+    "query": "What inputs does the deep Q-network agent receive while playing the Atari games?",
+    "target_doc_id": 28,
+    "target_doc_title": "12_DQN.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q95",
+    "query": "What are the limitations of the deep Q-network in terms of generalization to environments outside of the Atari 2600 games?",
+    "target_doc_id": 28,
+    "target_doc_title": "12_DQN.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q96",
+    "query": "In which scenarios does the deep Q-network struggle to maintain stable learning or performance due to the use of nonlinear function approximators?",
+    "target_doc_id": 28,
+    "target_doc_title": "12_DQN.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q97",
+    "query": "What is the Auto-Encoding Variational Bayes (VAE) framework and how does it facilitate efficient inference in probabilistic models with continuous latent variables?",
+    "target_doc_id": 29,
+    "target_doc_title": "13_VAE.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q98",
+    "query": "How does the SGVB estimator improve the optimization of variational lower bounds in the context of intractable posterior distributions?",
+    "target_doc_id": 29,
+    "target_doc_title": "13_VAE.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q99",
+    "query": "How is the recognition model q(z|x) trained in the AEVB algorithm?",
+    "target_doc_id": 29,
+    "target_doc_title": "13_VAE.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q100",
+    "query": "What is the objective function used to optimize the variational lower bound L(θ, φ; x(i)) in the context of the SGVB estimator?",
+    "target_doc_id": 29,
+    "target_doc_title": "13_VAE.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q101",
+    "query": "What is the form of the approximate posterior q(z|x) used in the AEVB algorithm?",
+    "target_doc_id": 29,
+    "target_doc_title": "13_VAE.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q102",
+    "query": "What type of neural network is employed for the recognition model in the variational auto-encoder?",
+    "target_doc_id": 29,
+    "target_doc_title": "13_VAE.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q103",
+    "query": "What are the limitations of the SGVB estimator in handling highly complex posterior distributions?",
+    "target_doc_id": 29,
+    "target_doc_title": "13_VAE.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q104",
+    "query": "In which scenarios does the AEVB algorithm underperform compared to traditional MCMC methods?",
+    "target_doc_id": 29,
+    "target_doc_title": "13_VAE.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q105",
+    "query": "What is the Swin Transformer and how does it differ from traditional vision Transformers?",
+    "target_doc_id": 30,
+    "target_doc_title": "14_SwinTransformer.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q106",
+    "query": "How does the shifted windowing scheme in the Swin Transformer improve computational efficiency in vision tasks?",
+    "target_doc_id": 30,
+    "target_doc_title": "14_SwinTransformer.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q107",
+    "query": "What architecture does the Swin Transformer use to achieve hierarchical feature representation?",
+    "target_doc_id": 30,
+    "target_doc_title": "14_SwinTransformer.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q108",
+    "query": "How does the shifted windowing scheme improve the efficiency of self-attention computation in the Swin Transformer?",
+    "target_doc_id": 30,
+    "target_doc_title": "14_SwinTransformer.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q109",
+    "query": "What is the top-1 accuracy achieved by Swin Transformer on the ImageNet-1K dataset?",
+    "target_doc_id": 30,
+    "target_doc_title": "14_SwinTransformer.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q110",
+    "query": "What are the box AP and mask AP scores of Swin Transformer on the COCO test-dev dataset?",
+    "target_doc_id": 30,
+    "target_doc_title": "14_SwinTransformer.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q111",
+    "query": "What are the limitations of the Swin Transformer when applied to tasks with extremely high-resolution images?",
+    "target_doc_id": 30,
+    "target_doc_title": "14_SwinTransformer.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q112",
+    "query": "In which scenarios does the Swin Transformer underperform compared to traditional convolutional neural networks?",
+    "target_doc_id": 30,
+    "target_doc_title": "14_SwinTransformer.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q113",
+    "query": "What is the core concept behind Google's search engine and how does it utilize hypertext structure?",
+    "target_doc_id": 31,
+    "target_doc_title": "15_PageRank.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q114",
+    "query": "How does Google's approach to indexing and searching differ from traditional search engines?",
+    "target_doc_id": 31,
+    "target_doc_title": "15_PageRank.pdf",
+    "query_type": "definitional",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q115",
+    "query": "What techniques are employed to efficiently crawl and index the vast amount of web pages in Google?",
+    "target_doc_id": 31,
+    "target_doc_title": "15_PageRank.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q116",
+    "query": "How does Google utilize the hyperlink structure of the web to improve search result quality?",
+    "target_doc_id": 31,
+    "target_doc_title": "15_PageRank.pdf",
+    "query_type": "methodology",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q117",
+    "query": "What is the size of the full text and hyperlink database used in the Google prototype?",
+    "target_doc_id": 31,
+    "target_doc_title": "15_PageRank.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q118",
+    "query": "How many queries per day did the World Wide Web Worm handle in March and April 1994?",
+    "target_doc_id": 31,
+    "target_doc_title": "15_PageRank.pdf",
+    "query_type": "factual",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q119",
+    "query": "What are the limitations of using hypertext structure to improve search results in large-scale search engines?",
+    "target_doc_id": 31,
+    "target_doc_title": "15_PageRank.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  },
+  {
+    "query_id": "q120",
+    "query": "In which scenarios does Google's approach to indexing and crawling the Web underperform compared to traditional search techniques?",
+    "target_doc_id": 31,
+    "target_doc_title": "15_PageRank.pdf",
+    "query_type": "limitations",
+    "mode_affinity": "uploaded"
+  }
+]

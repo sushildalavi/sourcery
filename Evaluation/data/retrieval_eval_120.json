@@ -1,0 +1,16 @@
+{
+  "case_count": 120,
+  "embedding_provider": null,
+  "embedding_model": null,
+  "recall@5": 0.9917,
+  "recall@10": 1.0,
+  "mrr": 0.9812,
+  "ndcg@10": 0.9857,
+  "input_format": {
+    "query": "string",
+    "doc_id": "optional int",
+    "doc_ids": "optional list[int]",
+    "relevant_chunk_ids": "optional list[int]",
+    "relevant_doc_ids": "optional list[int]"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "n_folds": 5,
+  "stratified": true,
+  "random_state": 42,
+  "brier_mean": 0.1632,
+  "brier_std": 0.015,
+  "auc_mean": 0.8446,
+  "auc_std": 0.0277,
+  "log_loss_mean": 0.494,
+  "log_loss_std": 0.0381,
+  "folds": [
+    {
+      "fold": 1,
+      "n_train": 424,
+      "n_test": 106,
+      "brier": 0.1651,
+      "auc": 0.8527,
+      "log_loss": 0.4913
+    },
+    {
+      "fold": 2,
+      "n_train": 424,
+      "n_test": 106,
+      "brier": 0.1725,
+      "auc": 0.8271,
+      "log_loss": 0.5159
+    },
+    {
+      "fold": 3,
+      "n_train": 424,
+      "n_test": 106,
+      "brier": 0.1587,
+      "auc": 0.8606,
+      "log_loss": 0.4792
+    },
+    {
+      "fold": 4,
+      "n_train": 424,
+      "n_test": 106,
+      "brier": 0.1376,
+      "auc": 0.8811,
+      "log_loss": 0.4346
+    },
+    {
+      "fold": 5,
+      "n_train": 424,
+      "n_test": 106,
+      "brier": 0.1822,
+      "auc": 0.8014,
+      "log_loss": 0.5491
+    }
+  ]
+}
