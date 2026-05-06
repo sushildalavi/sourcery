@@ -11,7 +11,7 @@ const toneClasses: Record<BadgeTone, string> = {
   support:
     'bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300',
   warn:
-    'bg-rose-500/15 text-rose-700 border-rose-500/30 dark:text-rose-300',
+    'bg-red-500/15 text-red-700 border-red-500/30 dark:text-red-300',
   muted:
     'bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800',
 };

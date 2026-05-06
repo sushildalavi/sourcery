@@ -17,7 +17,7 @@ Hybrid dense + sparse retrieval over your PDFs and **6 live scholarly APIs**, wi
 [![pgvector](https://img.shields.io/badge/Postgres%2016-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Docker](https://img.shields.io/badge/Docker-ready-1d4ed8?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-15803d)](LICENSE)
-[![Security](https://img.shields.io/badge/security-OWASP%20headers%20%2B%20Trivy%20%2B%20gitleaks-6d28d9)](SECURITY.md)
+[![Security](https://img.shields.io/badge/security-OWASP%20headers%20%2B%20Trivy%20%2B%20gitleaks-0e7490)](SECURITY.md)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-1d4ed8)](https://www.conventionalcommits.org)
 
 [**Quick Start**](#quick-start) · [**Architecture**](#architecture) · [**Benchmarks**](#benchmark-results) · [**API Reference**](docs/examples/curl.md) · [**Contributing**](CONTRIBUTING.md) · [**Security**](SECURITY.md)
@@ -96,7 +96,7 @@ flowchart LR
         SCH[6 Scholarly APIs<br/>OpenAlex · arXiv · S2<br/>Crossref · Springer<br/>Elsevier]
     end
 
-    %% Brand palette: indigo (client) · emerald (api) · amber (data) · violet (external)
+    %% Brand palette: indigo (client) · emerald (api) · amber (data) · cyan (external)
 
     UI -->|REST + SSE| ROUTE
     AN -->|metrics| ROUTE
@@ -114,7 +114,7 @@ flowchart LR
     classDef client fill:#dbeafe,stroke:#1d4ed8,color:#0c4a6e
     classDef api fill:#dcfce7,stroke:#15803d,color:#14532d
     classDef data fill:#fef3c7,stroke:#b45309,color:#3f3f46
-    classDef ext fill:#ede9fe,stroke:#6d28d9,color:#4c1d95
+    classDef ext fill:#cffafe,stroke:#0891b2,color:#164e63
     class UI,AN client
     class ROUTE,IR,SR,ING,AGG,CONF,JUDGE api
     class PG,OL data
@@ -295,7 +295,7 @@ flowchart LR
     classDef step fill:#dbeafe,stroke:#1d4ed8,color:#0c4a6e
     classDef judge fill:#fef3c7,stroke:#b45309,color:#3f3f46
     classDef calib fill:#dcfce7,stroke:#15803d,color:#14532d
-    classDef result fill:#ede9fe,stroke:#6d28d9,color:#4c1d95,font-weight:bold
+    classDef result fill:#cffafe,stroke:#0891b2,color:#164e63,font-weight:bold
 
     class INPUT input
     class B1H,B1M,B2A,B2J,B2L,B3D,B3F,B3S,B4D,B4S,B5Q,B5P step

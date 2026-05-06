@@ -628,7 +628,7 @@ export function SourcesPanel({
             40–59
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
             &lt;40
           </span>
           <span className="text-zinc-300 dark:text-zinc-700">confidence</span>

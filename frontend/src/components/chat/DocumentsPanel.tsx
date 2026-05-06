@@ -132,7 +132,7 @@ export function DocumentsPanel({ docs, selectedDocs, onToggle, onUpload, onDelet
                         ready
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : isError
-                            ? 'text-rose-500'
+                            ? 'text-red-500'
                             : 'text-zinc-500',
                       )}
                     >
@@ -141,7 +141,7 @@ export function DocumentsPanel({ docs, selectedDocs, onToggle, onUpload, onDelet
                   </div>
                   <button
                     type="button"
-                    className="opacity-0 transition group-hover:opacity-100 text-zinc-400 hover:text-rose-500"
+                    className="opacity-0 transition group-hover:opacity-100 text-zinc-400 hover:text-red-500"
                     onClick={(e) => {
                       e.stopPropagation();
                       setPendingDelete(d);

@@ -129,7 +129,7 @@ export default function Analytics() {
         </motion.div>
 
         {state.error && (
-          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 px-4 py-3 text-xs text-rose-600 dark:text-rose-300">
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-xs text-red-600 dark:text-red-300">
             {state.error}
           </div>
         )}

@@ -34,7 +34,7 @@ module.exports = {
           },
           accent: '#f59e0b',    // amber-500
           support: '#10b981',   // emerald-500
-          warn: '#f43f5e',      // rose-500
+          warn: '#ef4444',      // red-500
         },
       },
       borderRadius: {

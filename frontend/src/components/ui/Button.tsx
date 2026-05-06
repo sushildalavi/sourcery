@@ -19,7 +19,7 @@ const variantClasses: Record<Variant, string> = {
   outline:
     'border border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800',
   danger:
-    'bg-rose-500 text-white hover:bg-rose-400 active:bg-rose-600 disabled:opacity-60',
+    'bg-red-500 text-white hover:bg-red-400 active:bg-red-600 disabled:opacity-60',
 };
 
 const sizeClasses: Record<Size, string> = {

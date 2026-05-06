@@ -83,7 +83,7 @@ export function ChatHistoryPanel({
                         onDelete(c.id);
                       }
                     }}
-                    className="shrink-0 rounded p-0.5 text-zinc-400 opacity-0 transition hover:bg-zinc-200 hover:text-rose-600 group-hover:opacity-100 dark:hover:bg-zinc-800"
+                    className="shrink-0 rounded p-0.5 text-zinc-400 opacity-0 transition hover:bg-zinc-200 hover:text-red-600 group-hover:opacity-100 dark:hover:bg-zinc-800"
                     aria-label="Delete chat"
                   >
                     <Trash2 size={11} />
