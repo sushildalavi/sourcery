@@ -1,0 +1,55 @@
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.coverage
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
+
+# node
+node_modules/
+dist/
+build/
+.npm/
+*.tsbuildinfo
+
+# env / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# os
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# runtime data
+logs/
+*.log
+storage/
+uploads/
+tmp/
+temp/
+
+# build / packaging artifacts
+*.tar.gz
+*.zip
