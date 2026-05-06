@@ -247,6 +247,26 @@ def _post_openai_embedding_batch(texts: List[str]) -> List[List[float]]:
     return result
 
 
+_STUB_DIM = 1024
+
+
+def _stub_embedding(text: str) -> List[float]:
+    """Deterministic offline embedding for tests + CI.
+
+    Same text -> same vector -> meaningful cosine. We hash the input and
+    expand it into a fixed-length float vector, then L2-normalize so the
+    output behaves like a real embedding under inner-product / cosine
+    retrieval.
+    """
+    digest = hashlib.sha256(text.encode("utf-8")).digest()
+    expanded = (digest * ((_STUB_DIM + len(digest) - 1) // len(digest)))[:_STUB_DIM]
+    vec = [(b - 127.5) / 127.5 for b in expanded]
+    norm = sum(x * x for x in vec) ** 0.5
+    if norm == 0:
+        return vec
+    return [x / norm for x in vec]
+
+
 def _retry(fn, *args, **kwargs):
     last_err: Exception | None = None
     for attempt in range(1, max(1, EMBEDDING_RETRY_ATTEMPTS) + 1):
@@ -288,6 +308,12 @@ def _embed_single(text: str, kind: str) -> List[float]:
                 raw = _retry(_post_ollama_embedding, input_text)
             elif EMBEDDING_PROVIDER == "openai":
                 raw = _retry(_post_openai_embedding, input_text)
+            elif EMBEDDING_PROVIDER == "stub":
+                # Deterministic offline provider for tests + CI. Hashes the
+                # input into a fixed-length pseudo-vector so cosine similarity
+                # is meaningful (same text → same vector) without touching
+                # Ollama or OpenAI.
+                raw = _stub_embedding(input_text)
             else:
                 raise RuntimeError(f"Unsupported embedding provider: {EMBEDDING_PROVIDER}")
             return _trim_or_pad(raw, VECTOR_STORE_DIM)
@@ -450,7 +476,11 @@ def get_provider() -> str:
 
 
 def get_embedding_model() -> str:
-    return OLLAMA_EMBED_MODEL if EMBEDDING_PROVIDER == "ollama" else OPENAI_EMBEDDING_MODEL
+    if EMBEDDING_PROVIDER == "ollama":
+        return OLLAMA_EMBED_MODEL
+    if EMBEDDING_PROVIDER == "stub":
+        return "stub-sha256"
+    return OPENAI_EMBEDDING_MODEL
 
 
 def get_embedding_version() -> str:
@@ -464,4 +494,6 @@ def get_embedding_dims() -> int:
 def get_raw_embedding_dims() -> int:
     if EMBEDDING_PROVIDER == "openai":
         return _openai_dimensions_for_request() or OPENAI_EMBED_DIMENSIONS
+    if EMBEDDING_PROVIDER == "stub":
+        return _STUB_DIM
     return EMBEDDING_RAW_DIM
