@@ -1,0 +1,9 @@
+# Default owner for everything in this repo.
+*                          @sushildalavi
+
+# Critical paths that always need a careful look.
+/backend/app.py            @sushildalavi
+/backend/confidence.py     @sushildalavi
+/backend/services/         @sushildalavi
+/db/                       @sushildalavi
+/.github/workflows/        @sushildalavi
