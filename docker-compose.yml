@@ -1,10 +1,10 @@
-# docker compose up -d              → starts db + adminer only
-# docker compose --profile backend up -d   → also starts the API server
-# docker compose --profile ollama  up -d   → also starts containerized Ollama
-# docker compose --profile backend --profile ollama up -d → everything
+# docker compose up -d                                       → db + adminer
+# docker compose --profile backend up -d                     → + API server
+# docker compose --profile frontend up -d                    → + nginx-served SPA
+# docker compose --profile ollama up -d                      → + containerized Ollama
+# docker compose --profile backend --profile frontend --profile ollama up -d → everything
 
 services:
-  # ── FastAPI backend (profile: backend) ─────────────────────────
   backend:
     build:
       context: .
@@ -30,10 +30,28 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/').status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     profiles: ["backend"]
 
-  # ── PostgreSQL + pgvector (always starts) ──────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    profiles: ["frontend"]
+
   db:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
@@ -46,8 +64,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scholarrag -d scholarrag_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
-  # ── Adminer DB UI (always starts) ─────────────────────────────
   adminer:
     image: adminer
     restart: unless-stopped
@@ -58,7 +80,6 @@ services:
     depends_on:
       - db
 
-  # ── Ollama (profile: ollama) ──────────────────────────────────
   ollama:
     image: ollama/ollama:latest
     restart: unless-stopped
