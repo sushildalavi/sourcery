@@ -271,16 +271,22 @@ Evaluated on a corpus of **15 diverse landmark papers** spanning 1997–2023 acr
 
 Calibration artifacts live in [`Evaluation/data/calibration/`](Evaluation/data/calibration/).
 
-**Dataset**
+**Dataset** — 530 claim-evidence pairs, 3 independent human coders, binary rubric, near-balanced gold distribution.
 
-| Item | Value |
-|---|---|
-| Claim-evidence pairs (binary rubric) | 530 |
-| Independent human coders | 3 |
-| Pairwise Cohen's κ (A-B / A-C / B-C) | 0.37 / 0.44 / 0.59 |
-| **Average pairwise κ** | **0.47 (moderate)** |
-| Unanimous agreement | 59.8% |
-| Gold label distribution | 50.4% supported / 49.6% unsupported |
+```mermaid
+xychart-beta
+    title "Pairwise inter-annotator agreement (Cohen's κ, mean = 0.47)"
+    x-axis ["A vs B", "A vs C", "B vs C"]
+    y-axis "Cohen's κ" 0 --> 1
+    bar [0.37, 0.44, 0.59]
+```
+
+```mermaid
+pie showData
+    title Gold label distribution (n=530, 59.8% unanimous across 3 coders)
+    "Supported" : 267
+    "Unsupported" : 263
+```
 
 **Fitted unified logistic** `P(supported | M, S, A) = σ(b + w₁·M + w₂·S + w₃·A)`
 
