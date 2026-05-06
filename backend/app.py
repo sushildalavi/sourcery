@@ -163,8 +163,8 @@ ENABLE_WEB_FALLBACK = os.getenv("ENABLE_WEB_FALLBACK", "false").strip().lower() 
 # Fallback thresholds: only replace the LLM answer with a template when citation
 # grounding is critically low.  Single-paragraph answers and answers with any inline
 # citation are always preserved.
-_FALLBACK_MIN_PARAGRAPHS = 3          # only enforce coverage on multi-paragraph answers
-_FALLBACK_MIN_COVERAGE = 0.20         # < 20% of paragraphs cited → critically uncited
+_FALLBACK_MIN_PARAGRAPHS = 3  # only enforce coverage on multi-paragraph answers
+_FALLBACK_MIN_COVERAGE = 0.20  # < 20% of paragraphs cited → critically uncited
 
 
 def _ensure_eval_schema() -> None:
@@ -229,6 +229,7 @@ def _ensure_msa_schema() -> None:
         """
     )
 
+
 def _initialize_database_schema() -> None:
     pdf_ingest._ensure_doc_type_schema()
     _ensure_eval_schema()
@@ -254,6 +255,7 @@ def _chat_answer(query: str) -> str:
         timeout=OPENAI_CHAT_TIMEOUT_SECONDS,
     )
     return (completion.choices[0].message.content or "").strip()
+
 
 @app.get("/favicon.ico")
 def favicon():
@@ -340,7 +342,7 @@ def assistant_answer(
                 },
             }
         },
-    )
+    ),
 ):
     """
     Unified QA endpoint for uploaded docs (chunk RAG) or public papers (FAISS/external).
@@ -404,6 +406,7 @@ def assistant_answer(
         if intent_usable:
             return is_offtopic_by_intent(query_intent, citation)
         return is_offtopic_public_result(query, citation)
+
     answer_mode = _classify_answer_mode(query)
     doc_summary_intent = _is_uploaded_doc_summary_query(query)
     related_work_intent = _is_related_work_query(query)
@@ -416,19 +419,58 @@ def assistant_answer(
         chosen_sense = None
     # Heuristic routing: simple chat vs research
     small_talk_triggers = {
-        "hi", "hello", "hey", "heyy", "sup", "ssup", "wassup", "what's up", "whats up",
-        "yo", "thanks", "thank you", "thx", "ty", "bye", "goodbye", "see ya", "later",
-        "how are you", "how's it going", "hows it going", "good morning", "good evening",
-        "good night", "gn", "gm",
-        "ok", "okay", "cool", "nice", "lol", "lmao", "haha",
+        "hi",
+        "hello",
+        "hey",
+        "heyy",
+        "sup",
+        "ssup",
+        "wassup",
+        "what's up",
+        "whats up",
+        "yo",
+        "thanks",
+        "thank you",
+        "thx",
+        "ty",
+        "bye",
+        "goodbye",
+        "see ya",
+        "later",
+        "how are you",
+        "how's it going",
+        "hows it going",
+        "good morning",
+        "good evening",
+        "good night",
+        "gn",
+        "gm",
+        "ok",
+        "okay",
+        "cool",
+        "nice",
+        "lol",
+        "lmao",
+        "haha",
     }
     # Phrases that signal the user is chatting / asking for generic help rather than
     # posing a content question about the uploaded docs. "help me with my hw" is the
     # canonical failing case — no research cue, no doc reference, just vibes.
     generic_chat_phrases = (
-        "help me", "can you help", "what can you do", "who are you", "what are you",
-        "my hw", "my homework", "do my hw", "do my homework",
-        "nothing much", "not much", "i'm fine", "im fine", "i am fine",
+        "help me",
+        "can you help",
+        "what can you do",
+        "who are you",
+        "what are you",
+        "my hw",
+        "my homework",
+        "do my hw",
+        "do my homework",
+        "nothing much",
+        "not much",
+        "i'm fine",
+        "im fine",
+        "i am fine",
     )
     ui_help_actions = {"where", "how", "click", "button", "panel", "screen", "ui", "app"}
     ui_help_targets = {"upload", "uploaded", "document", "documents", "doc", "docs"}
@@ -456,10 +498,7 @@ def assistant_answer(
     qtokens = qnorm.split()
     _is_small_trigger = any(t in qnorm for t in small_talk_triggers)
     _is_generic_chat = any(p in qnorm for p in generic_chat_phrases)
-    is_small_talk = (
-        (len(qtokens) <= 6 and _is_small_trigger)
-        or (len(qtokens) <= 8 and _is_generic_chat)
-    )
+    is_small_talk = (len(qtokens) <= 6 and _is_small_trigger) or (len(qtokens) <= 8 and _is_generic_chat)
     # Only trigger canned UI guidance when question clearly asks "how/where to use the UI".
     # This avoids hijacking actual document questions like "can you see my attached docs?".
     is_ui_help = (
@@ -469,9 +508,7 @@ def assistant_answer(
     )
     is_research = any(t in qnorm for t in research_cues) or len(qnorm.split()) >= 6
     is_public_lookup = (
-        _is_general_knowledge_query(query)
-        or _is_related_work_query(query)
-        or _is_company_intent_query(query)
+        _is_general_knowledge_query(query) or _is_related_work_query(query) or _is_company_intent_query(query)
     )
 
     if is_ui_help:
@@ -484,9 +521,7 @@ def assistant_answer(
         return {"answer": answer, "citations": []}
 
     if scope == "uploaded" and _is_doc_visibility_query(qnorm):
-        rows = fetchall(
-            "SELECT title, status FROM documents ORDER BY created_at DESC LIMIT 8"
-        )
+        rows = fetchall("SELECT title, status FROM documents ORDER BY created_at DESC LIMIT 8")
         ready = [r for r in rows if (r.get("status") or "").lower() == "ready"]
         if ready:
             preview = ", ".join((r.get("title") or "Untitled") for r in ready[:3])
@@ -542,8 +577,20 @@ def assistant_answer(
             "answer": answer,
             "citations": [],
             "why_answer": {"rerank_changed_order": False, "top_chunks": []},
-            "latency_breakdown_ms": {"retrieve": 0.0, "rerank": 0.0, "generate": 0.0, "total": int((time.time() - started) * 1000)},
-            "retrieval_policy": {"mode": "chat-bypass", "uploaded_hits": 0, "public_hits": 0, "uploaded_strength": 0.0, "uploaded_overlap": 0.0, "used_public_fallback": False},
+            "latency_breakdown_ms": {
+                "retrieve": 0.0,
+                "rerank": 0.0,
+                "generate": 0.0,
+                "total": int((time.time() - started) * 1000),
+            },
+            "retrieval_policy": {
+                "mode": "chat-bypass",
+                "uploaded_hits": 0,
+                "public_hits": 0,
+                "uploaded_strength": 0.0,
+                "uploaded_overlap": 0.0,
+                "used_public_fallback": False,
+            },
         }
 
     # NOTE: we used to block here when scope=="uploaded" and no doc_id was selected.
@@ -566,7 +613,9 @@ def assistant_answer(
             # concept-heavy queries where the right paper is not in the vector top-k
             # but is present slightly lower in the candidate list.
             candidate_k = max(int(k), min(120, int(k) * 10))
-            results = search_uploaded_chunks({"q": q, "k": candidate_k, "doc_id": doc_id, "doc_ids": doc_ids})["results"]
+            results = search_uploaded_chunks({"q": q, "k": candidate_k, "doc_id": doc_id, "doc_ids": doc_ids})[
+                "results"
+            ]
             distances = [float(r.get("distance", 1.0) or 1.0) for r in results] or [1.0]
             cosines = [max(-1.0, min(1.0, 1.0 - d)) for d in distances] or [0.0]
             min_s, max_s = min(cosines), max(cosines)
@@ -714,7 +763,11 @@ def assistant_answer(
             citations.extend(fetch_context(related_probe, "uploaded"))
 
         explicit_uploaded_summary = _is_explicit_uploaded_summary_request(query)
-        if allow_general_background and not explicit_uploaded_summary and (_is_general_knowledge_query(query) or _is_company_intent_query(query)):
+        if (
+            allow_general_background
+            and not explicit_uploaded_summary
+            and (_is_general_knowledge_query(query) or _is_company_intent_query(query))
+        ):
             public_citations = fetch_context(effective_query, "public")
             public_citations = _prune_public_citations(query, public_citations)
             public_citations = [c for c in public_citations if not _offtopic(c)]
@@ -730,14 +783,15 @@ def assistant_answer(
         uploaded_strength = _uploaded_evidence_strength(citations)
         uploaded_overlap = _query_overlap_strength(query, citations)
         strong_uploaded_match = uploaded_overlap >= 0.6 and uploaded_hits >= 1
-        weak_uploaded = (
-            not strong_uploaded_match
-            and (
-                uploaded_overlap < 0.22
-                or (uploaded_hits < 3 and uploaded_strength < 0.52)
-            )
+        weak_uploaded = not strong_uploaded_match and (
+            uploaded_overlap < 0.22 or (uploaded_hits < 3 and uploaded_strength < 0.52)
         )
-        if weak_uploaded and allow_general_background and not explicit_uploaded_summary and answer_mode in {"research_synthesis", "source_listing"}:
+        if (
+            weak_uploaded
+            and allow_general_background
+            and not explicit_uploaded_summary
+            and answer_mode in {"research_synthesis", "source_listing"}
+        ):
             used_public_fallback = True
             public_citations = fetch_context(effective_query, "public")
             public_citations = _prune_public_citations(query, public_citations)
@@ -768,10 +822,7 @@ def assistant_answer(
             # Per-chunk overlap floor: keep only chunks that plausibly match
             # the query. This replaces the prior aggregate-threshold gate
             # that silently dropped borderline-relevant uploaded papers.
-            uploaded_probe = [
-                c for c in raw_uploaded
-                if _chunk_query_overlap(query, c) >= UPLOADED_CHUNK_OVERLAP_FLOOR
-            ]
+            uploaded_probe = [c for c in raw_uploaded if _chunk_query_overlap(query, c) >= UPLOADED_CHUNK_OVERLAP_FLOOR]
             # Concept gate: when the intent resolver gave us a canonical term
             # and/or disambiguation hints, require the uploaded chunk to
             # mention at least one of them. Prevents a generic BERT/attention
@@ -848,10 +899,7 @@ def assistant_answer(
     # an unreliable abstention signal. When we have real retrieval hits and the
     # query is that short, trust the semantic retriever.
     query_content_tokens = _normalize_tokens(query)
-    short_query_exempt = (
-        len(query_content_tokens) <= 1
-        and len(citations) > 0
-    )
+    short_query_exempt = len(query_content_tokens) <= 1 and len(citations) > 0
 
     missing_named_paper = _query_mentions_missing_uploaded_paper(query)
     specific_targets = _specific_target_phrases(query)
@@ -860,17 +908,15 @@ def assistant_answer(
         and bool(specific_targets)
         and not _citations_cover_specific_targets(citations, specific_targets)
     )
-    lacks_named_paper_target_support = (
-        bool(specific_targets)
-        and not _named_paper_targets_supported(query, citations, specific_targets)
+    lacks_named_paper_target_support = bool(specific_targets) and not _named_paper_targets_supported(
+        query, citations, specific_targets
     )
     missing_exact_metric = not _citations_support_requested_metric(query, citations)
     missing_entity_benchmark_pair = not _citations_support_entity_benchmark_pair(query, citations)
     unseen_system_reference = _query_mentions_unseen_system(query, citations)
     unseen_term_reference = _query_mentions_unseen_terms(query, citations)
-    strict_exact_metric_query = (
-        "benchmark" in query.lower()
-        and ("exact value" in query.lower() or "exact score" in query.lower())
+    strict_exact_metric_query = "benchmark" in query.lower() and (
+        "exact value" in query.lower() or "exact score" in query.lower()
     )
 
     if (
@@ -901,7 +947,11 @@ def assistant_answer(
                     f"{sense_hint} Try a more specific topic (keywords, year range, or exact paper title)."
                 ),
                 "citations": [],
-                "confidence": {"score": 0.15, "label": "Abstained (insufficient evidence)", "needs_clarification": True},
+                "confidence": {
+                    "score": 0.15,
+                    "label": "Abstained (insufficient evidence)",
+                    "needs_clarification": True,
+                },
                 "retrieval_policy": {
                     "mode": "abstention",
                     "reason": "no-relevant-match",
@@ -954,8 +1004,7 @@ def assistant_answer(
 
     entity_query = _is_entity_level_query(query) and not doc_summary_intent
     all_personal_resume = all(
-        ((c.get("doc_type") in {"resume"}) or (_source_scope(c) == "personal_profile"))
-        for c in citations
+        ((c.get("doc_type") in {"resume"}) or (_source_scope(c) == "personal_profile")) for c in citations
     )
     no_official_docs = not _has_official_company_docs()
     if entity_query and all_personal_resume and no_official_docs:
@@ -971,7 +1020,9 @@ def assistant_answer(
             "clarification": {
                 "question": "Choose answer scope:",
                 "options": ["Resume context summary", "Public company overview"],
-                "recommended_option": "Public company overview" if allow_general_background else "Resume context summary",
+                "recommended_option": "Public company overview"
+                if allow_general_background
+                else "Resume context summary",
                 "rationale": "Entity-level query with only personal-document evidence.",
                 "term": entity,
             },
@@ -1009,7 +1060,12 @@ def assistant_answer(
             },
         }
 
-    if scope == "uploaded" and allow_general_background and not _is_explicit_uploaded_summary_request(query) and _is_general_knowledge_query(query):
+    if (
+        scope == "uploaded"
+        and allow_general_background
+        and not _is_explicit_uploaded_summary_request(query)
+        and _is_general_knowledge_query(query)
+    ):
         primary = _primary_anchor_term(query)
         has_public_primary = any(
             (c.get("source") or "").lower() != "uploaded"
@@ -1063,8 +1119,10 @@ def assistant_answer(
             }
 
     rerank_start = time.perf_counter()
-    prefer_public = scope == "uploaded" and allow_general_background and (
-        _is_general_knowledge_query(query) or _is_company_intent_query(query)
+    prefer_public = (
+        scope == "uploaded"
+        and allow_general_background
+        and (_is_general_knowledge_query(query) or _is_company_intent_query(query))
     )
     citations = _rank_and_trim_citations(
         query,
@@ -1079,7 +1137,11 @@ def assistant_answer(
             citations = public_only[:k]
     # For definition-style questions, don't get stuck on resume/course-only evidence:
     # automatically try public evidence once before forcing a scope-limited response.
-    if scope == "uploaded" and not _is_explicit_uploaded_summary_request(query) and _needs_scope_limited_answer(query, citations):
+    if (
+        scope == "uploaded"
+        and not _is_explicit_uploaded_summary_request(query)
+        and _needs_scope_limited_answer(query, citations)
+    ):
         public_citations = fetch_context(query, "public")
         public_citations = _prune_public_citations(query, public_citations)
         if not public_citations and ENABLE_WEB_FALLBACK:
@@ -1112,6 +1174,7 @@ def assistant_answer(
         alt_senses = [s for s in (query_intent.get("alternative_senses") or []) if isinstance(s, str) and s.strip()]
         domain = (query_intent.get("domain") or "").strip()
         primary_sense = f"{canonical} ({domain})" if canonical and domain else canonical
+
         # If the alternative_senses already include specific variants of the
         # canonical term (e.g. "Recurrent GAN", "Robust GAN" for canonical="RGAN"),
         # adding "RGAN (machine learning)" as a separate option is just "any of
@@ -1120,13 +1183,12 @@ def assistant_answer(
             tok_a = {t for t in re.findall(r"[a-z0-9]+", a.lower()) if len(t) > 2}
             tok_b = {t for t in re.findall(r"[a-z0-9]+", b.lower()) if len(t) > 2}
             return bool(tok_a & tok_b)
+
         primary_is_redundant = bool(
-            primary_sense
-            and alt_senses
-            and all(_shares_tokens(primary_sense, alt) for alt in alt_senses)
+            primary_sense and alt_senses and all(_shares_tokens(primary_sense, alt) for alt in alt_senses)
         )
-        options = alt_senses if primary_is_redundant else (
-            ([primary_sense] + alt_senses) if primary_sense else alt_senses
+        options = (
+            alt_senses if primary_is_redundant else (([primary_sense] + alt_senses) if primary_sense else alt_senses)
         )
         if len(options) >= 2:
             return {
@@ -1149,16 +1211,12 @@ def assistant_answer(
                 "why_answer": {"rerank_changed_order": False, "top_chunks": []},
                 "needs_clarification": True,
                 "clarification": {
-                    "question": f"\"{canonical or query}\" could mean a few different things. Which do you mean?",
+                    "question": f'"{canonical or query}" could mean a few different things. Which do you mean?',
                     "options": options,
                     # Recommended option must be among the rendered buttons; when
                     # the primary sense was dropped as redundant, fall back to
                     # the first alternative.
-                    "recommended_option": (
-                        options[0]
-                        if primary_is_redundant or not primary_sense
-                        else primary_sense
-                    ),
+                    "recommended_option": (options[0] if primary_is_redundant or not primary_sense else primary_sense),
                     "rationale": (
                         f"Intent resolver detected ambiguity. Primary sense inferred as {primary_sense!r}; "
                         f"alternatives: {alt_senses!r}."
@@ -1248,7 +1306,9 @@ def assistant_answer(
                 "clarification": {
                     "question": "Do you want a profile-scoped summary from your docs, or a public company overview?",
                     "options": ["Profile-scoped summary", "Public company overview"],
-                    "recommended_option": "Public company overview" if allow_general_background else "Profile-scoped summary",
+                    "recommended_option": "Public company overview"
+                    if allow_general_background
+                    else "Profile-scoped summary",
                     "rationale": "Company intent detected but evidence is only personal profile context.",
                     "term": _primary_anchor_term(query),
                 },
@@ -1422,10 +1482,7 @@ def assistant_answer(
     should_compute_msa = (
         bool(citations)
         and bool((answer or "").strip())
-        and (
-            answer_mode in ("research_synthesis", "explanatory", "extractive")
-            or run_judge
-        )
+        and (answer_mode in ("research_synthesis", "explanatory", "extractive") or run_judge)
     )
     if should_compute_msa:
         msa_by_citation, unsupported_by_msa = _compute_citation_msa(
@@ -1509,21 +1566,11 @@ def assistant_answer(
             hit = next((c for c in citations if int(c.get("id") or 0) == sid), None)
             if hit and hit.get("doc_id") is not None:
                 llm_cited_docs.add(int(hit["doc_id"]))
-        total_docs_with_evidence = len({
-            int(c.get("doc_id")) for c in citations if c.get("doc_id") is not None
-        })
-        llm_covers_single_doc = (
-            total_docs_with_evidence >= 2
-            and len(llm_cited_docs) <= 1
-        )
+        total_docs_with_evidence = len({int(c.get("doc_id")) for c in citations if c.get("doc_id") is not None})
+        llm_covers_single_doc = total_docs_with_evidence >= 2 and len(llm_cited_docs) <= 1
         is_summary_intent = _is_uploaded_doc_summary_query(query)
-        force_multi_doc_template = (
-            is_summary_intent
-            and (
-                critically_uncited
-                or not answer.strip()
-                or llm_covers_single_doc
-            )
+        force_multi_doc_template = is_summary_intent and (
+            critically_uncited or not answer.strip() or llm_covers_single_doc
         )
         if force_multi_doc_template:
             answer = _build_multi_doc_uploaded_summary(citations, doc_ids)
@@ -1592,12 +1639,7 @@ def assistant_answer(
                 "weights": _load_latest_calibration_weights(scope),
             }
     grounded_minimum_score = 0.0
-    if (
-        scope == "uploaded"
-        and has_uploaded_evidence
-        and citation_coverage >= 0.25
-        and unsupported_claims == 0
-    ):
+    if scope == "uploaded" and has_uploaded_evidence and citation_coverage >= 0.25 and unsupported_claims == 0:
         retrieval_strength = _clamp01((0.6 * top_sim) + (0.4 * top_rerank_norm))
         grounded_minimum_score = min(0.97, 0.62 + (0.2 * citation_coverage) + (0.16 * retrieval_strength))
     confidence = build_confidence(
@@ -1705,9 +1747,7 @@ def assistant_answer(
             boosted = float(c.get("confidence") or 0.0)
             if boosted > c["confidence_obj"]["score"]:
                 c["confidence_obj"]["score"] = round(boosted, 4)
-                label_bucket = (
-                    "High" if boosted >= 0.75 else "Med" if boosted >= 0.5 else "Low"
-                )
+                label_bucket = "High" if boosted >= 0.75 else "Med" if boosted >= 0.5 else "Low"
                 c["confidence_obj"]["label"] = label_bucket
     if not debug_confidence:
         for c in citations_out:
@@ -1740,11 +1780,13 @@ def assistant_answer(
             c["rank_after"] = new_idx
             c["rank_delta"] = c.get("rank_before", new_idx) - new_idx
         if id_remap and answer:
+
             def _remap_ref(m: re.Match) -> str:
                 prefix = m.group(1) or ""
                 old_id = int(m.group(2))
                 new_id = id_remap.get(old_id, old_id)
                 return f"[{prefix}{new_id}]"
+
             answer = re.sub(r"\[(S?)(\d+)\]", _remap_ref, answer)
 
     if citations:
@@ -1934,7 +1976,9 @@ def _sigmoid(x: float) -> float:
     return 1.0 / (1.0 + np.exp(-x))
 
 
-def _fit_logistic_weights(records: list[tuple[float, float, float, int]], iters: int = 2200) -> tuple[dict[str, float], dict[str, float]]:
+def _fit_logistic_weights(
+    records: list[tuple[float, float, float, int]], iters: int = 2200
+) -> tuple[dict[str, float], dict[str, float]]:
     # records: [(m,s,a,label_int)]
     if not records:
         return (
@@ -2001,12 +2045,7 @@ def _build_msa_records(payload: dict) -> list[tuple[float, float, float, int]]:
             a = float(msa.get("A", 0.0))
         else:
             sentence = (item.get("sentence") or "").strip()
-            evidence_text = (
-                item.get("evidence")
-                or item.get("evidence_text")
-                or item.get("evidence_snippet")
-                or ""
-            )
+            evidence_text = item.get("evidence") or item.get("evidence_text") or item.get("evidence_snippet") or ""
             if sentence and evidence_text:
                 m = entailment_prob(sentence, str(evidence_text))
                 s = float(item.get("S", 0.5))
@@ -2204,7 +2243,9 @@ def run_judge(payload: dict = Body(...)):
             )
             answer = (result.get("answer") or "").strip()
             citations = result.get("citations") or []
-        report = evaluate_faithfulness(query, answer, citations if isinstance(citations, list) else [], use_llm=run_judge_llm)
+        report = evaluate_faithfulness(
+            query, answer, citations if isinstance(citations, list) else [], use_llm=run_judge_llm
+        )
         details.append(
             {
                 "query": query,
@@ -2346,6 +2387,7 @@ def get_latest_calibration(label: str | None = None):
         "created_at": created.isoformat() if created else None,
     }
 
+
 LOG_DIR = Path("logs")
 RETRIEVAL_LOG = LOG_DIR / "retrieval.log"
 
@@ -2362,6 +2404,7 @@ except RuntimeError as err:
 # Logger for observability
 REQUEST_LOG = setup_file_logger(LOG_DIR / "requests.jsonl")
 
+
 def log_request(entry: dict) -> None:
     try:
         LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -2376,6 +2419,7 @@ def trust_score(sim: float, has_doi: bool) -> float:
     base = max(sim, 0.0)
     bonus = 0.05 if has_doi else 0.0
     return round(min(base + bonus, 1.0), 3)
+
 
 # ------------------------------
 # Endpoints
@@ -2426,6 +2470,7 @@ def health_full():
 def embeddings_health():
     return healthcheck_embeddings()
 
+
 @app.get("/research/latest")
 def research_latest(
     topic: str | None = Query(default=None, description="Optional research topic"),
@@ -2435,10 +2480,12 @@ def research_latest(
 ):
     return latest_research_feed(topic=topic, limit=limit, days=days, sort=sort)
 
+
 @app.get("/feed/latest")
 def latest_papers(limit: int = 10):
     """Compatibility alias for the landing/latest research feed."""
     return latest_research_feed(limit=limit)
+
 
 @app.get("/search")
 def search_papers(query: str = Query(..., description="Search query text"), k: int = 5):
@@ -2464,6 +2511,7 @@ def search_papers(query: str = Query(..., description="Search query text"), k: i
         "provider_status": public_resp.get("provider_status", {}),
     }
 
+
 @app.get("/summarize")
 def summarize(query: str = Query(..., description="Topic to summarize")):
     """Summarize top live scholarly results for a given query using GPT."""
@@ -2473,7 +2521,11 @@ def summarize(query: str = Query(..., description="Topic to summarize")):
     public_resp = public_live_search(query, k=5, return_metadata=True)
     rows = public_resp.get("results", [])
     if not rows:
-        return {"query": query, "summary": "No relevant public sources found.", "provider_status": public_resp.get("provider_status", {})}
+        return {
+            "query": query,
+            "summary": "No relevant public sources found.",
+            "provider_status": public_resp.get("provider_status", {}),
+        }
 
     numbered_sources = []
     for i, row in enumerate(rows, start=1):
@@ -2497,6 +2549,7 @@ def summarize(query: str = Query(..., description="Topic to summarize")):
     )
     summary = completion.choices[0].message.content
     return {"query": query, "summary": summary, "provider_status": public_resp.get("provider_status", {})}
+
 
 @app.post("/ask")
 def ask(payload: dict = Body(...)):
@@ -2545,21 +2598,23 @@ def ask(payload: dict = Body(...)):
     for d in rows:
         sim = round(float(d.get("score") or d.get("similarity") or 0.0), 3)
         t_score = trust_score(sim, bool(d.get("doi")))
-        sources.append({
-            "title": d.get("title", "Unknown Title"),
-            "year": d.get("year", "Unknown Year"),
-            "doi": d.get("doi", ""),
-            "openalex_id": d.get("id") or d.get("paper_id"),
-            "arxiv_id": d.get("arxiv_id"),
-            "concepts": (d.get("concepts") or [])[:5],
-            "why_relevant": d.get("why_relevant", ""),
-            "snippet": (d.get("abstract") or d.get("summary") or "")[:900],
-            "similarity": sim,
-            "trust_score": t_score,
-            "authors": d.get("authors", []),
-            "url": d.get("url") or d.get("source_url"),
-            "source": d.get("source"),
-        })
+        sources.append(
+            {
+                "title": d.get("title", "Unknown Title"),
+                "year": d.get("year", "Unknown Year"),
+                "doi": d.get("doi", ""),
+                "openalex_id": d.get("id") or d.get("paper_id"),
+                "arxiv_id": d.get("arxiv_id"),
+                "concepts": (d.get("concepts") or [])[:5],
+                "why_relevant": d.get("why_relevant", ""),
+                "snippet": (d.get("abstract") or d.get("summary") or "")[:900],
+                "similarity": sim,
+                "trust_score": t_score,
+                "authors": d.get("authors", []),
+                "url": d.get("url") or d.get("source_url"),
+                "source": d.get("source"),
+            }
+        )
 
     similarities = [s["similarity"] for s in sources if s.get("similarity") is not None]
     metrics = {
@@ -2603,6 +2658,8 @@ def ask(payload: dict = Body(...)):
         "provider_status": public_resp.get("provider_status", {}),
     }
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="127.0.0.1", port=8000)

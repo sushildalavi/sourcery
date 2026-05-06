@@ -84,8 +84,24 @@ def _normalize_public_query(query: str) -> str:
         return ""
 
     stop = {
-        "about", "info", "information", "the", "and", "for", "with", "that", "this",
-        "what", "who", "where", "when", "why", "how", "into", "using", "use",
+        "about",
+        "info",
+        "information",
+        "the",
+        "and",
+        "for",
+        "with",
+        "that",
+        "this",
+        "what",
+        "who",
+        "where",
+        "when",
+        "why",
+        "how",
+        "into",
+        "using",
+        "use",
     }
     toks = [t for t in q.split() if len(t) > 2 and t not in stop]
     if not toks:
@@ -149,7 +165,7 @@ def _normalize_doi(raw) -> str:
         return ""
     for prefix in _DOI_URL_PREFIXES:
         if s.startswith(prefix):
-            s = s[len(prefix):]
+            s = s[len(prefix) :]
             break
     return s.strip(". \t\r\n")
 
@@ -385,12 +401,11 @@ def public_live_search(
     # trivial chatty queries: skip external search
     qnorm = (query or "").strip().lower()
     if not qnorm or len(qnorm) < 3 or qnorm in {"hi", "hello", "hey", "thanks", "thank you"}:
-        skip_reason = "empty_query" if not qnorm else (
-            "query_too_short" if len(qnorm) < 3 else "greeting_only"
-        )
+        skip_reason = "empty_query" if not qnorm else ("query_too_short" if len(qnorm) < 3 else "greeting_only")
         return (
             {"results": [], "provider_status": {}, "skipped": {"reason": skip_reason, "normalized_query": qnorm}}
-            if return_metadata else []
+            if return_metadata
+            else []
         )
 
     provider = (source_only or "").strip().lower()
@@ -401,8 +416,13 @@ def public_live_search(
         query_variants = _query_variants(query)
     if not query_variants:
         return (
-            {"results": [], "provider_status": {}, "skipped": {"reason": "no_searchable_tokens", "normalized_query": qnorm}}
-            if return_metadata else []
+            {
+                "results": [],
+                "provider_status": {},
+                "skipped": {"reason": "no_searchable_tokens", "normalized_query": qnorm},
+            }
+            if return_metadata
+            else []
         )
     primary_query = query_variants[0]
     embedding_query = _embedding_query_from_intent(intent, primary_query)
@@ -441,10 +461,7 @@ def public_live_search(
         tasks: list[tuple[str, str]] = [(p, qv) for p in providers for qv in query_variants]
         workers = min(PUBLIC_PROVIDER_MAX_WORKERS * 2, max(1, len(tasks)))
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            future_map = {
-                executor.submit(_fetch_provider, p, qv, limit): (p, qv)
-                for (p, qv) in tasks
-            }
+            future_map = {executor.submit(_fetch_provider, p, qv, limit): (p, qv) for (p, qv) in tasks}
             for future in as_completed(future_map):
                 p, qv = future_map[future]
                 err = None
@@ -480,10 +497,7 @@ def public_live_search(
         # doesn't match the canonical_term (e.g. "Attention Is All You Need"
         # for a "self-attention" query) still lands in the pool.
         with ThreadPoolExecutor(max_workers=len(seminal_seeds)) as seminal_pool:
-            future_to_seed = {
-                seminal_pool.submit(fetch_seminal_from_s2, seed, 4): seed
-                for seed in seminal_seeds
-            }
+            future_to_seed = {seminal_pool.submit(fetch_seminal_from_s2, seed, 4): seed for seed in seminal_seeds}
             for fut in as_completed(future_to_seed):
                 seed = future_to_seed[fut]
                 try:

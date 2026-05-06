@@ -2,6 +2,7 @@
 Tests for pure-function helpers in backend/services/judge.py.
 No OpenAI API calls are made.
 """
+
 import unittest
 
 from backend.services.judge import (

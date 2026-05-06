@@ -32,11 +32,21 @@ from backend.services.db import execute, fetchall, fetchone
 
 # Stale filenames to purge from the DB if they linger from other corpora.
 _LEGACY_TITLES = {
-    "01_DPR.pdf", "02_ColBERT.pdf", "03_RAG.pdf", "04_BEIR.pdf",
-    "05_SQuAD.pdf", "06_NaturalQuestions.pdf", "07_DrQA.pdf",
-    "08_PEGASUS.pdf", "09_BART.pdf", "10_FActScore.pdf",
-    "11_BERT.pdf", "12_Attention.pdf", "13_ChainOfThought.pdf",
-    "14_InstructGPT.pdf", "15_LLMasJudge.pdf",
+    "01_DPR.pdf",
+    "02_ColBERT.pdf",
+    "03_RAG.pdf",
+    "04_BEIR.pdf",
+    "05_SQuAD.pdf",
+    "06_NaturalQuestions.pdf",
+    "07_DrQA.pdf",
+    "08_PEGASUS.pdf",
+    "09_BART.pdf",
+    "10_FActScore.pdf",
+    "11_BERT.pdf",
+    "12_Attention.pdf",
+    "13_ChainOfThought.pdf",
+    "14_InstructGPT.pdf",
+    "15_LLMasJudge.pdf",
 }
 
 # Canonical corpus. Files must exist in Evaluation/papers/.

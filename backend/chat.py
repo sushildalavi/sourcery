@@ -209,9 +209,7 @@ def chat(payload: dict = None):
                     "url": d.get("url") or d.get("doi"),
                 }
             )
-            context_blocks.append(
-                f"[{d.get('title','')}] {d.get('abstract') or d.get('summary') or ''}"
-            )
+            context_blocks.append(f"[{d.get('title','')}] {d.get('abstract') or d.get('summary') or ''}")
 
     context = "\n\n".join(context_blocks) if context_blocks else "No context found."
     prompt = (

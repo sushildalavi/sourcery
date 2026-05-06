@@ -195,7 +195,9 @@ def _latest_arxiv(topic: str | None, limit: int, days: int, sort: str) -> list[d
                 "venue": "arXiv",
                 "doi": entry.findtext("atom:doi", default="", namespaces=ns) or None,
                 "citation_count": 0,
-                "topics": [c.attrib.get("term") for c in entry.findall("atom:category", ns)[:5] if c.attrib.get("term")],
+                "topics": [
+                    c.attrib.get("term") for c in entry.findall("atom:category", ns)[:5] if c.attrib.get("term")
+                ],
                 "why_relevant": "Recent preprint from arXiv ordered by submission date."
                 if normalized_sort == "latest"
                 else "Recent arXiv preprint with strong topic overlap.",
@@ -241,7 +243,7 @@ def _age_days(row: dict[str, Any]) -> float:
 def _trend_score(row: dict[str, Any]) -> float:
     cites = float(row.get("citation_count") or 0)
     age = max(_age_days(row), 3.0)
-    return (cites + 5.0) / (age ** 0.72)
+    return (cites + 5.0) / (age**0.72)
 
 
 def _sort_rows(rows: list[dict[str, Any]], sort: str) -> None:
@@ -254,7 +256,9 @@ def _sort_rows(rows: list[dict[str, Any]], sort: str) -> None:
     rows.sort(key=lambda row: (_published_timestamp(row), float(row.get("citation_count") or 0)), reverse=True)
 
 
-def latest_research_feed(topic: str | None = None, limit: int = 8, days: int = 45, sort: str | None = "latest") -> dict[str, Any]:
+def latest_research_feed(
+    topic: str | None = None, limit: int = 8, days: int = 45, sort: str | None = "latest"
+) -> dict[str, Any]:
     normalized_topic = _normalize_topic(topic)
     normalized_sort = _normalize_sort(sort)
     capped_limit = max(1, min(limit, 24))

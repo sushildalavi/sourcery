@@ -53,6 +53,7 @@ def _evidence_fingerprint(text: str) -> str:
 def _read_xlsx_rows(path: Path) -> list[dict]:
     """Read an xlsx's first sheet as a list of dicts keyed by header row."""
     from openpyxl import load_workbook
+
     wb = load_workbook(path, data_only=True, read_only=True)
     ws = wb[wb.sheetnames[0]]
     it = ws.iter_rows(values_only=True)
@@ -135,7 +136,9 @@ def main() -> int:
                 print(f"  [{i}/{len(groups)}] {qid}/{mode}  stability FAIL: {type(exc).__name__}: {exc}")
                 stability_cache[(qid, mode)] = {}
             # Compact log
-            print(f"  [{i}/{len(groups)}] {qid}/{mode}  uploaded_stability: {len(stability_cache.get((qid, mode), {}))} eids")
+            print(
+                f"  [{i}/{len(groups)}] {qid}/{mode}  uploaded_stability: {len(stability_cache.get((qid, mode), {}))} eids"
+            )
         else:
             # public mode: skip live API stability; downstream uses the
             # same-group-frequency proxy.
@@ -201,16 +204,18 @@ def main() -> int:
         else:
             s = 0.0
 
-        results.append({
-            "claim_id": pair["claim_id"],
-            "query_id": qid,
-            "mode": mode,
-            "query_type": pair.get("query_type", ""),
-            "gold_label": pair["gold_label"],
-            "M": round(float(m), 4),
-            "S": round(float(s), 4),
-            "A": round(float(a), 4),
-        })
+        results.append(
+            {
+                "claim_id": pair["claim_id"],
+                "query_id": qid,
+                "mode": mode,
+                "query_type": pair.get("query_type", ""),
+                "gold_label": pair["gold_label"],
+                "M": round(float(m), 4),
+                "S": round(float(s), 4),
+                "A": round(float(a), 4),
+            }
+        )
         if i % 50 == 0:
             print(f"  [{i}/{len(pairs)}]  last: claim={pair['claim_id'][:30]}  M={m:.3f}  S={s:.3f}  A={a:.3f}")
 
@@ -218,6 +223,7 @@ def main() -> int:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     from openpyxl import Workbook
     from openpyxl.utils import get_column_letter
+
     fields = ["claim_id", "query_id", "mode", "query_type", "gold_label", "M", "S", "A"]
     wb = Workbook()
     ws = wb.active
@@ -226,8 +232,7 @@ def main() -> int:
     for row in results:
         ws.append([row.get(f, "") for f in fields])
     ws.freeze_panes = "A2"
-    widths = {"claim_id": 22, "query_id": 10, "mode": 10, "query_type": 14,
-              "gold_label": 13, "M": 8, "S": 8, "A": 8}
+    widths = {"claim_id": 22, "query_id": 10, "mode": 10, "query_type": 14, "gold_label": 13, "M": 8, "S": 8, "A": 8}
     for i, f in enumerate(fields, start=1):
         ws.column_dimensions[get_column_letter(i)].width = widths.get(f, 12)
     wb.save(OUT_PATH)
@@ -235,19 +240,24 @@ def main() -> int:
 
     # Quick stats
     import statistics
+
     supported = [r for r in results if r["gold_label"] == "supported"]
     unsupported = [r for r in results if r["gold_label"] == "unsupported"]
     print()
     print("=== Feature means (supported vs unsupported) ===")
     print("           N       M      S      A")
     if supported:
-        print(f"  supp    {len(supported):>3}   {statistics.mean(r['M'] for r in supported):.3f}  "
-              f"{statistics.mean(r['S'] for r in supported):.3f}  "
-              f"{statistics.mean(r['A'] for r in supported):.3f}")
+        print(
+            f"  supp    {len(supported):>3}   {statistics.mean(r['M'] for r in supported):.3f}  "
+            f"{statistics.mean(r['S'] for r in supported):.3f}  "
+            f"{statistics.mean(r['A'] for r in supported):.3f}"
+        )
     if unsupported:
-        print(f"  unsupp  {len(unsupported):>3}   {statistics.mean(r['M'] for r in unsupported):.3f}  "
-              f"{statistics.mean(r['S'] for r in unsupported):.3f}  "
-              f"{statistics.mean(r['A'] for r in unsupported):.3f}")
+        print(
+            f"  unsupp  {len(unsupported):>3}   {statistics.mean(r['M'] for r in unsupported):.3f}  "
+            f"{statistics.mean(r['S'] for r in unsupported):.3f}  "
+            f"{statistics.mean(r['A'] for r in unsupported):.3f}"
+        )
     return 0
 
 

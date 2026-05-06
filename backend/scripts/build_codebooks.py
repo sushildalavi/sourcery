@@ -42,27 +42,118 @@ MAX_CLAIM_CHARS = 600
 MAX_EVIDENCE_CHARS = 1200
 
 PAPER_LIST = [
-    ("01_ResNet.pdf", "Deep Residual Learning for Image Recognition", "Computer vision", "CVPR 2016", "https://arxiv.org/abs/1512.03385"),
-    ("02_GAN.pdf", "Generative Adversarial Networks", "Generative models", "NeurIPS 2014", "https://arxiv.org/abs/1406.2661"),
-    ("03_Word2Vec.pdf", "Efficient Estimation of Word Representations in Vector Space (Word2Vec)", "Representation learning", "ICLR 2013", "https://arxiv.org/abs/1301.3781"),
-    ("04_LLaMA2.pdf", "LLaMA 2: Open Foundation and Fine-Tuned Chat Models", "Open LLMs", "Meta, 2023", "https://arxiv.org/abs/2307.09288"),
-    ("05_Chinchilla.pdf", "Training Compute-Optimal Large Language Models (Chinchilla)", "Scaling laws", "NeurIPS 2022", "https://arxiv.org/abs/2203.15556"),
-    ("06_ConstitutionalAI.pdf", "Constitutional AI: Harmlessness from AI Feedback", "Alignment", "Anthropic, 2022", "https://arxiv.org/abs/2212.08073"),
-    ("07_AlphaGo.pdf", "Mastering the Game of Go with Deep Neural Networks and Tree Search (AlphaGo)", "Reinforcement learning", "Nature 529, 2016", "https://doi.org/10.1038/nature16961"),
-    ("08_CLIP.pdf", "Learning Transferable Visual Models From Natural Language Supervision (CLIP)", "Multimodal", "ICML 2021", "https://arxiv.org/abs/2103.00020"),
-    ("09_AlphaFold.pdf", "Highly Accurate Protein Structure Prediction with AlphaFold", "Computational biology", "Nature 596, 2021", "https://doi.org/10.1038/s41586-021-03819-2"),
-    ("10_StableDiffusion.pdf", "High-Resolution Image Synthesis with Latent Diffusion Models (Stable Diffusion)", "Generative models", "CVPR 2022", "https://arxiv.org/abs/2112.10752"),
-    ("11_LSTM.pdf", "Long Short-Term Memory (LSTM)", "Foundational ML", "Neural Computation 9(8), 1997", "https://doi.org/10.1162/neco.1997.9.8.1735"),
-    ("12_DQN.pdf", "Human-level Control Through Deep Reinforcement Learning (DQN)", "Reinforcement learning", "Nature 518, 2015", "https://doi.org/10.1038/nature14236"),
-    ("13_VAE.pdf", "Auto-Encoding Variational Bayes (VAE)", "Generative models", "ICLR 2014", "https://arxiv.org/abs/1312.6114"),
-    ("14_SwinTransformer.pdf", "Swin Transformer: Hierarchical Vision Transformer using Shifted Windows", "Computer vision", "ICCV 2021", "https://arxiv.org/abs/2103.14030"),
-    ("15_PageRank.pdf", "The Anatomy of a Large-Scale Hypertextual Web Search Engine (PageRank)", "Information retrieval", "WWW 1998", "http://infolab.stanford.edu/pub/papers/google.pdf"),
+    (
+        "01_ResNet.pdf",
+        "Deep Residual Learning for Image Recognition",
+        "Computer vision",
+        "CVPR 2016",
+        "https://arxiv.org/abs/1512.03385",
+    ),
+    (
+        "02_GAN.pdf",
+        "Generative Adversarial Networks",
+        "Generative models",
+        "NeurIPS 2014",
+        "https://arxiv.org/abs/1406.2661",
+    ),
+    (
+        "03_Word2Vec.pdf",
+        "Efficient Estimation of Word Representations in Vector Space (Word2Vec)",
+        "Representation learning",
+        "ICLR 2013",
+        "https://arxiv.org/abs/1301.3781",
+    ),
+    (
+        "04_LLaMA2.pdf",
+        "LLaMA 2: Open Foundation and Fine-Tuned Chat Models",
+        "Open LLMs",
+        "Meta, 2023",
+        "https://arxiv.org/abs/2307.09288",
+    ),
+    (
+        "05_Chinchilla.pdf",
+        "Training Compute-Optimal Large Language Models (Chinchilla)",
+        "Scaling laws",
+        "NeurIPS 2022",
+        "https://arxiv.org/abs/2203.15556",
+    ),
+    (
+        "06_ConstitutionalAI.pdf",
+        "Constitutional AI: Harmlessness from AI Feedback",
+        "Alignment",
+        "Anthropic, 2022",
+        "https://arxiv.org/abs/2212.08073",
+    ),
+    (
+        "07_AlphaGo.pdf",
+        "Mastering the Game of Go with Deep Neural Networks and Tree Search (AlphaGo)",
+        "Reinforcement learning",
+        "Nature 529, 2016",
+        "https://doi.org/10.1038/nature16961",
+    ),
+    (
+        "08_CLIP.pdf",
+        "Learning Transferable Visual Models From Natural Language Supervision (CLIP)",
+        "Multimodal",
+        "ICML 2021",
+        "https://arxiv.org/abs/2103.00020",
+    ),
+    (
+        "09_AlphaFold.pdf",
+        "Highly Accurate Protein Structure Prediction with AlphaFold",
+        "Computational biology",
+        "Nature 596, 2021",
+        "https://doi.org/10.1038/s41586-021-03819-2",
+    ),
+    (
+        "10_StableDiffusion.pdf",
+        "High-Resolution Image Synthesis with Latent Diffusion Models (Stable Diffusion)",
+        "Generative models",
+        "CVPR 2022",
+        "https://arxiv.org/abs/2112.10752",
+    ),
+    (
+        "11_LSTM.pdf",
+        "Long Short-Term Memory (LSTM)",
+        "Foundational ML",
+        "Neural Computation 9(8), 1997",
+        "https://doi.org/10.1162/neco.1997.9.8.1735",
+    ),
+    (
+        "12_DQN.pdf",
+        "Human-level Control Through Deep Reinforcement Learning (DQN)",
+        "Reinforcement learning",
+        "Nature 518, 2015",
+        "https://doi.org/10.1038/nature14236",
+    ),
+    (
+        "13_VAE.pdf",
+        "Auto-Encoding Variational Bayes (VAE)",
+        "Generative models",
+        "ICLR 2014",
+        "https://arxiv.org/abs/1312.6114",
+    ),
+    (
+        "14_SwinTransformer.pdf",
+        "Swin Transformer: Hierarchical Vision Transformer using Shifted Windows",
+        "Computer vision",
+        "ICCV 2021",
+        "https://arxiv.org/abs/2103.14030",
+    ),
+    (
+        "15_PageRank.pdf",
+        "The Anatomy of a Large-Scale Hypertextual Web Search Engine (PageRank)",
+        "Information retrieval",
+        "WWW 1998",
+        "http://infolab.stanford.edu/pub/papers/google.pdf",
+    ),
 ]
 
 
 # ---------------------------------------------------------------------------
 # Pipeline
 # ---------------------------------------------------------------------------
+
 
 def split_sentences(text: str) -> List[str]:
     if not text:
@@ -135,9 +226,9 @@ def run_pipeline(pairs_path: Path, *, include_public: bool = False, per_call_tim
         trimmed: list = []
         for q in queries:
             same_paper_same_type = [
-                x for x in trimmed
-                if x.get("target_doc_title") == q.get("target_doc_title")
-                and x.get("query_type") == q.get("query_type")
+                x
+                for x in trimmed
+                if x.get("target_doc_title") == q.get("target_doc_title") and x.get("query_type") == q.get("query_type")
             ]
             if len(same_paper_same_type) < keep_per_type:
                 trimmed.append(q)
@@ -173,7 +264,9 @@ def run_pipeline(pairs_path: Path, *, include_public: bool = False, per_call_tim
                 try:
                     resp = fut.result(timeout=per_call_timeout_s)
                 except FuturesTimeoutError:
-                    print(f"  [{i:>3}/{len(queries)}] {mode:<8} {q['query_id']:>4}  TIMEOUT after {per_call_timeout_s}s")
+                    print(
+                        f"  [{i:>3}/{len(queries)}] {mode:<8} {q['query_id']:>4}  TIMEOUT after {per_call_timeout_s}s"
+                    )
                     continue
                 except Exception as exc:
                     print(f"  [{i:>3}/{len(queries)}] {mode:<8} {q['query_id']:>4}  FAIL: {type(exc).__name__}: {exc}")
@@ -283,26 +376,36 @@ def write_codebook(path: Path, coder: str, pairs: List[Dict]) -> None:
     for i, h in enumerate(headers, start=1):
         ws2.cell(row=8, column=i, value=h).font = Font(bold=True)
     examples = [
-        ("Swin Transformer achieves 87.3% top-1 accuracy on ImageNet-1K.",
-         "Swin Transformer achieves 87.3% top-1 accuracy on ImageNet-1K validation.",
-         "supported",
-         "Evidence explicitly states the value."),
-        ("GANs are trained with a supervised cross-entropy loss on labeled data.",
-         "The framework sets up a minimax game between a generator and a discriminator.",
-         "unsupported",
-         "Evidence describes adversarial training, not supervised cross-entropy."),
-        ("I only found Main Idea mentioned in profile/course context.",
-         "(any evidence snippet)",
-         "unsupported",
-         "System-level abstention — never supported."),
-        ("AlphaFold predicts protein structures from amino-acid sequences.",
-         "We developed AlphaFold, a neural network that predicts 3D protein structures with atomic accuracy.",
-         "supported",
-         "Evidence directly asserts the claim."),
-        ("LLaMA 2 reaches GPT-4 performance across most benchmarks.",
-         "LLaMA 2 is competitive with closed-source chat models on a range of tasks.",
-         "unsupported",
-         "Evidence says 'competitive,' not 'reaches GPT-4' — claim overstates."),
+        (
+            "Swin Transformer achieves 87.3% top-1 accuracy on ImageNet-1K.",
+            "Swin Transformer achieves 87.3% top-1 accuracy on ImageNet-1K validation.",
+            "supported",
+            "Evidence explicitly states the value.",
+        ),
+        (
+            "GANs are trained with a supervised cross-entropy loss on labeled data.",
+            "The framework sets up a minimax game between a generator and a discriminator.",
+            "unsupported",
+            "Evidence describes adversarial training, not supervised cross-entropy.",
+        ),
+        (
+            "I only found Main Idea mentioned in profile/course context.",
+            "(any evidence snippet)",
+            "unsupported",
+            "System-level abstention — never supported.",
+        ),
+        (
+            "AlphaFold predicts protein structures from amino-acid sequences.",
+            "We developed AlphaFold, a neural network that predicts 3D protein structures with atomic accuracy.",
+            "supported",
+            "Evidence directly asserts the claim.",
+        ),
+        (
+            "LLaMA 2 reaches GPT-4 performance across most benchmarks.",
+            "LLaMA 2 is competitive with closed-source chat models on a range of tasks.",
+            "unsupported",
+            "Evidence says 'competitive,' not 'reaches GPT-4' — claim overstates.",
+        ),
     ]
     for idx, (claim, ev, label, why) in enumerate(examples, start=9):
         ws2.cell(row=idx, column=1, value=claim)
@@ -338,9 +441,16 @@ def write_codebook(path: Path, coder: str, pairs: List[Dict]) -> None:
     ws4 = wb.create_sheet("Labeling")
     ws4.freeze_panes = "A2"
     headers = [
-        "#", "query_id", "query", "mode", "query_type",
-        "claim_id", "claim_text", "evidence_text",
-        f"Your Label (Coder {coder})", "Notes",
+        "#",
+        "query_id",
+        "query",
+        "mode",
+        "query_type",
+        "claim_id",
+        "claim_text",
+        "evidence_text",
+        f"Your Label (Coder {coder})",
+        "Notes",
     ]
     for i, h in enumerate(headers, start=1):
         cell = ws4.cell(row=1, column=i, value=h)
@@ -384,19 +494,19 @@ def write_codebook(path: Path, coder: str, pairs: List[Dict]) -> None:
     ws5["A3"] = "Total rows"
     ws5["B3"] = total
     ws5["A4"] = "Labeled"
-    ws5["B4"] = f"=COUNTIF({label_col},\"<>\")"
+    ws5["B4"] = f'=COUNTIF({label_col},"<>")'
     ws5["A5"] = "Remaining"
-    ws5["B5"] = f"={total}-COUNTIF({label_col},\"<>\")"
+    ws5["B5"] = f'={total}-COUNTIF({label_col},"<>")'
     ws5["A7"] = "supported"
-    ws5["B7"] = f"=COUNTIF({label_col},\"supported\")"
+    ws5["B7"] = f'=COUNTIF({label_col},"supported")'
     ws5["A8"] = "unsupported"
-    ws5["B8"] = f"=COUNTIF({label_col},\"unsupported\")"
+    ws5["B8"] = f'=COUNTIF({label_col},"unsupported")'
     ws5["A10"] = "By mode"
     ws5["A10"].font = Font(bold=True)
     ws5["A11"] = "uploaded (labeled)"
-    ws5["B11"] = f"=COUNTIFS(Labeling!D2:D{total + 1},\"uploaded\",{label_col},\"<>\")"
+    ws5["B11"] = f'=COUNTIFS(Labeling!D2:D{total + 1},"uploaded",{label_col},"<>")'
     ws5["A12"] = "public (labeled)"
-    ws5["B12"] = f"=COUNTIFS(Labeling!D2:D{total + 1},\"public\",{label_col},\"<>\")"
+    ws5["B12"] = f'=COUNTIFS(Labeling!D2:D{total + 1},"public",{label_col},"<>")'
     for c, w in [("A", 26), ("B", 18)]:
         ws5.column_dimensions[c].width = w
 

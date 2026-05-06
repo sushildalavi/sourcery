@@ -13,10 +13,12 @@ MAX_RETRIES = 3
 
 
 def _backoff(attempt: int) -> float:
-    return min(2 ** attempt + random.random(), 8.0)
+    return min(2**attempt + random.random(), 8.0)
 
 
-def fetch_from_elsevier(query: str, limit: Optional[int] = None, year_from: Optional[int] = None, year_to: Optional[int] = None) -> List[Dict]:
+def fetch_from_elsevier(
+    query: str, limit: Optional[int] = None, year_from: Optional[int] = None, year_to: Optional[int] = None
+) -> List[Dict]:
     elsevier_key = os.getenv("ELSEVIER_API_KEY")
     elsevier_max = int(os.getenv("ELSEVIER_MAX_RESULTS", "30")) or 30
     request_timeout = float(os.getenv("ELSEVIER_TIMEOUT", "8"))

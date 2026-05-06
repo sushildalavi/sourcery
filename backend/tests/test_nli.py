@@ -2,6 +2,7 @@
 Tests for pure-function helpers in backend/services/nli.py.
 No OpenAI API calls are made — only the heuristic and parsing paths are tested.
 """
+
 import unittest
 
 from backend.services.nli import (

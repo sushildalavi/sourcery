@@ -36,6 +36,7 @@ def load_features() -> List[Dict]:
         print(f"[!] Missing {FEATURES_PATH}. Run extract_msa_features.py first.")
         sys.exit(1)
     from openpyxl import load_workbook
+
     wb = load_workbook(FEATURES_PATH, data_only=True, read_only=True)
     ws = wb[wb.sheetnames[0]]
     it = ws.iter_rows(values_only=True)
@@ -43,16 +44,18 @@ def load_features() -> List[Dict]:
     idx = {h: i for i, h in enumerate(headers)}
     rows: List[Dict] = []
     for raw in it:
-        rows.append({
-            "claim_id": raw[idx["claim_id"]],
-            "query_id": raw[idx["query_id"]],
-            "mode": raw[idx["mode"]],
-            "query_type": raw[idx["query_type"]],
-            "gold_label": raw[idx["gold_label"]],
-            "M": float(raw[idx["M"]] or 0.0),
-            "S": float(raw[idx["S"]] or 0.0),
-            "A": float(raw[idx["A"]] or 0.0),
-        })
+        rows.append(
+            {
+                "claim_id": raw[idx["claim_id"]],
+                "query_id": raw[idx["query_id"]],
+                "mode": raw[idx["mode"]],
+                "query_type": raw[idx["query_type"]],
+                "gold_label": raw[idx["gold_label"]],
+                "M": float(raw[idx["M"]] or 0.0),
+                "S": float(raw[idx["S"]] or 0.0),
+                "A": float(raw[idx["A"]] or 0.0),
+            }
+        )
     return rows
 
 
@@ -127,13 +130,15 @@ def reliability_diagram(rows: List[Dict], weights: Dict, n_bins: int = 10) -> Li
         n = int(mask.sum())
         if n == 0:
             continue
-        buckets.append({
-            "bucket_lo": round(float(lo), 4),
-            "bucket_hi": round(float(hi), 4),
-            "n": n,
-            "mean_predicted": round(float(probs[mask].mean()), 4),
-            "empirical_supported_rate": round(float(y[mask].mean()), 4),
-        })
+        buckets.append(
+            {
+                "bucket_lo": round(float(lo), 4),
+                "bucket_hi": round(float(hi), 4),
+                "n": n,
+                "mean_predicted": round(float(probs[mask].mean()), 4),
+                "empirical_supported_rate": round(float(y[mask].mean()), 4),
+            }
+        )
     return buckets
 
 
@@ -157,6 +162,7 @@ def main() -> int:
     rows = load_features()
     print(f"Loaded {len(rows)} rows from {FEATURES_PATH}")
     from collections import Counter
+
     dist = Counter(r["gold_label"] for r in rows)
     print(f"Label distribution: {dict(dist)}")
     modes = Counter(r["mode"] for r in rows)
@@ -184,7 +190,9 @@ def main() -> int:
     if "error" not in uploaded and "error" not in public and "error" not in pooled:
         # Compare pooled against per-mode: if pooled Brier is within ~0.02 of the per-mode average,
         # treat pooled as statistically valid.
-        per_mode_avg = ((uploaded["brier"] or 0) * uploaded["n"] + (public["brier"] or 0) * public["n"]) / max(1, (uploaded["n"] + public["n"]))
+        per_mode_avg = ((uploaded["brier"] or 0) * uploaded["n"] + (public["brier"] or 0) * public["n"]) / max(
+            1, (uploaded["n"] + public["n"])
+        )
         comparison = {
             "pooled_brier": pooled["brier"],
             "per_mode_avg_brier": round(per_mode_avg, 6),
@@ -204,8 +212,10 @@ def main() -> int:
         print("\n=== Reliability diagram (pooled fit, 10 buckets) ===")
         print(f"  {'bucket':<20}{'n':>5}  mean_pred  empirical")
         for b in diagram:
-            print(f"  [{b['bucket_lo']:.2f}, {b['bucket_hi']:.2f}){b['n']:>6}    "
-                  f"{b['mean_predicted']:.3f}     {b['empirical_supported_rate']:.3f}")
+            print(
+                f"  [{b['bucket_lo']:.2f}, {b['bucket_hi']:.2f}){b['n']:>6}    "
+                f"{b['mean_predicted']:.3f}     {b['empirical_supported_rate']:.3f}"
+            )
 
     # --- Save ---
     out = {
@@ -222,6 +232,7 @@ def main() -> int:
     if diagram:
         from openpyxl import Workbook
         from openpyxl.utils import get_column_letter
+
         fields = ["bucket_lo", "bucket_hi", "n", "mean_predicted", "empirical_supported_rate"]
         wb = Workbook()
         ws = wb.active
@@ -230,8 +241,7 @@ def main() -> int:
         for r in diagram:
             ws.append([r.get(f, "") for f in fields])
         ws.freeze_panes = "A2"
-        widths = {"bucket_lo": 11, "bucket_hi": 11, "n": 8,
-                  "mean_predicted": 16, "empirical_supported_rate": 24}
+        widths = {"bucket_lo": 11, "bucket_hi": 11, "n": 8, "mean_predicted": 16, "empirical_supported_rate": 24}
         for i, f in enumerate(fields, start=1):
             ws.column_dimensions[get_column_letter(i)].width = widths.get(f, 12)
         wb.save(OUT_DIAGRAM)
@@ -240,14 +250,18 @@ def main() -> int:
     # --- DB write ---
     if args.write_db and "error" not in pooled:
         print("\n=== Writing to DB ===")
-        write_to_db(pooled["weights"], "unified", {
-            "n": pooled["n"],
-            "brier": pooled["brier"],
-            "log_loss": pooled["log_loss"],
-            "auc": pooled["auc"],
-            "unified_valid": unified_valid,
-            "ablation": comparison,
-        })
+        write_to_db(
+            pooled["weights"],
+            "unified",
+            {
+                "n": pooled["n"],
+                "brier": pooled["brier"],
+                "log_loss": pooled["log_loss"],
+                "auc": pooled["auc"],
+                "unified_valid": unified_valid,
+                "ablation": comparison,
+            },
+        )
 
     return 0
 

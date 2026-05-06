@@ -21,10 +21,12 @@ MAX_RETRIES = int(os.getenv("S2_MAX_RETRIES", "2")) or 2
 
 
 def _backoff(attempt: int) -> float:
-    return min(2 ** attempt + random.random(), 8.0)
+    return min(2**attempt + random.random(), 8.0)
 
 
-def fetch_from_s2(query: str, limit: Optional[int] = None, year_from: Optional[int] = None, year_to: Optional[int] = None) -> List[Dict]:
+def fetch_from_s2(
+    query: str, limit: Optional[int] = None, year_from: Optional[int] = None, year_to: Optional[int] = None
+) -> List[Dict]:
     s2_max = int(os.getenv("S2_MAX_RESULTS", "20")) or 20
     s2_api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
     request_timeout = float(os.getenv("S2_TIMEOUT", "10"))
@@ -44,8 +46,10 @@ def fetch_from_s2(query: str, limit: Optional[int] = None, year_from: Optional[i
             resp = requests.get(S2_URL, params=params, headers=headers, timeout=request_timeout)
             if resp.status_code == 429:
                 # Too many requests: back off more aggressively
-                sleep_for = min(2 ** attempt + random.random(), 12.0)
-                logger.warning("Semantic Scholar 429 (attempt %s/%s); backing off %.1fs", attempt, MAX_RETRIES, sleep_for)
+                sleep_for = min(2**attempt + random.random(), 12.0)
+                logger.warning(
+                    "Semantic Scholar 429 (attempt %s/%s); backing off %.1fs", attempt, MAX_RETRIES, sleep_for
+                )
                 time.sleep(sleep_for)
                 continue
             resp.raise_for_status()

@@ -40,7 +40,7 @@ def _reconstruct_abstract(inv_index: Optional[Dict]) -> str:
 
 def _backoff_seconds(attempt: int) -> float:
     # Exponential backoff with jitter
-    return min(2 ** attempt + random.random(), 10.0)
+    return min(2**attempt + random.random(), 10.0)
 
 
 def fetch_candidates_from_openalex(

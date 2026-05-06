@@ -26,7 +26,9 @@ def _backoff(attempt: int) -> float:
 _NON_RETRYABLE_STATUSES = {401, 403, 404, 429}
 
 
-def fetch_from_crossref(query: str, limit: Optional[int] = None, year_from: Optional[int] = None, year_to: Optional[int] = None) -> List[Dict]:
+def fetch_from_crossref(
+    query: str, limit: Optional[int] = None, year_from: Optional[int] = None, year_to: Optional[int] = None
+) -> List[Dict]:
     remaining = limit if limit is not None else CROSSREF_MAX
     if remaining <= 0:
         return []
@@ -62,8 +64,13 @@ def fetch_from_crossref(query: str, limit: Optional[int] = None, year_from: Opti
                         "year": (it.get("issued", {}).get("date-parts") or [[None]])[0][0],
                         "doi": it.get("DOI"),
                         "abstract": it.get("abstract"),
-                        "concepts": [s.get("subject") for s in it.get("subject", [])] if isinstance(it.get("subject"), list) else [],
-                        "authors": [{"display_name": " ".join(a.get("given", "").split() + a.get("family", "").split())} for a in it.get("author", [])],
+                        "concepts": [s.get("subject") for s in it.get("subject", [])]
+                        if isinstance(it.get("subject"), list)
+                        else [],
+                        "authors": [
+                            {"display_name": " ".join(a.get("given", "").split() + a.get("family", "").split())}
+                            for a in it.get("author", [])
+                        ],
                         "url": it.get("URL"),
                         "source": "crossref",
                     }

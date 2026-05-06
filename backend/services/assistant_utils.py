@@ -193,9 +193,30 @@ def _is_doc_visibility_query(qnorm: str) -> bool:
 
 def _is_doc_intent_query(qnorm: str) -> bool:
     doc_terms = (
-        "doc", "docs", "document", "documents", "uploaded", "attach", "attached", "file", "files",
-        "pdf", "page", "chunk", "source", "citation", "cite", "resume", "assignment", "lecture",
-        "paper", "papers", "study", "studies", "benchmark", "dataset",
+        "doc",
+        "docs",
+        "document",
+        "documents",
+        "uploaded",
+        "attach",
+        "attached",
+        "file",
+        "files",
+        "pdf",
+        "page",
+        "chunk",
+        "source",
+        "citation",
+        "cite",
+        "resume",
+        "assignment",
+        "lecture",
+        "paper",
+        "papers",
+        "study",
+        "studies",
+        "benchmark",
+        "dataset",
     )
     return any(t in qnorm for t in doc_terms)
 
@@ -221,8 +242,10 @@ def _build_public_evidence_fallback(query: str, citations: list[dict]) -> str:
     if not citations:
         return "I couldn’t find enough reliable public source evidence for this query."
     lines = []
-    paper_intent = bool(re.search(r"\b(papers?|research papers?|studies|survey|surveys|references?)\b", query or "", flags=re.I))
-    for i, c in enumerate(citations[:5 if paper_intent else 3], start=1):
+    paper_intent = bool(
+        re.search(r"\b(papers?|research papers?|studies|survey|surveys|references?)\b", query or "", flags=re.I)
+    )
+    for i, c in enumerate(citations[: 5 if paper_intent else 3], start=1):
         title = c.get("title") or f"Source {i}"
         year = c.get("year")
         snippet = (c.get("snippet") or "").strip()
@@ -236,11 +259,10 @@ def _build_public_evidence_fallback(query: str, citations: list[dict]) -> str:
             suffix = f" Link: {url}" if url else ""
             lines.append(f"- {header} [S{i}]{suffix}")
     return (
-        ("I found relevant public research papers for your query. Here are the strongest matches:\n"
-         if paper_intent
-         else "I found relevant public research sources for your query. Here are the strongest matches from the retrieved evidence:\n")
-        + "\n".join(lines)
-    )
+        "I found relevant public research papers for your query. Here are the strongest matches:\n"
+        if paper_intent
+        else "I found relevant public research sources for your query. Here are the strongest matches from the retrieved evidence:\n"
+    ) + "\n".join(lines)
 
 
 def _build_public_source_listing_answer(citations: list[dict]) -> str:
@@ -317,8 +339,7 @@ def _build_uploaded_related_work_fallback(citations: list[dict]) -> str:
             lines.append(f"- {header} [S{i}]")
     return (
         "I found related/prior-work evidence in your uploaded paper. "
-        "Here are the most relevant excerpts:\n"
-        + "\n".join(lines)
+        "Here are the most relevant excerpts:\n" + "\n".join(lines)
     )
 
 
@@ -385,7 +406,11 @@ def _build_uploaded_evidence_fallback(query: str, citations: list[dict]) -> str:
     multi_doc = len(unique_docs) > 1
     lead = "Here is a grounded summary from the selected uploaded evidence"
     if _is_uploaded_doc_summary_query(query):
-        lead = "Here is a grounded summary from the uploaded documents" if multi_doc else "Here is a grounded summary from the uploaded document"
+        lead = (
+            "Here is a grounded summary from the uploaded documents"
+            if multi_doc
+            else "Here is a grounded summary from the uploaded document"
+        )
     grouped: dict[str, list[tuple[int, str]]] = {}
     for i, c in enumerate(citations[:6], start=1):
         title = c.get("title") or f"Document {c.get('doc_id', '?')}"
@@ -435,7 +460,11 @@ def _build_strict_grounded_answer(query: str, citations: list[dict], scope: str,
         items.append((i, title, snippet))
 
     if not items:
-        return _build_uploaded_evidence_fallback(query, citations) if scope == "uploaded" else _build_public_synthesis_fallback(citations)
+        return (
+            _build_uploaded_evidence_fallback(query, citations)
+            if scope == "uploaded"
+            else _build_public_synthesis_fallback(citations)
+        )
 
     if answer_mode == "source_listing":
         lines = ["## Evidence-Grounded Sources"]
@@ -637,9 +666,38 @@ def _uploaded_evidence_strength(citations: list[dict]) -> float:
 
 def _normalize_tokens(text: str) -> set[str]:
     stop = {
-        "the", "and", "for", "with", "from", "that", "this", "what", "about", "tell", "into",
-        "your", "have", "does", "is", "are", "was", "were", "can", "could", "would", "should",
-        "any", "all", "how", "why", "when", "where", "who", "whom", "which", "whose",
+        "the",
+        "and",
+        "for",
+        "with",
+        "from",
+        "that",
+        "this",
+        "what",
+        "about",
+        "tell",
+        "into",
+        "your",
+        "have",
+        "does",
+        "is",
+        "are",
+        "was",
+        "were",
+        "can",
+        "could",
+        "would",
+        "should",
+        "any",
+        "all",
+        "how",
+        "why",
+        "when",
+        "where",
+        "who",
+        "whom",
+        "which",
+        "whose",
     }
     toks = re.findall(r"[a-z0-9]+", (text or "").lower())
     return {t for t in toks if len(t) > 2 and t not in stop}
@@ -647,8 +705,20 @@ def _normalize_tokens(text: str) -> set[str]:
 
 def _query_anchor_terms(query: str) -> set[str]:
     generic = {
-        "company", "general", "overview", "background", "about", "tell",
-        "what", "who", "where", "when", "which", "please", "info", "information",
+        "company",
+        "general",
+        "overview",
+        "background",
+        "about",
+        "tell",
+        "what",
+        "who",
+        "where",
+        "when",
+        "which",
+        "please",
+        "info",
+        "information",
     }
     toks = _normalize_tokens(query)
     anchors = {t for t in toks if t not in generic}
@@ -807,11 +877,34 @@ def _named_paper_targets_supported(query: str, citations: list[dict], targets: l
 def _query_requests_exact_metric_value(query: str) -> bool:
     q = (query or "").lower()
     metric_terms = (
-        "f1", "accuracy", "recall", "mrr", "ndcg", "em", "exact match",
-        "top-20 retrieval accuracy", "top 20 retrieval accuracy", "score threshold",
+        "f1",
+        "accuracy",
+        "recall",
+        "mrr",
+        "ndcg",
+        "em",
+        "exact match",
+        "top-20 retrieval accuracy",
+        "top 20 retrieval accuracy",
+        "score threshold",
     )
-    exactness_terms = ("exact value", "exact score", "what value", "what is the exact", "what f1", "what benchmark score")
-    return any(term in q for term in metric_terms) and any(term in q for term in exactness_terms + ("report on", "achieve on", "recommend",))
+    exactness_terms = (
+        "exact value",
+        "exact score",
+        "what value",
+        "what is the exact",
+        "what f1",
+        "what benchmark score",
+    )
+    return any(term in q for term in metric_terms) and any(
+        term in q
+        for term in exactness_terms
+        + (
+            "report on",
+            "achieve on",
+            "recommend",
+        )
+    )
 
 
 def _citations_support_requested_metric(query: str, citations: list[dict]) -> bool:
@@ -849,10 +942,7 @@ def _uploaded_title_prior_boost(query: str, title: str) -> float:
     boost = 0.0
 
     # Natural Questions intent cues.
-    if (
-        ("google search" in q or "real google" in q)
-        and ("naturalquestions" in t or "natural questions" in t)
-    ):
+    if ("google search" in q or "real google" in q) and ("naturalquestions" in t or "natural questions" in t):
         boost += 0.75
     if ("google search" in q or "real queries" in q) and ("squad" in t or "drqa" in t):
         boost -= 0.25
@@ -973,11 +1063,45 @@ def _citations_support_entity_benchmark_pair(query: str, citations: list[dict]) 
 
 def _primary_anchor_term(query: str) -> str | None:
     generic = {
-        "company", "general", "overview", "background", "about", "tell",
-        "what", "who", "where", "when", "which", "please", "info", "information",
-        "in", "on", "for", "with", "the", "a", "an",
-        "need", "needs", "know", "kinda", "kind", "type", "is", "this", "that",
-        "want", "wanna", "would", "like", "need", "about", "me", "you", "i",
+        "company",
+        "general",
+        "overview",
+        "background",
+        "about",
+        "tell",
+        "what",
+        "who",
+        "where",
+        "when",
+        "which",
+        "please",
+        "info",
+        "information",
+        "in",
+        "on",
+        "for",
+        "with",
+        "the",
+        "a",
+        "an",
+        "need",
+        "needs",
+        "know",
+        "kinda",
+        "kind",
+        "type",
+        "is",
+        "this",
+        "that",
+        "want",
+        "wanna",
+        "would",
+        "like",
+        "need",
+        "about",
+        "me",
+        "you",
+        "i",
     }
     qlow = (query or "").lower()
     ordered = re.findall(r"[a-z0-9]+", qlow)
@@ -1007,9 +1131,21 @@ def _has_anchor_match(query: str, citation: dict) -> bool:
 def _query_has_disambiguator(query: str) -> bool:
     q = (query or "").lower()
     hints = (
-        "nlp", "llm", "language model", "bert", "gpt", "attention", "machine learning",
-        "computer vision", "vision", "image",
-        "electrical", "power", "grid", "voltage", "substation",
+        "nlp",
+        "llm",
+        "language model",
+        "bert",
+        "gpt",
+        "attention",
+        "machine learning",
+        "computer vision",
+        "vision",
+        "image",
+        "electrical",
+        "power",
+        "grid",
+        "voltage",
+        "substation",
     )
     return any(h in q for h in hints)
 
@@ -1228,11 +1364,19 @@ def _is_research_synthesis_query(query: str) -> bool:
 
 _FACTUAL_QUERY_CUES = (
     # Definitional
-    r"\bwhat is\b", r"\bwhat are\b", r"\bwhat does\b",
-    r"\bdefine\b", r"\bdefinition of\b",
+    r"\bwhat is\b",
+    r"\bwhat are\b",
+    r"\bwhat does\b",
+    r"\bdefine\b",
+    r"\bdefinition of\b",
     # Specific-value questions
-    r"\bhow many\b", r"\bhow much\b", r"\bwhat year\b", r"\bwhen was\b",
-    r"\bwhich dataset\b", r"\bwhich model\b", r"\bwhich metric\b",
+    r"\bhow many\b",
+    r"\bhow much\b",
+    r"\bwhat year\b",
+    r"\bwhen was\b",
+    r"\bwhich dataset\b",
+    r"\bwhich model\b",
+    r"\bwhich metric\b",
     r"\bwhat (value|score|accuracy|benchmark|f1|recall|precision)\b",
     # Attribution
     r"\bwho (proposed|introduced|wrote|published)\b",
@@ -1252,9 +1396,15 @@ def _is_factual_query(query: str) -> bool:
     if not q:
         return False
     # Very short synthesis-y cues should still count as non-factual.
-    for pat in (r"\bcompare\b", r"\bcontrast\b", r"\bsynthesi[sz]e\b",
-                r"\btrade\-?offs?\b", r"\bdifference between\b",
-                r"\bdifferences\b", r"\bpros and cons\b"):
+    for pat in (
+        r"\bcompare\b",
+        r"\bcontrast\b",
+        r"\bsynthesi[sz]e\b",
+        r"\btrade\-?offs?\b",
+        r"\bdifference between\b",
+        r"\bdifferences\b",
+        r"\bpros and cons\b",
+    ):
         if re.search(pat, q):
             return False
     return any(re.search(pat, q) for pat in _FACTUAL_QUERY_CUES)
@@ -1399,18 +1549,44 @@ def _is_company_intent_query(query: str) -> bool:
     if _is_doc_intent_query(q):
         return False
     research_terms = (
-        "paper", "papers", "study", "studies", "benchmark", "dataset", "retrieval",
-        "pretraining", "attention", "language model", "question answering", "summarization",
+        "paper",
+        "papers",
+        "study",
+        "studies",
+        "benchmark",
+        "dataset",
+        "retrieval",
+        "pretraining",
+        "attention",
+        "language model",
+        "question answering",
+        "summarization",
     )
     if any(term in q for term in research_terms):
         return False
     company_cues = (
-        " inc", " llc", " ltd", " corp", " company", " co.", " corporation",
-        " technologies", " systems", " holdings", " group", " enterprises",
+        " inc",
+        " llc",
+        " ltd",
+        " corp",
+        " company",
+        " co.",
+        " corporation",
+        " technologies",
+        " systems",
+        " holdings",
+        " group",
+        " enterprises",
     )
     business_intent_cues = (
-        "company overview", "about the company", "what company",
-        "headquartered", "ticker", "founded", "market cap", "industry",
+        "company overview",
+        "about the company",
+        "what company",
+        "headquartered",
+        "ticker",
+        "founded",
+        "market cap",
+        "industry",
     )
     return any(c in q for c in company_cues) or any(c in q for c in business_intent_cues)
 
@@ -1457,10 +1633,26 @@ def _is_entity_level_query(query: str) -> bool:
     tokens = re.findall(r"[a-z0-9]+", q)
     short_entity_like = 1 <= len(tokens) <= 3
     role_terms = {"worked", "experience", "did", "role", "intern", "resume", "cv", "my"}
-    research_terms = {"paper", "research", "study", "method", "results", "abstract", "dataset", "uploaded", "attached", "document", "docs"}
+    research_terms = {
+        "paper",
+        "research",
+        "study",
+        "method",
+        "results",
+        "abstract",
+        "dataset",
+        "uploaded",
+        "attached",
+        "document",
+        "docs",
+    }
     has_role_intent = any(t in tokens for t in role_terms)
     has_research_intent = any(t in tokens for t in research_terms)
-    return (has_pattern or short_entity_like or _is_company_intent_query(q)) and not has_role_intent and not has_research_intent
+    return (
+        (has_pattern or short_entity_like or _is_company_intent_query(q))
+        and not has_role_intent
+        and not has_research_intent
+    )
 
 
 def _resolve_effective_doc_id(doc_id: int | None, scope: str, query: str) -> int | None:
@@ -1499,9 +1691,7 @@ def _needs_scope_limited_answer(query: str, citations: list[dict]) -> bool:
     has_public = any((c.get("scope") == "public_reference") for c in citations)
     if has_public:
         return False
-    has_profile_or_course = any(
-        (c.get("scope") in {"personal_profile", "course_material"}) for c in citations
-    )
+    has_profile_or_course = any((c.get("scope") in {"personal_profile", "course_material"}) for c in citations)
     return has_profile_or_course
 
 
@@ -1701,7 +1891,9 @@ def _stability_lookup_public(q: str, k: int, source_only: str | None = None, per
     return out
 
 
-def _compute_stability_scores(query: str, k: int, scope: str, doc_id: int | None = None, source_only: str | None = None) -> dict[str, float]:
+def _compute_stability_scores(
+    query: str, k: int, scope: str, doc_id: int | None = None, source_only: str | None = None
+) -> dict[str, float]:
     if not query:
         return {}
 
@@ -1744,13 +1936,66 @@ def _compute_agreement_score(sentence: str, context_map: dict[int, dict], eviden
     MIN_OVERLAP = 2
     DISTINCT_SOURCE_CAP = 4
     STOPWORDS = {
-        "the", "a", "an", "and", "or", "of", "to", "in", "on", "for", "with",
-        "is", "are", "was", "were", "be", "been", "being", "that", "this",
-        "these", "those", "it", "its", "as", "at", "by", "from", "but", "not",
-        "what", "which", "who", "whom", "whose", "how", "why", "when", "where",
-        "do", "does", "did", "has", "have", "had", "can", "could", "should",
-        "would", "may", "might", "will", "shall", "about", "into", "than",
-        "then", "so", "if", "also",
+        "the",
+        "a",
+        "an",
+        "and",
+        "or",
+        "of",
+        "to",
+        "in",
+        "on",
+        "for",
+        "with",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "that",
+        "this",
+        "these",
+        "those",
+        "it",
+        "its",
+        "as",
+        "at",
+        "by",
+        "from",
+        "but",
+        "not",
+        "what",
+        "which",
+        "who",
+        "whom",
+        "whose",
+        "how",
+        "why",
+        "when",
+        "where",
+        "do",
+        "does",
+        "did",
+        "has",
+        "have",
+        "had",
+        "can",
+        "could",
+        "should",
+        "would",
+        "may",
+        "might",
+        "will",
+        "shall",
+        "about",
+        "into",
+        "than",
+        "then",
+        "so",
+        "if",
+        "also",
     }
 
     def tokens(text: str) -> set[str]:
@@ -1911,10 +2156,7 @@ def _rewrite_ungrounded_claims(answer: str, citations: list[dict]) -> tuple[str,
     if not answer or not citations:
         return answer, 0
 
-    snippets_by_idx = {
-        i + 1: (c.get("snippet", "") or "")
-        for i, c in enumerate(citations)
-    }
+    snippets_by_idx = {i + 1: (c.get("snippet", "") or "") for i, c in enumerate(citations)}
 
     # Single, grammatically-natural hedge. Previously cycled through four
     # different prefixes which made the answer sound robotic and concatenated
@@ -1922,9 +2164,17 @@ def _rewrite_ungrounded_claims(answer: str, citations: list[dict]) -> tuple[str,
     HEDGE_PREFIX = "Some evidence suggests "
     # Skip hedging if the sentence is already clearly hedged.
     ALREADY_HEDGED = (
-        "reportedly", "it is suggested", "according to",
-        "some sources", "some evidence", "may ", "might ", "could ", "possibly",
-        "not clear", "insufficient evidence",
+        "reportedly",
+        "it is suggested",
+        "according to",
+        "some sources",
+        "some evidence",
+        "may ",
+        "might ",
+        "could ",
+        "possibly",
+        "not clear",
+        "insufficient evidence",
     )
     # Patterns that indicate a sentence is a structural / non-prose element
     # (markdown headings, list bullets, code fences, table rows, blockquotes).
@@ -2074,6 +2324,7 @@ def _compute_citation_msa(
     if pair_set:
         pairs = list(pair_set)
         max_workers = min(16, max(2, len(pairs)))
+
         # Warm BOTH NLI caches in parallel:
         #   - entailment_prob   → _cached_entailment       (used downstream by _compute_claim_features)
         #   - support_prob      → _cached_entailment_meta  (used downstream for M in MSA)
@@ -2086,6 +2337,7 @@ def _compute_citation_msa(
                 entailment_meta(p[0], p[1])
             except Exception:
                 pass
+
         try:
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
                 list(pool.map(_warm, pairs))
@@ -2143,7 +2395,9 @@ def _compute_citation_msa(
                         ambiguity_penalty=0.0,
                         insufficiency_penalty=0.0,
                         msa={"M": m, "S": s, "A": a, "weights": _load_latest_calibration_weights(scope)},
-                    )["factors"].get("msa", {}).get("msa_score", 0.0),
+                    )["factors"]
+                    .get("msa", {})
+                    .get("msa_score", 0.0),
                 }
             )
 
@@ -2155,7 +2409,16 @@ def _compute_citation_msa(
                 INSERT INTO evidence_scores (request_id, sentence_id, citation_id, evidence_id, m_score, s_score, a_score, score)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                [request_id, row.get("sentence_id"), row.get("citation_id"), row.get("evidence_id"), row.get("M"), row.get("S"), row.get("A"), row.get("msa_score")],
+                [
+                    request_id,
+                    row.get("sentence_id"),
+                    row.get("citation_id"),
+                    row.get("evidence_id"),
+                    row.get("M"),
+                    row.get("S"),
+                    row.get("A"),
+                    row.get("msa_score"),
+                ],
             )
         except Exception:
             pass

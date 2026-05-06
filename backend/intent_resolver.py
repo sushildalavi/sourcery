@@ -80,30 +80,30 @@ _SYSTEM_PROMPT = (
     "Do not assume a default field. Infer the most likely domain from the query text.\n\n"
     "Return strict JSON with exactly these keys:\n"
     "  canonical_term: string or null — the primary entity or concept the user is asking about.\n"
-    "  domain: string or null — the inferred scholarly domain in lowercase, e.g. \"molecular biology\", \"medieval history\", \"macroeconomics\".\n"
+    '  domain: string or null — the inferred scholarly domain in lowercase, e.g. "molecular biology", "medieval history", "macroeconomics".\n'
     "  scholarly_intent: boolean — true when the query is asking about a concept, entity, method, or work that exists in scholarly literature.\n"
     "  is_ambiguous: boolean — true when canonical_term could plausibly refer to more than one real-world thing.\n"
     "  alternative_senses: array of strings — MUST contain 2 or more distinct meanings of canonical_term "
     "whenever is_ambiguous is true. Each entry is a short label like "
-    "\"Transformer neural network architecture (NLP / deep learning)\" or "
-    "\"Electrical power transformer (electrical engineering)\". "
+    '"Transformer neural network architecture (NLP / deep learning)" or '
+    '"Electrical power transformer (electrical engineering)". '
     "Empty list is allowed only when is_ambiguous is false.\n"
     "  disambiguation_hints: array of 3 to 8 short domain-specific terms that, if present in a paper's title or abstract, confirm the intended scholarly sense. These guide downstream filtering.\n"
-    "  search_queries: array of 2 to 4 concise search-ready query strings suitable for scholarly search APIs like Semantic Scholar or OpenAlex. Each should be 2–8 words, should not include stopwords like \"tell me about\", and should vary enough to give good recall.\n\n"
+    '  search_queries: array of 2 to 4 concise search-ready query strings suitable for scholarly search APIs like Semantic Scholar or OpenAlex. Each should be 2–8 words, should not include stopwords like "tell me about", and should vary enough to give good recall.\n\n'
     "When is_ambiguous is true, search_queries must cover every sense listed in "
     "alternative_senses in a balanced way (at least one query per sense).\n\n"
     "Examples (keys illustrated across diverse fields):\n\n"
-    "Query: \"the tanzimat reforms\"\n"
-    "{\"canonical_term\":\"Tanzimat reforms\",\"domain\":\"modern history\",\"scholarly_intent\":true,\"is_ambiguous\":false,\"alternative_senses\":[],\"disambiguation_hints\":[\"Ottoman Empire\",\"19th century\",\"reorganization\",\"Abdulmejid\",\"modernization\"],\"search_queries\":[\"Tanzimat reforms Ottoman Empire\",\"Ottoman modernization 19th century\",\"Abdulmejid reform period\"]}\n\n"
-    "Query: \"CRISPR-Cas9 off-target effects\"\n"
-    "{\"canonical_term\":\"CRISPR-Cas9 off-target effects\",\"domain\":\"molecular biology\",\"scholarly_intent\":true,\"is_ambiguous\":false,\"alternative_senses\":[],\"disambiguation_hints\":[\"genome editing\",\"guide RNA\",\"DNA cleavage\",\"specificity\",\"Cas9 nuclease\"],\"search_queries\":[\"CRISPR-Cas9 off-target effects\",\"guide RNA specificity genome editing\",\"Cas9 nuclease mismatch tolerance\"]}\n\n"
-    "Query: \"tell me about transformers\"\n"
-    "{\"canonical_term\":\"transformer\",\"domain\":null,\"scholarly_intent\":true,\"is_ambiguous\":true,"
-    "\"alternative_senses\":[\"Transformer neural-network architecture (NLP / deep learning)\",\"Electrical power transformer (power engineering)\",\"Transformers film or toy franchise (popular culture)\"],"
-    "\"disambiguation_hints\":[\"self-attention\",\"encoder\",\"decoder\",\"BERT\",\"GPT\",\"Vaswani\",\"substation\",\"voltage\",\"power grid\"],"
-    "\"search_queries\":[\"Transformer self-attention neural network\",\"Attention is all you need Vaswani 2017\",\"power transformer voltage grid\",\"transformer condition monitoring electrical\"]}\n\n"
-    "Query: \"tell me about Mercury\"\n"
-    "{\"canonical_term\":\"Mercury\",\"domain\":null,\"scholarly_intent\":true,\"is_ambiguous\":true,\"alternative_senses\":[\"the planet Mercury (astronomy)\",\"the element mercury Hg (chemistry)\",\"the Roman god Mercury (mythology)\",\"Freddie Mercury the musician (music / pop culture)\"],\"disambiguation_hints\":[\"planet\",\"solar system\",\"element\",\"toxicity\",\"Hg\",\"Roman god\",\"Freddie\"],\"search_queries\":[\"Mercury planet astronomy\",\"mercury element toxicity chemistry\",\"Mercury Roman mythology\",\"Freddie Mercury biography\"]}\n\n"
+    'Query: "the tanzimat reforms"\n'
+    '{"canonical_term":"Tanzimat reforms","domain":"modern history","scholarly_intent":true,"is_ambiguous":false,"alternative_senses":[],"disambiguation_hints":["Ottoman Empire","19th century","reorganization","Abdulmejid","modernization"],"search_queries":["Tanzimat reforms Ottoman Empire","Ottoman modernization 19th century","Abdulmejid reform period"]}\n\n'
+    'Query: "CRISPR-Cas9 off-target effects"\n'
+    '{"canonical_term":"CRISPR-Cas9 off-target effects","domain":"molecular biology","scholarly_intent":true,"is_ambiguous":false,"alternative_senses":[],"disambiguation_hints":["genome editing","guide RNA","DNA cleavage","specificity","Cas9 nuclease"],"search_queries":["CRISPR-Cas9 off-target effects","guide RNA specificity genome editing","Cas9 nuclease mismatch tolerance"]}\n\n'
+    'Query: "tell me about transformers"\n'
+    '{"canonical_term":"transformer","domain":null,"scholarly_intent":true,"is_ambiguous":true,'
+    '"alternative_senses":["Transformer neural-network architecture (NLP / deep learning)","Electrical power transformer (power engineering)","Transformers film or toy franchise (popular culture)"],'
+    '"disambiguation_hints":["self-attention","encoder","decoder","BERT","GPT","Vaswani","substation","voltage","power grid"],'
+    '"search_queries":["Transformer self-attention neural network","Attention is all you need Vaswani 2017","power transformer voltage grid","transformer condition monitoring electrical"]}\n\n'
+    'Query: "tell me about Mercury"\n'
+    '{"canonical_term":"Mercury","domain":null,"scholarly_intent":true,"is_ambiguous":true,"alternative_senses":["the planet Mercury (astronomy)","the element mercury Hg (chemistry)","the Roman god Mercury (mythology)","Freddie Mercury the musician (music / pop culture)"],"disambiguation_hints":["planet","solar system","element","toxicity","Hg","Roman god","Freddie"],"search_queries":["Mercury planet astronomy","mercury element toxicity chemistry","Mercury Roman mythology","Freddie Mercury biography"]}\n\n'
     "Return ONLY the JSON object. No prose, no markdown, no code fences."
 )
 
@@ -142,9 +142,7 @@ def _coerce_str_list(value, *, limit: int) -> List[str]:
     return out
 
 
-def _derive_alt_senses_from_queries(
-    canonical: Optional[str], search_queries: List[str]
-) -> List[str]:
+def _derive_alt_senses_from_queries(canonical: Optional[str], search_queries: List[str]) -> List[str]:
     """Synthesize alternative_senses from search_queries when the LLM omits them.
 
     Each search_query typically looks like "<canonical_term> <domain-hint-words>".

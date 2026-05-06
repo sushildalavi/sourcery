@@ -23,10 +23,32 @@ class SenseCoverageTests(unittest.TestCase):
     """ML-paper terms that USED to be missing and caused the Colbert bug."""
 
     REQUIRED_TERMS = (
-        "colbert", "rag", "bart", "pegasus", "clip", "adam", "whisper",
-        "llama", "palm", "gemini", "attention", "vit", "gpt",
-        "yolo", "dpr", "rlhf", "squad", "beir", "drqa", "instructgpt",
-        "unet", "resnet", "faiss", "cnn", "gan", "factscore",
+        "colbert",
+        "rag",
+        "bart",
+        "pegasus",
+        "clip",
+        "adam",
+        "whisper",
+        "llama",
+        "palm",
+        "gemini",
+        "attention",
+        "vit",
+        "gpt",
+        "yolo",
+        "dpr",
+        "rlhf",
+        "squad",
+        "beir",
+        "drqa",
+        "instructgpt",
+        "unet",
+        "resnet",
+        "faiss",
+        "cnn",
+        "gan",
+        "factscore",
     )
 
     def test_ml_paper_names_are_covered(self):
@@ -68,9 +90,7 @@ class QueryExpansionTests(unittest.TestCase):
         self.assertEqual(out["term"], "attention")
 
     def test_long_query_with_ml_context_is_still_boosted(self):
-        out = expand_query_for_ml_sense(
-            "What does the BART paper say about denoising autoencoder objectives?"
-        )
+        out = expand_query_for_ml_sense("What does the BART paper say about denoising autoencoder objectives?")
         self.assertTrue(out["rewritten"])
         self.assertEqual(out["ml_sense"], "BART (denoising seq2seq model)")
 

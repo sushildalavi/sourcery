@@ -10,9 +10,7 @@ class _DummyCompletions:
         self._content = content
 
     def create(self, **kwargs):
-        return SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(content=self._content))]
-        )
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=self._content))])
 
 
 def _dummy_client(content: str):
@@ -54,16 +52,16 @@ class AssistantAnswerRoutingTests(unittest.TestCase):
             patch.object(app_module, "_chat_answer", side_effect=AssertionError("chat bypass should not run")),
             patch.object(app_module, "search_uploaded_chunks", return_value=uploaded_results),
             patch.object(app_module, "public_live_search", return_value=public_results),
-            patch.object(app_module, "_rank_and_trim_citations", side_effect=lambda query, citations, k, **kwargs: citations[:k]),
+            patch.object(
+                app_module, "_rank_and_trim_citations", side_effect=lambda query, citations, k, **kwargs: citations[:k]
+            ),
             patch.object(app_module, "_build_generation_prompt", return_value="prompt"),
             patch.object(app_module, "_compute_citation_msa", return_value=({}, 0)),
             patch.object(app_module, "_has_official_company_docs", return_value=True),
             patch.object(app_module, "client", _dummy_client("ColBERT is a retrieval model [S1].")),
             patch.object(app_module, "log_json", return_value=None),
         ):
-            resp = app_module.assistant_answer(
-                {"query": "tell me about Colbert", "scope": "public", "k": 4}
-            )
+            resp = app_module.assistant_answer({"query": "tell me about Colbert", "scope": "public", "k": 4})
 
         self.assertTrue(resp["citations"])
         self.assertEqual(resp["citations"][0]["source"], "uploaded")
@@ -90,9 +88,7 @@ class AssistantAnswerRoutingTests(unittest.TestCase):
             patch.object(app_module, "public_live_search", return_value=public_results),
             patch.object(app_module, "log_json", return_value=None),
         ):
-            resp = app_module.assistant_answer(
-                {"query": "tell me about Colbert", "scope": "public", "k": 4}
-            )
+            resp = app_module.assistant_answer({"query": "tell me about Colbert", "scope": "public", "k": 4})
 
         self.assertEqual(resp["citations"], [])
         self.assertEqual(resp["retrieval_policy"]["mode"], "abstention")
@@ -122,14 +118,16 @@ class AssistantAnswerRoutingTests(unittest.TestCase):
         }
 
         with (
-            patch.object(app_module, "_chat_answer", side_effect=AssertionError("chat bypass should not run in public mode for non-chatty queries")),
+            patch.object(
+                app_module,
+                "_chat_answer",
+                side_effect=AssertionError("chat bypass should not run in public mode for non-chatty queries"),
+            ),
             patch.object(app_module, "search_uploaded_chunks", return_value={"results": []}),
             patch.object(app_module, "public_live_search", return_value=public_results),
             patch.object(app_module, "log_json", return_value=None),
         ):
-            resp = app_module.assistant_answer(
-                {"query": "tell me abut RGANs", "scope": "public", "k": 4}
-            )
+            resp = app_module.assistant_answer({"query": "tell me abut RGANs", "scope": "public", "k": 4})
 
         self.assertEqual(resp["citations"], [])
         self.assertIn("evidence", resp["answer"].lower())
@@ -175,7 +173,9 @@ class AssistantAnswerRoutingTests(unittest.TestCase):
             patch.object(app_module, "_chat_answer", side_effect=AssertionError("chat bypass should not run")),
             patch.object(app_module, "search_uploaded_chunks", side_effect=_spy_search),
             patch.object(app_module, "public_live_search", return_value=public_results),
-            patch.object(app_module, "_rank_and_trim_citations", side_effect=lambda query, citations, k, **kwargs: citations[:k]),
+            patch.object(
+                app_module, "_rank_and_trim_citations", side_effect=lambda query, citations, k, **kwargs: citations[:k]
+            ),
             patch.object(app_module, "_build_generation_prompt", return_value="prompt"),
             patch.object(app_module, "_compute_citation_msa", return_value=({}, 0)),
             patch.object(app_module, "_has_official_company_docs", return_value=True),

@@ -2,6 +2,7 @@
 Tests for pure-function helpers in backend/services/embeddings.py.
 No network calls or database connections are required.
 """
+
 import importlib
 import os
 import unittest
@@ -129,14 +130,17 @@ class ContextLengthErrorTests(unittest.TestCase):
 
 class OpenAIProviderConfigTests(unittest.TestCase):
     def test_openai_provider_uses_openai_model_and_dimensions(self):
-        old = {key: os.environ.get(key) for key in (
-            "EMBEDDING_PROVIDER",
-            "OPENAI_EMBEDDING_MODEL",
-            "OPENAI_EMBED_DIMENSIONS",
-            "EMBEDDING_VERSION",
-            "VECTOR_STORE_DIM",
-            "EMBEDDING_RAW_DIM",
-        )}
+        old = {
+            key: os.environ.get(key)
+            for key in (
+                "EMBEDDING_PROVIDER",
+                "OPENAI_EMBEDDING_MODEL",
+                "OPENAI_EMBED_DIMENSIONS",
+                "EMBEDDING_VERSION",
+                "VECTOR_STORE_DIM",
+                "EMBEDDING_RAW_DIM",
+            )
+        }
         try:
             os.environ["EMBEDDING_PROVIDER"] = "openai"
             os.environ["OPENAI_EMBEDDING_MODEL"] = "text-embedding-3-large"

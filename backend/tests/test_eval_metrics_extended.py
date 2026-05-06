@@ -2,6 +2,7 @@
 Extended tests for backend/eval_metrics.py covering edge cases and
 the aggregate_metrics() aggregation logic.
 """
+
 import unittest
 
 from backend.eval_metrics import aggregate_metrics, mrr, ndcg_at_k, recall_at_k
@@ -80,8 +81,8 @@ class AggregateMetricsTests(unittest.TestCase):
 
     def test_aggregation_averages_correctly(self):
         rows = [
-            {"pred_doc_ids": [1, 2, 3], "gold_doc_id": 1},   # MRR=1.0
-            {"pred_doc_ids": [2, 1, 3], "gold_doc_id": 1},   # MRR=0.5
+            {"pred_doc_ids": [1, 2, 3], "gold_doc_id": 1},  # MRR=1.0
+            {"pred_doc_ids": [2, 1, 3], "gold_doc_id": 1},  # MRR=0.5
         ]
         result = aggregate_metrics(rows)
         self.assertAlmostEqual(result["mrr"], 0.75)

@@ -364,11 +364,8 @@ def _embed_batch_openai(
     """Batch-embed all cache misses via a single OpenAI API call (up to 2048 texts per call)."""
     MAX_PER_CALL = 2048
     for chunk_start in range(0, len(miss_indices), MAX_PER_CALL):
-        batch_indices = miss_indices[chunk_start:chunk_start + MAX_PER_CALL]
-        prepared = [
-            f"{EMBEDDING_DOC_PREFIX}{_prepare_text(texts[idx], 'document')}"
-            for idx in batch_indices
-        ]
+        batch_indices = miss_indices[chunk_start : chunk_start + MAX_PER_CALL]
+        prepared = [f"{EMBEDDING_DOC_PREFIX}{_prepare_text(texts[idx], 'document')}" for idx in batch_indices]
         try:
             raw_batch = _retry(_post_openai_embedding_batch, prepared)
         except Exception:
@@ -410,6 +407,7 @@ def embed_documents(texts: List[str]) -> List[List[float]]:
         if EMBEDDING_PROVIDER == "openai" and len(miss_indices) > 1:
             _embed_batch_openai(texts, miss_indices, results)
         else:
+
             def _compute(idx: int) -> tuple[int, List[float]]:
                 return idx, _embed_single(texts[idx], "document")
 
@@ -424,10 +422,16 @@ def embed_documents(texts: List[str]) -> List[List[float]]:
         for idx in miss_indices:
             emb = results[idx]
             if emb is not None:
-                cache_rows.append((
-                    all_keys[idx], VECTOR_STORE_DIM, emb,
-                    get_provider(), get_embedding_model(), get_embedding_version(),
-                ))
+                cache_rows.append(
+                    (
+                        all_keys[idx],
+                        VECTOR_STORE_DIM,
+                        emb,
+                        get_provider(),
+                        get_embedding_model(),
+                        get_embedding_version(),
+                    )
+                )
         if cache_rows:
             execute_batch(
                 """INSERT INTO embedding_cache (text_hash, dim, embedding, provider, model, embedding_version)

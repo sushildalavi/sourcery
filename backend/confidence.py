@@ -27,7 +27,12 @@ def compute_msa_score(m: float, s: float, a: float, weights: Optional[Dict[str, 
     s = clamp01(s)
     a = clamp01(a)
     w = weights or {}
-    base = float(w.get("b", 0.0)) + float(w.get("w1", 0.58)) * m + float(w.get("w2", 0.22)) * s + float(w.get("w3", 0.20)) * a
+    base = (
+        float(w.get("b", 0.0))
+        + float(w.get("w1", 0.58)) * m
+        + float(w.get("w2", 0.22)) * s
+        + float(w.get("w3", 0.20)) * a
+    )
     return clamp01(sigmoid(base))
 
 

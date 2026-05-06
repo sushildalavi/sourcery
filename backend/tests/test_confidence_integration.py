@@ -3,6 +3,7 @@ Integration tests for the M/S/A confidence model.
 Tests the full build_confidence() path including the MSA logistic blend.
 No external dependencies required.
 """
+
 import math
 import unittest
 
@@ -126,15 +127,21 @@ class BuildConfidenceWithMsaTests(unittest.TestCase):
     def test_calibration_weights_override_defaults(self):
         """Custom weights should change the MSA score."""
         default_weights = build_confidence(
-            top_sim=0.5, top_rerank_norm=0.5,
-            citation_coverage=0.5, evidence_margin=0.2,
-            ambiguity_penalty=0.0, insufficiency_penalty=0.0,
+            top_sim=0.5,
+            top_rerank_norm=0.5,
+            citation_coverage=0.5,
+            evidence_margin=0.2,
+            ambiguity_penalty=0.0,
+            insufficiency_penalty=0.0,
             msa={"M": 0.8, "S": 0.2, "A": 0.2},
         )
         high_m_weight = build_confidence(
-            top_sim=0.5, top_rerank_norm=0.5,
-            citation_coverage=0.5, evidence_margin=0.2,
-            ambiguity_penalty=0.0, insufficiency_penalty=0.0,
+            top_sim=0.5,
+            top_rerank_norm=0.5,
+            citation_coverage=0.5,
+            evidence_margin=0.2,
+            ambiguity_penalty=0.0,
+            insufficiency_penalty=0.0,
             msa={"M": 0.8, "S": 0.2, "A": 0.2, "weights": {"w1": 0.9, "w2": 0.05, "w3": 0.05}},
         )
         # Higher w1 with high M should produce higher or equal MSA component
@@ -183,33 +190,45 @@ class BuildConfidenceWithMsaTests(unittest.TestCase):
 
     def test_scope_penalty_reduces_score(self):
         no_pen = build_confidence(
-            top_sim=0.8, top_rerank_norm=0.8,
-            citation_coverage=0.9, evidence_margin=0.4,
-            ambiguity_penalty=0.0, insufficiency_penalty=0.0,
+            top_sim=0.8,
+            top_rerank_norm=0.8,
+            citation_coverage=0.9,
+            evidence_margin=0.4,
+            ambiguity_penalty=0.0,
+            insufficiency_penalty=0.0,
             scope_penalty=0.0,
         )
         with_pen = build_confidence(
-            top_sim=0.8, top_rerank_norm=0.8,
-            citation_coverage=0.9, evidence_margin=0.4,
-            ambiguity_penalty=0.0, insufficiency_penalty=0.0,
+            top_sim=0.8,
+            top_rerank_norm=0.8,
+            citation_coverage=0.9,
+            evidence_margin=0.4,
+            ambiguity_penalty=0.0,
+            insufficiency_penalty=0.0,
             scope_penalty=1.0,
         )
         self.assertLess(with_pen["score"], no_pen["score"])
 
     def test_output_shape(self):
         c = build_confidence(
-            top_sim=0.6, top_rerank_norm=0.5,
-            citation_coverage=0.7, evidence_margin=0.2,
-            ambiguity_penalty=0.1, insufficiency_penalty=0.1,
+            top_sim=0.6,
+            top_rerank_norm=0.5,
+            citation_coverage=0.7,
+            evidence_margin=0.2,
+            ambiguity_penalty=0.1,
+            insufficiency_penalty=0.1,
         )
         for key in ("score", "label", "factors", "explanation", "needs_clarification"):
             self.assertIn(key, c)
 
     def test_score_is_clamped(self):
         c = build_confidence(
-            top_sim=2.0, top_rerank_norm=2.0,
-            citation_coverage=2.0, evidence_margin=2.0,
-            ambiguity_penalty=0.0, insufficiency_penalty=0.0,
+            top_sim=2.0,
+            top_rerank_norm=2.0,
+            citation_coverage=2.0,
+            evidence_margin=2.0,
+            ambiguity_penalty=0.0,
+            insufficiency_penalty=0.0,
         )
         self.assertLessEqual(c["score"], 1.0)
         self.assertGreaterEqual(c["score"], 0.0)

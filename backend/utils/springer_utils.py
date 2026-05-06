@@ -36,7 +36,9 @@ def _build_query_expression(query: str) -> str:
     return f'keyword:"{safe_q}"'
 
 
-def fetch_from_springer(query: str, limit: Optional[int] = None, year_from: Optional[int] = None, year_to: Optional[int] = None) -> List[Dict]:
+def fetch_from_springer(
+    query: str, limit: Optional[int] = None, year_from: Optional[int] = None, year_to: Optional[int] = None
+) -> List[Dict]:
     global _auth_fail_until
     springer_key = os.getenv("SPRINGER_API_KEY")
     springer_max = int(os.getenv("SPRINGER_MAX_RESULTS", "30")) or 30
@@ -51,7 +53,11 @@ def fetch_from_springer(query: str, limit: Optional[int] = None, year_from: Opti
     if remaining <= 0:
         return []
 
-    endpoints = [SPRINGER_META_V2_URL, SPRINGER_LEGACY_URL] if springer_meta_version == "v2" else [SPRINGER_LEGACY_URL, SPRINGER_META_V2_URL]
+    endpoints = (
+        [SPRINGER_META_V2_URL, SPRINGER_LEGACY_URL]
+        if springer_meta_version == "v2"
+        else [SPRINGER_LEGACY_URL, SPRINGER_META_V2_URL]
+    )
     query_expr = _build_query_expression(query)
 
     for endpoint in endpoints:
@@ -112,7 +118,9 @@ def fetch_from_springer(query: str, limit: Optional[int] = None, year_from: Opti
                     _auth_fail_until = time.time() + _CIRCUIT_BREAKER_SECONDS
                     logger.warning(
                         "Springer auth %s on %r — circuit-breaker active for %ss.",
-                        status, query[:60], _CIRCUIT_BREAKER_SECONDS,
+                        status,
+                        query[:60],
+                        _CIRCUIT_BREAKER_SECONDS,
                     )
                     return []
                 if status in _NON_RETRYABLE_STATUSES:

@@ -61,6 +61,7 @@ def _ensure_doc_type_schema() -> None:
         """
     )
 
+
 def _hash_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -284,8 +285,7 @@ def _embed_and_store_chunks(document_id: int, chunks: List[Tuple[int, int, str]]
     raw_dim = get_raw_embedding_dims()
 
     chunk_values = [
-        (document_id, page_no, chunk_idx, text, len(text.split()))
-        for page_no, chunk_idx, text in clean_chunks
+        (document_id, page_no, chunk_idx, text, len(text.split())) for page_no, chunk_idx, text in clean_chunks
     ]
     returned = execute_values(
         "INSERT INTO chunks (document_id, page_no, chunk_index, text, tokens) VALUES %s RETURNING id",
@@ -294,10 +294,7 @@ def _embed_and_store_chunks(document_id: int, chunks: List[Tuple[int, int, str]]
     )
     chunk_ids = [row[0] for row in (returned or [])]
 
-    emb_values = [
-        (cid, provider, model, version, raw_dim, emb)
-        for cid, emb in zip(chunk_ids, embeddings)
-    ]
+    emb_values = [(cid, provider, model, version, raw_dim, emb) for cid, emb in zip(chunk_ids, embeddings)]
     execute_values(
         "INSERT INTO chunk_embeddings (chunk_id, provider, model, embedding_version, dim, vector) VALUES %s",
         emb_values,
@@ -339,7 +336,9 @@ def latest_documents(limit: int = 10):
 
 
 @router.post("/upload")
-async def upload_document(file: UploadFile = File(...), title: Optional[str] = None, background_tasks: BackgroundTasks = None):
+async def upload_document(
+    file: UploadFile = File(...), title: Optional[str] = None, background_tasks: BackgroundTasks = None
+):
     data = await file.read()
     if not data:
         raise HTTPException(status_code=400, detail="Empty file")
@@ -428,7 +427,9 @@ def _ingest_document(doc_id: int, data: bytes, mime: str, filename: str, title: 
 
 
 @router.post("/search/chunks")
-def search_chunks(payload: dict = None, q: str = None, k: int = 10, doc_id: Optional[int] = None, doc_ids: Optional[list[int]] = None):
+def search_chunks(
+    payload: dict = None, q: str = None, k: int = 10, doc_id: Optional[int] = None, doc_ids: Optional[list[int]] = None
+):
     """
     Accepts JSON body {q, k, doc_id}. Allows query param q fallback.
     """

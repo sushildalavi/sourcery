@@ -17,10 +17,12 @@ class EvalMetricsTests(unittest.TestCase):
         self.assertEqual(ndcg_at_k([3, 2, 1], 5, 3), 0.0)
 
     def test_aggregate(self):
-        out = aggregate_metrics([
-            {"pred_doc_ids": [1, 2, 3], "gold_doc_id": 1},
-            {"pred_doc_ids": [4, 2, 1], "gold_doc_id": 2},
-        ])
+        out = aggregate_metrics(
+            [
+                {"pred_doc_ids": [1, 2, 3], "gold_doc_id": 1},
+                {"pred_doc_ids": [4, 2, 1], "gold_doc_id": 2},
+            ]
+        )
         self.assertEqual(out["count"], 2)
         self.assertGreaterEqual(out["recall_at"]["1"], 0.5)
 

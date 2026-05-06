@@ -47,6 +47,7 @@ def _write_xlsx(path: Path, fields: List[str], rows: Iterable[Mapping], sheet_na
         ws.column_dimensions[get_column_letter(i)].width = min(60, max(10, max_len + 2))
     wb.save(path)
 
+
 _WORKBOOKS_DIR = Path("Evaluation/data/calibration/coder_workbooks")
 INPUTS = {
     "A": str(_WORKBOOKS_DIR / "coder_A.xlsx"),
@@ -72,17 +73,19 @@ def load_codebook(path: str) -> List[Dict]:
     idx = {h: i + 1 for i, h in enumerate(headers)}
     rows = []
     for r in range(2, ws.max_row + 1):
-        rows.append({
-            "row": r,
-            "claim_id": ws.cell(row=r, column=idx["claim_id"]).value,
-            "query_id": ws.cell(row=r, column=idx["query_id"]).value,
-            "mode": (ws.cell(row=r, column=idx["mode"]).value or "").strip(),
-            "query_type": (ws.cell(row=r, column=idx["query_type"]).value or "").strip(),
-            "claim_text": ws.cell(row=r, column=idx["claim_text"]).value or "",
-            "evidence_text": ws.cell(row=r, column=idx["evidence_text"]).value or "",
-            "label": _clean(ws.cell(row=r, column=9).value),
-            "notes": (ws.cell(row=r, column=10).value or "").strip(),
-        })
+        rows.append(
+            {
+                "row": r,
+                "claim_id": ws.cell(row=r, column=idx["claim_id"]).value,
+                "query_id": ws.cell(row=r, column=idx["query_id"]).value,
+                "mode": (ws.cell(row=r, column=idx["mode"]).value or "").strip(),
+                "query_type": (ws.cell(row=r, column=idx["query_type"]).value or "").strip(),
+                "claim_text": ws.cell(row=r, column=idx["claim_text"]).value or "",
+                "evidence_text": ws.cell(row=r, column=idx["evidence_text"]).value or "",
+                "label": _clean(ws.cell(row=r, column=9).value),
+                "notes": (ws.cell(row=r, column=10).value or "").strip(),
+            }
+        )
     return rows
 
 
@@ -198,9 +201,7 @@ def main() -> int:
     print(f"Average pairwise kappa: {avg_kappa:.4f} ({_interpret_kappa(avg_kappa)})")
 
     # Per-coder distribution
-    iaa["per_coder_distribution"] = {
-        c: dict(Counter(row["label"] for row in data[c])) for c in data
-    }
+    iaa["per_coder_distribution"] = {c: dict(Counter(row["label"] for row in data[c])) for c in data}
 
     # Majority-vote resolution
     gold_rows = []
@@ -222,19 +223,21 @@ def main() -> int:
             resolution = "tie"
             three_way_tie += 1
         base = data["A"][i]  # any coder's row; metadata is identical
-        gold_rows.append({
-            "claim_id": base["claim_id"],
-            "query_id": base["query_id"],
-            "mode": base["mode"],
-            "query_type": base["query_type"],
-            "claim_text": base["claim_text"],
-            "evidence_text": base["evidence_text"],
-            "label_A": data["A"][i]["label"],
-            "label_B": data["B"][i]["label"],
-            "label_C": data["C"][i]["label"],
-            "gold_label": top,
-            "resolution": resolution,
-        })
+        gold_rows.append(
+            {
+                "claim_id": base["claim_id"],
+                "query_id": base["query_id"],
+                "mode": base["mode"],
+                "query_type": base["query_type"],
+                "claim_text": base["claim_text"],
+                "evidence_text": base["evidence_text"],
+                "label_A": data["A"][i]["label"],
+                "label_B": data["B"][i]["label"],
+                "label_C": data["C"][i]["label"],
+                "gold_label": top,
+                "resolution": resolution,
+            }
+        )
 
     iaa["majority_vote_summary"] = {
         "unanimous": sum(1 for r in gold_rows if r["resolution"] == "unanimous"),
@@ -270,27 +273,44 @@ def main() -> int:
     print(f"\nWrote IAA report → {iaa_path}")
 
     gold_path = OUT_DIR / "gold_labels.xlsx"
-    fields = ["claim_id", "query_id", "mode", "query_type", "claim_text",
-              "evidence_text", "label_A", "label_B", "label_C",
-              "gold_label", "resolution"]
+    fields = [
+        "claim_id",
+        "query_id",
+        "mode",
+        "query_type",
+        "claim_text",
+        "evidence_text",
+        "label_A",
+        "label_B",
+        "label_C",
+        "gold_label",
+        "resolution",
+    ]
     _write_xlsx(gold_path, fields, gold_rows, sheet_name="gold_labels")
     print(f"Wrote gold labels → {gold_path}")
 
     dist_path = OUT_DIR / "label_distribution.json"
-    dist_path.write_text(json.dumps({
-        "n": n,
-        "per_coder": iaa["per_coder_distribution"],
-        "gold": iaa["gold_distribution"],
-        "gold_by_mode": iaa["gold_by_mode"],
-        "gold_by_query_type": iaa["gold_by_query_type"],
-    }, indent=2))
+    dist_path.write_text(
+        json.dumps(
+            {
+                "n": n,
+                "per_coder": iaa["per_coder_distribution"],
+                "gold": iaa["gold_distribution"],
+                "gold_by_mode": iaa["gold_by_mode"],
+                "gold_by_query_type": iaa["gold_by_query_type"],
+            },
+            indent=2,
+        )
+    )
     print(f"Wrote distribution → {dist_path}")
 
     print()
     print("=== HEADLINE STATS ===")
     print(f"Total claims:              {n}")
     print(f"Average pairwise kappa:    {avg_kappa:.4f} ({_interpret_kappa(avg_kappa)})")
-    print(f"Unanimous agreement:       {iaa['majority_vote_summary']['unanimous']} / {n}  ({iaa['majority_vote_summary']['unanimous']/n:.1%})")
+    print(
+        f"Unanimous agreement:       {iaa['majority_vote_summary']['unanimous']} / {n}  ({iaa['majority_vote_summary']['unanimous']/n:.1%})"
+    )
     print(f"Gold label distribution:   {dict(gold_dist)}")
     print(f"Gold supported rate:       {gold_dist['supported']/n:.1%}")
     return 0

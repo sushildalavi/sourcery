@@ -140,7 +140,7 @@ def _call_entailment_model_meta(hypothesis: str, premise: str) -> Dict[str, floa
                         "You evaluate whether a hypothesis is supported by a premise in a "
                         "retrieval-grounding context. Reward faithful paraphrases and summaries "
                         "as entailment, not neutral. Output strict JSON only: "
-                        "{\"entailment\": 0.xx, \"neutral\": 0.xx, \"contradiction\": 0.xx}"
+                        '{"entailment": 0.xx, "neutral": 0.xx, "contradiction": 0.xx}'
                     ),
                 },
                 {"role": "user", "content": prompt},

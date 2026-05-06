@@ -66,10 +66,7 @@ def main() -> None:
     for start in range(0, total, args.batch_size):
         batch = rows[start : start + args.batch_size]
         vectors = embed_documents([row["text"] for row in batch])
-        values = [
-            (row["id"], provider, model, version, raw_dim, vec)
-            for row, vec in zip(batch, vectors)
-        ]
+        values = [(row["id"], provider, model, version, raw_dim, vec) for row, vec in zip(batch, vectors)]
         execute_values(
             "INSERT INTO chunk_embeddings (chunk_id, provider, model, embedding_version, dim, vector) VALUES %s",
             values,

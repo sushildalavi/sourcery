@@ -113,6 +113,7 @@ def _fallback_report(sentences: List[str], citations: List[Dict]) -> Dict:
         "evidence_coverage_by_id": coverage_by_id,
     }
 
+
 def evaluate_faithfulness(query: str, answer: str, citations: List[Dict], use_llm: bool = True) -> Dict:
     sentences = _split_sentences(answer)
     if not use_llm:
@@ -146,7 +147,7 @@ def evaluate_faithfulness(query: str, answer: str, citations: List[Dict], use_ll
         '  "sentence_count": 0,\n'
         '  "claims": [\n'
         '    {"sentence_id":1, "sentence":"...", "supported":true, "evidence_ids":["S1"], "reason":"..."}\n'
-        '  ]\n'
+        "  ]\n"
         "}\n\n"
         f"Query: {query}\n"
         f"Answer: {answer}\n\n"
@@ -199,14 +200,16 @@ def evaluate_faithfulness(query: str, answer: str, citations: List[Dict], use_ll
 
         total = max(1, _safe_int(payload.get("sentence_count"), len(sentences)))
         return {
-            "overall_score": _safe_float(payload.get("overall_score"), len(cleaned_claims) / total if sentences else 0.0),
+            "overall_score": _safe_float(
+                payload.get("overall_score"), len(cleaned_claims) / total if sentences else 0.0
+            ),
             "citation_coverage": _safe_float(payload.get("citation_coverage"), 0.0),
             "supported_count": _safe_int(payload.get("supported_count"), max(0, total - len(unsupported))),
             "unsupported_count": _safe_int(payload.get("unsupported_count"), len(unsupported)),
             "sentence_count": total,
             "claims": cleaned_claims,
             "unsupported": unsupported,
-            "method": "llm", 
+            "method": "llm",
         }
     except Exception:
         return _fallback_report(sentences, citations)

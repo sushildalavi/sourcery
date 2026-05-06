@@ -18,7 +18,7 @@ ARXIV_MAX_RETRIES = 3
 
 
 def _backoff_seconds(attempt: int) -> float:
-    return min(2 ** attempt + random.random(), 8.0)
+    return min(2**attempt + random.random(), 8.0)
 
 
 def _extract_year(date_str: str) -> Optional[int]:
@@ -46,7 +46,7 @@ def _format_arxiv_query(query: str) -> str:
     if len(q.split()) <= 1:
         return f"all:{q}"
     # Strip any pre-existing quotes, then wrap.
-    stripped = q.replace('"', '')
+    stripped = q.replace('"', "")
     return f'all:"{stripped}"'
 
 

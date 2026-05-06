@@ -102,7 +102,12 @@ def execute_values(query: str, values: List[Tuple], template: Optional[str] = No
         with conn:
             with conn.cursor() as cur:
                 result = psycopg2.extras.execute_values(
-                    cur, query, values, template=template, fetch=fetch, page_size=250,
+                    cur,
+                    query,
+                    values,
+                    template=template,
+                    fetch=fetch,
+                    page_size=250,
                 )
                 return result if fetch else None
     finally:

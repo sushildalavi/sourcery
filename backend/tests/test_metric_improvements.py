@@ -4,6 +4,7 @@ Covers the three generator-side fixes (extractive mode, claim-rewrite pass,
 new calibration features) and the annotator-rubric v2 script so the
 behavior does not regress.
 """
+
 from __future__ import annotations
 
 import unittest
@@ -104,9 +105,7 @@ class ClaimFeatureTests(unittest.TestCase):
 
     def test_diversity_at_ceiling_when_all_unique_docs(self):
         ctx = {i: {"doc_id": i, "snippet": "x"} for i in range(1, 6)}
-        feats = _compute_claim_features(
-            "Claim.", "evidence.", ctx, {}, "e", ["Claim."], 1
-        )
+        feats = _compute_claim_features("Claim.", "evidence.", ctx, {}, "e", ["Claim."], 1)
         # 5 distinct docs / 5 ctx entries = 1.0
         self.assertEqual(feats["retrieval_diversity"], 1.0)
 
