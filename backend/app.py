@@ -22,6 +22,12 @@ from backend.confidence import build_confidence, score_percent
 from backend.eval_metrics import aggregate_metrics
 from backend.intent_resolver import is_offtopic_by_intent, resolve_query_intent
 from backend.middleware import RequestIDMiddleware, SecurityHeadersMiddleware
+from backend.schemas import (
+    CalibrationResponse,
+    EmbeddingHealthResponse,
+    HealthFullResponse,
+    LivenessResponse,
+)
 from backend.pdf_ingest import search_chunks as search_uploaded_chunks
 from backend.public_search import public_live_search
 from backend.public_web import public_web_search
@@ -2349,7 +2355,11 @@ def calibrate_confidence(payload: dict = Body(...)):
     }
 
 
-@app.get("/confidence/calibration")
+@app.get(
+    "/confidence/calibration",
+    response_model=CalibrationResponse,
+    tags=["confidence"],
+)
 def get_latest_calibration(label: str | None = None):
     if label:
         row = fetchone(
@@ -2432,7 +2442,7 @@ def trust_score(sim: float, has_doi: bool) -> float:
 _BOOT_TS = time.time()
 
 
-@app.get("/")
+@app.get("/", response_model=LivenessResponse, tags=["health"])
 def home():
     return {
         "message": "ScholarRAG backend is live!",
@@ -2442,7 +2452,7 @@ def home():
     }
 
 
-@app.get("/health/full")
+@app.get("/health/full", response_model=HealthFullResponse, tags=["health"])
 def health_full():
     """Aggregated readiness: db reachable, embedding provider live.
 
@@ -2470,7 +2480,7 @@ def health_full():
     }
 
 
-@app.get("/health/embeddings")
+@app.get("/health/embeddings", response_model=EmbeddingHealthResponse, tags=["health"])
 def embeddings_health():
     return healthcheck_embeddings()
 
