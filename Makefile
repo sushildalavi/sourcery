@@ -1,4 +1,6 @@
-.PHONY: test lint typecheck run run-frontend install install-dev clean help
+.PHONY: test lint typecheck run run-frontend install install-dev clean help \
+        compose-up compose-down compose-logs compose-rebuild stack-up stack-down \
+        health frontend-build frontend-lint frontend-typecheck pre-commit-install
 
 # ── Environment ───────────────────────────────────────────────────────────────
 PYTHON  := python3
@@ -61,6 +63,49 @@ db-up:
 
 db-down:
 	docker compose down
+
+# ── Compose / full stack ────────────────────────────────────────────────────
+
+compose-up:
+	docker compose up -d db adminer
+
+compose-down:
+	docker compose down
+
+compose-logs:
+	docker compose logs -f --tail=200
+
+compose-rebuild:
+	docker compose build --no-cache backend frontend
+
+stack-up:
+	docker compose --profile backend --profile frontend up -d
+
+stack-down:
+	docker compose --profile backend --profile frontend down
+
+health:
+	@echo "→ db";       docker compose exec db pg_isready -U scholarrag || true
+	@echo "→ backend";  curl -fsS http://127.0.0.1:8000/ || echo "  (backend not reachable)"
+	@echo "→ embed";    curl -fsS http://127.0.0.1:8000/health/embeddings || true
+	@echo "→ frontend"; curl -fsS -o /dev/null -w "  http %{http_code}\n" http://127.0.0.1:5173/ || true
+
+# ── Frontend dev tasks ─────────────────────────────────────────────────────
+
+frontend-lint:
+	cd frontend && npx eslint .
+
+frontend-typecheck:
+	cd frontend && npx tsc --noEmit
+
+frontend-build:
+	cd frontend && npm run build
+
+# ── Hooks ──────────────────────────────────────────────────────────────────
+
+pre-commit-install:
+	$(PIP) install pre-commit
+	$(VENV)/bin/pre-commit install
 
 # ── Reindex ───────────────────────────────────────────────────────────────────
 
@@ -134,6 +179,12 @@ help:
 	@echo "    make run           Start backend (dev, auto-reload)"
 	@echo "    make run-prod      Start backend (production, 4 workers)"
 	@echo "    make run-frontend  Start frontend dev server"
+	@echo ""
+	@echo "  Stack (docker compose):"
+	@echo "    make compose-up    Bring up db + adminer"
+	@echo "    make stack-up      Bring up everything (db, backend, frontend)"
+	@echo "    make stack-down    Stop the full stack"
+	@echo "    make health        Probe db / backend / embeddings / frontend"
 	@echo ""
 	@echo "  Calibration pipeline:"
 	@echo "    make reindex           Rebuild all chunk embeddings"
