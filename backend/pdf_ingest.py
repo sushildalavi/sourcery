@@ -27,7 +27,6 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 logger = logging.getLogger(__name__)
 
 STORAGE_DIR = Path(os.getenv("STORAGE_DIR", "storage"))
-STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".md"}
 ALLOWED_MIME_PREFIXES = ("text/",)
 ALLOWED_EXACT_MIME = {"application/pdf"}
@@ -67,13 +66,42 @@ def _hash_bytes(data: bytes) -> str:
 
 
 def _extract_pdf_text(data: bytes) -> List[Tuple[int, str]]:
-    """Lightweight text extractor for PDFs; OCR is a TODO."""
+    """Text-layer extractor for PDFs.
+
+    Returns one (page_no, text) tuple per page. Pages whose text layer is
+    empty (typical for scanned / image-only PDFs) are still returned with
+    an empty string so the caller can detect the condition; OCR is not
+    performed here.
+
+    The caller can ask `pdf_needs_ocr(pages)` to decide whether to surface
+    a clear "this PDF appears to be image-only — OCR not yet supported"
+    error to the user instead of silently producing zero chunks.
+    """
     reader = PdfReader(io.BytesIO(data))
     pages: List[Tuple[int, str]] = []
     for i, page in enumerate(reader.pages, start=1):
-        text = page.extract_text() or ""
+        try:
+            text = page.extract_text() or ""
+        except Exception as exc:
+            logger.warning("pdf page %s text extraction failed: %s", i, exc)
+            text = ""
         pages.append((i, text))
     return pages
+
+
+def pdf_needs_ocr(pages: List[Tuple[int, str]], min_chars: int = 40) -> bool:
+    """Heuristic: a PDF is "image-only" if essentially every page yielded
+    no usable text from the text layer.
+
+    Threshold defaults: at least one page must produce >= 40 non-whitespace
+    characters; otherwise we report the PDF as needing OCR.
+    """
+    if not pages:
+        return True
+    for _, text in pages:
+        if len((text or "").strip()) >= min_chars:
+            return False
+    return True
 
 
 def _chunk_text(text: str, target_min: int = 420, target_max: int = 620, overlap: int = 100) -> List[str]:
@@ -350,6 +378,7 @@ async def upload_document(
         )
 
     fname = f"{int(time.time())}_{file.filename}"
+    STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     fpath = STORAGE_DIR / fname
     fpath.write_bytes(data)
 
@@ -401,8 +430,21 @@ async def upload_document(
 
 def _ingest_document(doc_id: int, data: bytes, mime: str, filename: str, title: Optional[str]):
     try:
-        if mime == "application/pdf" or filename.lower().endswith(".pdf"):
+        is_pdf = mime == "application/pdf" or filename.lower().endswith(".pdf")
+        if is_pdf:
             pages = _extract_pdf_text(data)
+            # Detect image-only / scanned PDFs explicitly so the user gets a
+            # clear status (`ocr_required`) instead of a silent empty corpus.
+            if pdf_needs_ocr(pages):
+                logger.info(
+                    "doc %s appears to be image-only (no extractable text layer); marking ocr_required",
+                    doc_id,
+                )
+                execute(
+                    "UPDATE documents SET status='ocr_required' WHERE id=%s",
+                    [doc_id],
+                )
+                return
         else:
             decoded = data.decode("utf-8", errors="ignore")
             pages = [(1, _sanitize_text(decoded))]

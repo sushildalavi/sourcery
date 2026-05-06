@@ -5,24 +5,24 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from openai import OpenAI
 
 from backend.pdf_ingest import (
     _chunk_text,
     _embed_and_store_chunks,
     _extract_pdf_text,
+    _hash_bytes,
     _is_supported_upload,
     _sanitize_text,
 )
 from backend.pdf_ingest import search_chunks as search_uploaded_chunks
 from backend.public_search import public_live_search
 from backend.services.db import execute, fetchall, fetchone
+from backend.utils.config import get_openai_api_key
 
 router = APIRouter(prefix="/assistant/chat", tags=["chat"])
 
 STORAGE_DIR = Path(os.getenv("STORAGE_DIR", "storage"))
 CHAT_UPLOAD_DIR = STORAGE_DIR / "chat_uploads"
-CHAT_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _create_session() -> int:
@@ -97,8 +97,15 @@ def _ingest_upload(session_id: int, upload: UploadFile) -> Optional[int]:
     if not _is_supported_upload(upload.filename or "", mime):
         raise HTTPException(status_code=400, detail="Unsupported file type. Upload PDF, TXT, or Markdown files.")
     fname = f"{int(time.time())}_{upload.filename}"
+    CHAT_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     fpath = CHAT_UPLOAD_DIR / fname
     fpath.write_bytes(data)
+
+    # Real content SHA so duplicate-upload detection (and any downstream code
+    # keying on hash_sha256) sees identical content as identical, regardless
+    # of filename. Previously this stored the timestamped filename, which
+    # broke document identity semantics.
+    sha = _hash_bytes(data)
 
     doc_row = fetchone(
         """
@@ -106,7 +113,7 @@ def _ingest_upload(session_id: int, upload: UploadFile) -> Optional[int]:
         VALUES (%s, %s, %s, %s, %s, 'processing')
         RETURNING id
         """,
-        [upload.filename, str(fpath), mime, len(data), fname],  # hash placeholder
+        [upload.filename, str(fpath), mime, len(data), sha],
     )
     doc_id = doc_row["id"]
 
@@ -219,7 +226,13 @@ def chat(payload: dict = None):
         f"Question:\n{message}\n\nContext:\n{context}\n"
     )
 
-    client = OpenAI()
+    # Centralized client construction so this route honors the same
+    # `.env` / Streamlit / AWS Secrets Manager fallback chain as
+    # `/assistant/answer`. Imported lazily to keep this module
+    # import-safe when the openai package is unavailable.
+    from openai import OpenAI
+
+    client = OpenAI(api_key=get_openai_api_key())
     completion = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],

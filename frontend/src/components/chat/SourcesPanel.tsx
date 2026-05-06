@@ -583,7 +583,7 @@ export function SourcesPanel({
                                         className="text-[11px] text-zinc-600 dark:text-zinc-300"
                                       >
                                         <span className="mr-1 font-mono text-[10px] text-amber-600 dark:text-amber-400">
-                                          #{cl.sentenceId + 1}
+                                          #{cl.sentenceId}
                                         </span>
                                         {cl.sentence}
                                       </li>

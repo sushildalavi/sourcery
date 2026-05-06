@@ -241,7 +241,15 @@ def _ensure_msa_schema() -> None:
 
 
 def _initialize_database_schema() -> None:
+    """Bootstrap all schema. Called from FastAPI lifespan startup ONLY.
+
+    Modules under `backend/` must NOT call any of this at import time —
+    that would couple `import backend.app` to a live Postgres and break
+    unit tests, IDE introspection, and `--help` invocations.
+    """
     pdf_ingest._ensure_doc_type_schema()
+    agents.ensure_digests_table()
+    memory.ensure_memory_table()
     _ensure_eval_schema()
     _ensure_msa_schema()
 
@@ -360,7 +368,7 @@ def assistant_answer(
     """
     started = time.time()
     t0 = time.perf_counter()
-    query = payload.get("query") or ""
+    query = (payload.get("query") or "").strip()
     scope = payload.get("scope") or "uploaded"
     doc_id = payload.get("doc_id")
     raw_doc_ids = payload.get("doc_ids")
@@ -1781,14 +1789,22 @@ def assistant_answer(
         for old_idx, c in enumerate(citations_out, start=1):
             c["_old_id"] = old_idx
         citations_out.sort(key=_confidence_sort_key)
-        # Map old_id -> new_id so we can rewrite inline [S#] refs in the answer.
+        # Map old_id -> new_id AND old_id -> stable evidence_id so we can
+        # rewrite inline [S#] refs in the answer AND keep the faithfulness
+        # report's `evidence_ids` field pointing at stable identifiers
+        # (the only ones the frontend can resolve to a citation reliably
+        # after renumbering).
         id_remap: dict[int, int] = {}
+        old_id_to_evidence_id: dict[int, str] = {}
         for new_idx, c in enumerate(citations_out, start=1):
             old_id = int(c.pop("_old_id"))
             id_remap[old_id] = new_idx
             c["id"] = new_idx
             c["rank_after"] = new_idx
             c["rank_delta"] = c.get("rank_before", new_idx) - new_idx
+            ev_id = c.get("evidence_id")
+            if ev_id:
+                old_id_to_evidence_id[old_id] = ev_id
         if id_remap and answer:
 
             def _remap_ref(m: re.Match) -> str:
@@ -1798,6 +1814,32 @@ def assistant_answer(
                 return f"[{prefix}{new_id}]"
 
             answer = re.sub(r"\[(S?)(\d+)\]", _remap_ref, answer)
+
+        # Remap faithfulness.claims[].evidence_ids: the judge emits
+        # ["S<old_id>"] referencing the answer's pre-sort citation IDs.
+        # The frontend keys claims by `citation.evidence_id` (a stable
+        # string), so we rewrite each "S<n>" -> the matching stable
+        # evidence_id. Falls back to "S<new_id>" when no stable id exists.
+        if faithfulness and isinstance(faithfulness, dict):
+            for claim in faithfulness.get("claims") or []:
+                raw = claim.get("evidence_ids") or []
+                rewritten: list[str] = []
+                for ref in raw:
+                    if not isinstance(ref, str):
+                        continue
+                    m = re.match(r"^S(\d+)$", ref.strip())
+                    if not m:
+                        # Already a stable evidence_id (or some other form) — keep as-is.
+                        rewritten.append(ref)
+                        continue
+                    old_id = int(m.group(1))
+                    stable = old_id_to_evidence_id.get(old_id)
+                    if stable:
+                        rewritten.append(stable)
+                    else:
+                        new_id = id_remap.get(old_id, old_id)
+                        rewritten.append(f"S{new_id}")
+                claim["evidence_ids"] = rewritten
 
     if citations:
         if all((_source_scope(c) == "personal_profile") for c in citations):

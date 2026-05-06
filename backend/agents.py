@@ -12,7 +12,13 @@ from backend.services.db import execute, fetchall, fetchone
 router = APIRouter()
 
 
-def _ensure_digests_table() -> None:
+def ensure_digests_table() -> None:
+    """Create the `digests` table if missing.
+
+    Called from FastAPI lifespan startup, NEVER at import time — modules
+    must be import-safe so unit tests and tooling can load them without a
+    live Postgres.
+    """
     execute("""
         CREATE TABLE IF NOT EXISTS digests (
             id SERIAL PRIMARY KEY,
@@ -22,9 +28,6 @@ def _ensure_digests_table() -> None:
             created_at TIMESTAMP DEFAULT now()
         )
     """)
-
-
-_ensure_digests_table()
 
 
 @router.post("/agents/digest")

@@ -9,7 +9,11 @@ from backend.services.db import execute, fetchall, fetchone
 router = APIRouter()
 
 
-def _ensure_memory_table() -> None:
+def ensure_memory_table() -> None:
+    """Create the `user_memory` table + index if missing.
+
+    Called from FastAPI lifespan startup, NEVER at import time.
+    """
     execute("""
         CREATE TABLE IF NOT EXISTS user_memory (
             id SERIAL PRIMARY KEY,
@@ -21,9 +25,6 @@ def _ensure_memory_table() -> None:
         )
     """)
     execute("CREATE INDEX IF NOT EXISTS idx_user_memory_user ON user_memory(user_id)")
-
-
-_ensure_memory_table()
 
 
 @router.post("/memory/log")
