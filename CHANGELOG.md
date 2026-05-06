@@ -14,10 +14,7 @@ roughly tracks [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Frontend `<ErrorBoundary>` wrapping the route tree with a retry / go-home fallback.
 - Lazy-loaded `/analytics` route via `React.lazy` + `<Suspense>` with a CSS-only skeleton fallback. Initial JS bundle dropped **453 KB → 78 KB**.
 - Vendor chunk splitting (`react`, `framer-motion`, `lucide-react`) — eliminated the >500 KB chunk warning.
-- `.github/dependabot.yml` for pip / npm / GitHub Actions / Docker, with sensible groupings.
-- `.github/ISSUE_TEMPLATE/bug_report.yml` + `feature_request.yml` + `config.yml` (security finding redirects to email per `SECURITY.md`).
-- `.github/PULL_REQUEST_TEMPLATE.md`.
-- `CONTRIBUTING.md`, `SECURITY.md`, `CODEOWNERS`.
+- `SECURITY.md` for vulnerability disclosure policy.
 - `frontend/Dockerfile` (multi-stage `node:20-alpine` → `nginx:1.27-alpine`) + `frontend` profile in `docker-compose.yml`.
 - Compose: db & backend healthchecks, `depends_on: condition: service_healthy`.
 - `Makefile`: `compose-up`, `stack-up`, `stack-down`, `health`, `frontend-build`, `frontend-lint`, `frontend-typecheck`, `pre-commit-install`.

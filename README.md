@@ -20,7 +20,7 @@ Hybrid dense + sparse retrieval over your PDFs and **6 live scholarly APIs**, wi
 [![Security](https://img.shields.io/badge/security-OWASP%20headers%20%2B%20Trivy%20%2B%20gitleaks-0e7490)](SECURITY.md)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-1d4ed8)](https://www.conventionalcommits.org)
 
-[**Quick Start**](#quick-start) · [**Architecture**](#architecture) · [**Benchmarks**](#benchmark-results) · [**API Reference**](docs/examples/curl.md) · [**Contributing**](CONTRIBUTING.md) · [**Security**](SECURITY.md)
+[**Quick Start**](#quick-start) · [**Architecture**](#architecture) · [**Benchmarks**](#benchmark-results) · [**API Reference**](docs/examples/curl.md) · [**Security**](SECURITY.md)
 
 </div>
 
@@ -758,14 +758,12 @@ Initial bundle: **~78 KB gzipped** (down from 236 KB before splitting). The `/an
 
 | Doc | Purpose |
 |---|---|
-| [README.md](README.md) | You're here — overview, benchmarks, quick start. |
+| [README.md](README.md) | Overview, benchmarks, quick start. |
 | [docs/architecture.md](docs/architecture.md) | Layered architecture, design decisions, code map. |
 | [docs/adr/](docs/adr/) | Architecture Decision Records (MADR format). |
 | [docs/examples/curl.md](docs/examples/curl.md) | Curl recipes for every public endpoint. |
 | [Evaluation/README.md](Evaluation/README.md) | Calibration pipeline, gold set construction, IAA. |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Local setup, commit style, PR checklist. |
 | [SECURITY.md](SECURITY.md) | Reporting vulnerabilities, scope, hardening already in place. |
-| [SUPPORT.md](SUPPORT.md) | How to get help, response times, versioning policy. |
 | [CHANGELOG.md](CHANGELOG.md) | What changed, when, why. |
 | [NOTICE](NOTICE) | Third-party attribution. |
 
@@ -781,9 +779,7 @@ Items below are what we'd want before a 2.0 cut. None are blocking 1.x.
 - [ ] **Helm chart** — alongside the existing Docker Compose for k8s deployments.
 - [ ] **Per-tenant calibration** — re-fit M/S/A weights against a customer's own corpus instead of the shared 530-pair gold set.
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide. Quick loop:
+## Local development
 
 ```bash
 make install-dev          # install + dev deps
@@ -797,13 +793,10 @@ make frontend-lint        # eslint, 0 warnings
 make frontend-build       # vite build
 ```
 
-PRs that change retrieval should include `Recall@5 / MRR / nDCG@10` from `make eval`.
-PRs that change calibration should re-run `make fit-calibration` and attach the cv summary.
-
 ## Security
 
-See [SECURITY.md](SECURITY.md). Don't open public issues for security findings — email `sushildalavi@gmail.com`.
+See [SECURITY.md](SECURITY.md). For security findings, email `sushildalavi@gmail.com` rather than opening a public issue.
 
 ## License
 
-[MIT](LICENSE) © 2026 Sushil Dalavi, Parvathi Sanjana Pericherla, Eshna Gupta. Third-party attribution in [NOTICE](NOTICE).
+[MIT](LICENSE) © 2026 Sushil Dalavi. Third-party attribution in [NOTICE](NOTICE).
