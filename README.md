@@ -6,7 +6,7 @@
 [![pgvector](https://img.shields.io/badge/pgvector-0.7-336791.svg)](https://github.com/pgvector/pgvector)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg?logo=docker)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://github.com/sushildalavi/Final-Project-ScholarRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/sushildalavi/Final-Project-ScholarRAG/actions/workflows/ci.yml)
+[![CI](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml/badge.svg)](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml)
 
 **ScholarRAG** is a production-architecture Retrieval-Augmented Generation (RAG) system for scientific literature discovery, multi-document question answering, and calibrated answer confidence scoring.
 
@@ -206,8 +206,8 @@ Evaluated on 20 diverse ML/NLP queries with live API calls.
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/sushildalavi/Final-Project-ScholarRAG.git
-cd Final-Project-ScholarRAG
+git clone https://github.com/sushildalavi/citelens.git
+cd citelens
 cp .env.example .env
 # fill in OPENAI_API_KEY, DATABASE_URL, OLLAMA_BASE_URL
 ```
@@ -253,7 +253,7 @@ make test
 ## Project Structure
 
 ```
-ScholarRAG/
+citelens/
 ├── backend/
 │   ├── app.py                   # FastAPI app — CORS, routers, startup
 │   ├── pdf_ingest.py            # PDF extraction, chunking, pgvector upsert
