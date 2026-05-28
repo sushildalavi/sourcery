@@ -370,17 +370,17 @@ def metrics_prometheus():
         lines.append(f"# TYPE {name} {mtype}")
         lines.append(f"{name} {num}")
 
-    _emit("citelens_documents_total", payload.get("documents"), "Documents in `ready` status.")
-    _emit("citelens_chunks_total", payload.get("chunks"), "Total chunks across all documents.")
-    _emit("citelens_eval_runs_total", payload.get("eval_runs"), "Recorded evaluation runs.")
+    _emit("sourcery_documents_total", payload.get("documents"), "Documents in `ready` status.")
+    _emit("sourcery_chunks_total", payload.get("chunks"), "Total chunks across all documents.")
+    _emit("sourcery_eval_runs_total", payload.get("eval_runs"), "Recorded evaluation runs.")
     retrieval = payload.get("retrieval") or {}
-    _emit("citelens_retrieval_recall_at_5", retrieval.get("recall_at_5"), "Recall@5 from latest eval run.")
-    _emit("citelens_retrieval_ndcg_at_10", retrieval.get("ndcg_at_10"), "nDCG@10 from latest eval run.")
-    _emit("citelens_retrieval_mrr", retrieval.get("mrr"), "Mean reciprocal rank from latest eval run.")
+    _emit("sourcery_retrieval_recall_at_5", retrieval.get("recall_at_5"), "Recall@5 from latest eval run.")
+    _emit("sourcery_retrieval_ndcg_at_10", retrieval.get("ndcg_at_10"), "nDCG@10 from latest eval run.")
+    _emit("sourcery_retrieval_mrr", retrieval.get("mrr"), "Mean reciprocal rank from latest eval run.")
     latency = payload.get("latency_ms") or {}
-    _emit("citelens_assistant_latency_ms_p50", latency.get("p50"), "Assistant answer latency p50 (ms).")
-    _emit("citelens_assistant_latency_ms_p95", latency.get("p95"), "Assistant answer latency p95 (ms).")
-    _emit("citelens_assistant_latency_ms_p99", latency.get("p99"), "Assistant answer latency p99 (ms).")
+    _emit("sourcery_assistant_latency_ms_p50", latency.get("p50"), "Assistant answer latency p50 (ms).")
+    _emit("sourcery_assistant_latency_ms_p95", latency.get("p95"), "Assistant answer latency p95 (ms).")
+    _emit("sourcery_assistant_latency_ms_p99", latency.get("p99"), "Assistant answer latency p99 (ms).")
 
     body = "\n".join(lines) + "\n" if lines else ""
     return Response(content=body, media_type="text/plain; version=0.0.4; charset=utf-8")

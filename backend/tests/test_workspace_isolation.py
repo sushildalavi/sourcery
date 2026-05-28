@@ -11,11 +11,11 @@ These ARE integration tests — they need a real DB. They run automatically:
 When DATABASE_URL isn't set they skip with a clear message rather than
 failing. To run by hand:
 
-    docker run -d --name citelens-iso-db \\
+    docker run -d --name sourcery-iso-db \\
       -e POSTGRES_USER=scholarrag -e POSTGRES_PASSWORD=scholarrag \\
       -e POSTGRES_DB=scholarrag -p 5433:5432 pgvector/pgvector:pg16
     sleep 5
-    docker exec -i citelens-iso-db psql -U scholarrag -d scholarrag < db/init.sql
+    docker exec -i sourcery-iso-db psql -U scholarrag -d scholarrag < db/init.sql
     DATABASE_URL=postgresql://scholarrag:scholarrag@127.0.0.1:5433/scholarrag \\
       EMBEDDING_PROVIDER=stub OPENAI_API_KEY=test \\
       pytest backend/tests/test_workspace_isolation.py -v

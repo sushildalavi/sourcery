@@ -2,16 +2,16 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "citelens.fullname" . }}
+  name: {{ include "sourcery.fullname" . }}
   labels:
-    {{- include "citelens.labels" . | nindent 4 }}
+    {{- include "sourcery.labels" . | nindent 4 }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls }}
   tls:
     - hosts:
         - {{ .Values.ingress.host }}
-      secretName: {{ include "citelens.fullname" . }}-tls
+      secretName: {{ include "sourcery.fullname" . }}-tls
   {{- end }}
   rules:
     - host: {{ .Values.ingress.host }}
@@ -21,14 +21,14 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "citelens.fullname" . }}-backend
+                name: {{ include "sourcery.fullname" . }}-backend
                 port:
                   number: {{ .Values.backend.service.port }}
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: {{ include "citelens.fullname" . }}-frontend
+                name: {{ include "sourcery.fullname" . }}-frontend
                 port:
                   number: {{ .Values.frontend.service.port }}
 {{- end }}

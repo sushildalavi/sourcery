@@ -1,13 +1,13 @@
-# Default values for the citelens chart.
-# Override with `helm install citelens . -f my-values.yaml`.
+# Default values for the sourcery chart.
+# Override with `helm install sourcery . -f my-values.yaml`.
 
 image:
   backend:
-    repository: ghcr.io/sushildalavi/citelens-backend
+    repository: ghcr.io/sushildalavi/sourcery-backend
     tag: ""              # falls back to .Chart.AppVersion when empty
     pullPolicy: IfNotPresent
   frontend:
-    repository: ghcr.io/sushildalavi/citelens-frontend
+    repository: ghcr.io/sushildalavi/sourcery-frontend
     tag: ""
     pullPolicy: IfNotPresent
 
@@ -33,7 +33,7 @@ backend:
     CONFIDENCE_USE_FITTED_WEIGHTS: "true"
     ENABLE_HSTS: "true"
   # Mounted from a Kubernetes Secret you create out-of-band, not from values.yaml.
-  secretName: citelens-secrets
+  secretName: sourcery-secrets
   livenessProbe:
     httpGet:
       path: /health/live
@@ -79,7 +79,7 @@ postgres:
 ingress:
   enabled: false
   className: nginx
-  host: citelens.example.com
+  host: sourcery.example.com
   tls: true
 
 serviceMonitor:

@@ -170,10 +170,10 @@ jobs:
           version: v3.16.3
 
       - name: helm lint
-        run: helm lint helm/citelens
+        run: helm lint helm/sourcery
 
       - name: helm template (dry render)
-        run: helm template citelens helm/citelens --debug | head -200
+        run: helm template sourcery helm/sourcery --debug | head -200
 
   pyright:
     name: pyright (typecheck)

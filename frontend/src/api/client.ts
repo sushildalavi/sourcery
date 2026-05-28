@@ -17,12 +17,12 @@ export const API_BASE =
   import.meta.env.VITE_API_BASE ||
   'http://127.0.0.1:8000';
 
-const WORKSPACE_STORAGE_KEY = 'citelens-workspace-id';
+const WORKSPACE_STORAGE_KEY = 'sourcery-workspace-id';
 
 /**
  * Resolve the active workspace id for outbound requests, in this order:
  *   1. VITE_WORKSPACE_ID (build-time pin — useful for single-tenant deploys)
- *   2. localStorage[citelens-workspace-id] (set via setWorkspaceId())
+ *   2. localStorage[sourcery-workspace-id] (set via setWorkspaceId())
  * Falls back to undefined, in which case the backend uses "default".
  */
 export function getWorkspaceId(): string | undefined {

@@ -1,23 +1,23 @@
-{{/* Shared template helpers for the citelens chart. */}}
+{{/* Shared template helpers for the sourcery chart. */}}
 
-{{- define "citelens.fullname" -}}
+{{- define "sourcery.fullname" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "citelens.labels" -}}
-app.kubernetes.io/name: {{ include "citelens.fullname" . }}
+{{- define "sourcery.labels" -}}
+app.kubernetes.io/name: {{ include "sourcery.fullname" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 {{- end -}}
 
-{{- define "citelens.backend.image" -}}
+{{- define "sourcery.backend.image" -}}
 {{- $tag := .Values.image.backend.tag | default .Chart.AppVersion -}}
 {{ .Values.image.backend.repository }}:{{ $tag }}
 {{- end -}}
 
-{{- define "citelens.frontend.image" -}}
+{{- define "sourcery.frontend.image" -}}
 {{- $tag := .Values.image.frontend.tag | default .Chart.AppVersion -}}
 {{ .Values.image.frontend.repository }}:{{ $tag }}
 {{- end -}}

@@ -1,4 +1,4 @@
-# Architecture — citelens
+# Architecture — sourcery
 
 This document describes the **why** behind the major design decisions. The
 **what** lives in the [README architecture diagrams](../README.md#architecture).

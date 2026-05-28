@@ -28,12 +28,12 @@ def test_metrics_prom_returns_prometheus_text(monkeypatch):
     body = resp.text
 
     # Spot-check the wire format.
-    assert "# HELP citelens_documents_total" in body
-    assert "# TYPE citelens_documents_total gauge" in body
-    assert "citelens_documents_total 42.0" in body
-    assert "citelens_chunks_total 1337.0" in body
-    assert "citelens_retrieval_recall_at_5 0.99" in body
-    assert "citelens_assistant_latency_ms_p99 1600.0" in body
+    assert "# HELP sourcery_documents_total" in body
+    assert "# TYPE sourcery_documents_total gauge" in body
+    assert "sourcery_documents_total 42.0" in body
+    assert "sourcery_chunks_total 1337.0" in body
+    assert "sourcery_retrieval_recall_at_5 0.99" in body
+    assert "sourcery_assistant_latency_ms_p99 1600.0" in body
 
 
 def test_metrics_prom_skips_missing_values(monkeypatch):
@@ -49,5 +49,5 @@ def test_metrics_prom_skips_missing_values(monkeypatch):
     client = TestClient(app_module.app)
     body = client.get("/metrics/prom").text
 
-    assert "citelens_documents_total" not in body
-    assert "citelens_chunks_total 5.0" in body
+    assert "sourcery_documents_total" not in body
+    assert "sourcery_chunks_total 5.0" in body

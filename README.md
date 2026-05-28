@@ -1,12 +1,12 @@
-# citelens
+# sourcery
 
-<img src="frontend/favicon.svg" width="56" alt="citelens" align="left" hspace="12" />
+<img src="frontend/favicon.svg" width="56" alt="sourcery" align="left" hspace="12" />
 
 A scholarly RAG app I built because I kept getting plausible-but-uncited answers from off-the-shelf chatbots. It does hybrid retrieval over your uploaded PDFs and six live scholarly APIs, then scores every generated claim for whether it's actually supported by the cited evidence.
 
 <br clear="left"/>
 
-[![CI](https://img.shields.io/github/actions/workflow/status/sushildalavi/citelens/ci.yml?branch=main&label=CI&logo=github)](https://github.com/sushildalavi/citelens/actions/workflows/ci.yml) [![Tests](https://img.shields.io/badge/tests-198%20%E2%80%A2%2092%25%20unit-15803d?logo=pytest&logoColor=white)](https://github.com/sushildalavi/citelens/actions) [![Coverage](https://img.shields.io/badge/coverage-50%25-15803d)](.github/workflows/ci.yml) [![Python](https://img.shields.io/badge/python-3.11-1d4ed8?logo=python&logoColor=white)](https://www.python.org/) [![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-15803d?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![React](https://img.shields.io/badge/React-18-1d4ed8?logo=react&logoColor=white)](https://react.dev/) [![pgvector](https://img.shields.io/badge/Postgres%2016-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector) [![License](https://img.shields.io/badge/License-MIT-15803d)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/sushildalavi/sourcery/ci.yml?branch=main&label=CI&logo=github)](https://github.com/sushildalavi/sourcery/actions/workflows/ci.yml) [![Tests](https://img.shields.io/badge/tests-198%20%E2%80%A2%2092%25%20unit-15803d?logo=pytest&logoColor=white)](https://github.com/sushildalavi/sourcery/actions) [![Coverage](https://img.shields.io/badge/coverage-50%25-15803d)](.github/workflows/ci.yml) [![Python](https://img.shields.io/badge/python-3.11-1d4ed8?logo=python&logoColor=white)](https://www.python.org/) [![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-15803d?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![React](https://img.shields.io/badge/React-18-1d4ed8?logo=react&logoColor=white)](https://react.dev/) [![pgvector](https://img.shields.io/badge/Postgres%2016-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector) [![License](https://img.shields.io/badge/License-MIT-15803d)](LICENSE)
 
 [Quick start](#quick-start) · [Architecture](#architecture) · [Benchmarks](#benchmark-results) · [API examples](docs/examples/curl.md) · [Helm chart](helm/README.md) · [Security](SECURITY.md)
 
@@ -499,8 +499,8 @@ dominates the tail; embed/retrieve/rerank stay sub-450 ms even at p99.
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/sushildalavi/citelens.git
-cd citelens
+git clone https://github.com/sushildalavi/sourcery.git
+cd sourcery
 cp .env.example .env
 # fill in OPENAI_API_KEY, DATABASE_URL, OLLAMA_BASE_URL
 ```
@@ -546,7 +546,7 @@ make test
 ## Project Structure
 
 ```
-citelens/
+sourcery/
 ├── backend/
 │   ├── app.py                   # FastAPI app — CORS, routers, startup
 │   ├── pdf_ingest.py            # PDF extraction, chunking, pgvector upsert
@@ -780,7 +780,7 @@ Shipped:
 - [x] **Multi-tenant isolation** — `WorkspaceMiddleware` reads `X-Workspace-Id`, sanitises it, pins it on `request.state`. Every INSERT/SELECT/UPDATE/DELETE on `documents`, `chunks`, `chat_sessions`, `user_memory`, `digests`, and `confidence_calibration` filters by `workspace_id`. `db/init.sql` is canonical (fresh deploys are wired); existing deploys upgrade via `_ensure_workspace_columns()` on FastAPI lifespan startup. Cross-tenant isolation is covered by 7 integration tests in `test_workspace_isolation.py` (run via `make test-isolation`).
 - [x] **Batched embedding upserts** — verified the existing path: cache lookup → batched OpenAI / parallel Ollama → bulk `execute_values` insert into both `chunks` and `chunk_embeddings`. A 50-chunk PDF is one OpenAI call + one cache insert + one upsert per table.
 - [x] **Prometheus exposition** — `GET /metrics/prom` returns text/plain in standard Prometheus format. Helm chart includes an optional `ServiceMonitor` if you run Prometheus Operator.
-- [x] **Helm chart** — `helm/citelens/` with backend + frontend Deployments, Postgres StatefulSet, optional Ingress + ServiceMonitor. Wired to the k8s-style `/health/live` + `/health/ready` probes.
+- [x] **Helm chart** — `helm/sourcery/` with backend + frontend Deployments, Postgres StatefulSet, optional Ingress + ServiceMonitor. Wired to the k8s-style `/health/live` + `/health/ready` probes.
 - [x] **Per-tenant calibration** — `_load_latest_calibration_weights(workspace_id=...)` looks up tenant-specific MSA weights in the calibration table and falls back gracefully (tenant→global→default).
 
 Still open:

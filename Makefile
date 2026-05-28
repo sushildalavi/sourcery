@@ -38,15 +38,15 @@ test-coverage:
 # on port 5433 (so it doesn't fight whatever's already on 5432). Idempotent —
 # safe to re-run; the container is recreated each time.
 test-isolation:
-	@echo "→ tearing down any previous citelens-iso-db"
-	@docker rm -f citelens-iso-db 2>/dev/null || true
+	@echo "→ tearing down any previous sourcery-iso-db"
+	@docker rm -f sourcery-iso-db 2>/dev/null || true
 	@echo "→ booting pgvector on :5433"
-	@docker run -d --name citelens-iso-db \
+	@docker run -d --name sourcery-iso-db \
 		-e POSTGRES_USER=scholarrag -e POSTGRES_PASSWORD=scholarrag \
 		-e POSTGRES_DB=scholarrag -p 5433:5432 \
 		pgvector/pgvector:pg16 >/dev/null
 	@sleep 6
-	@docker exec -i citelens-iso-db psql -U scholarrag -d scholarrag < db/init.sql >/dev/null
+	@docker exec -i sourcery-iso-db psql -U scholarrag -d scholarrag < db/init.sql >/dev/null
 	@echo "→ running isolation tests"
 	@DATABASE_URL=postgresql://scholarrag:scholarrag@127.0.0.1:5433/scholarrag \
 		PGHOST=127.0.0.1 PGPORT=5433 PGUSER=scholarrag PGPASSWORD=scholarrag PGDATABASE=scholarrag \
@@ -54,7 +54,7 @@ test-isolation:
 		$(PYTEST) backend/tests/test_workspace_isolation.py -v --tb=short ; \
 		EXITCODE=$$? ; \
 		echo "→ tearing down" ; \
-		docker rm -f citelens-iso-db >/dev/null 2>&1 || true ; \
+		docker rm -f sourcery-iso-db >/dev/null 2>&1 || true ; \
 		exit $$EXITCODE
 
 # ── Lint ──────────────────────────────────────────────────────────────────────

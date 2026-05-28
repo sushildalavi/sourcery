@@ -1,12 +1,12 @@
 apiVersion: v2
-name: citelens
+name: sourcery
 description: Calibrated retrieval-augmented generation for scientific literature.
 type: application
 version: 0.1.0
 appVersion: "1.0"
-home: https://github.com/sushildalavi/citelens
+home: https://github.com/sushildalavi/sourcery
 sources:
-  - https://github.com/sushildalavi/citelens
+  - https://github.com/sushildalavi/sourcery
 keywords:
   - rag
   - retrieval-augmented-generation

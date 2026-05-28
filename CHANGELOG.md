@@ -33,7 +33,7 @@ roughly tracks [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Frontend fast-refresh warning by splitting `useDefaultPaletteActions` into its own file.
-- README pointed at the wrong GitHub repo slug (`Final-Project-ScholarRAG` → `citelens`).
+- README pointed at the wrong GitHub repo slug (`Final-Project-ScholarRAG` → `sourcery`).
 
 ## [0.1.0] — initial commit history
 

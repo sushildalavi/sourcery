@@ -1,23 +1,23 @@
 # Helm chart
 
-Deploy citelens to Kubernetes.
+Deploy sourcery to Kubernetes.
 
 ```bash
 # 1. create the secret with your real values (NEVER commit it)
-kubectl create secret generic citelens-secrets \
+kubectl create secret generic sourcery-secrets \
   --from-literal=OPENAI_API_KEY=sk-... \
   --from-literal=PGPASSWORD=$(openssl rand -hex 24) \
-  --from-literal=DATABASE_URL=postgresql://scholarrag:<the-password>@citelens-db:5432/scholarrag
+  --from-literal=DATABASE_URL=postgresql://scholarrag:<the-password>@sourcery-db:5432/scholarrag
 
 # 2. install
-helm install citelens ./helm/citelens
+helm install sourcery ./helm/sourcery
 
 # 3. apply schema (one-shot, after pods are healthy)
-kubectl exec -it citelens-db-0 -- psql -U scholarrag -d scholarrag \
+kubectl exec -it sourcery-db-0 -- psql -U scholarrag -d scholarrag \
   -f - < db/init.sql
 
 # 4. for the multi-tenant migration
-kubectl exec -it citelens-db-0 -- psql -U scholarrag -d scholarrag \
+kubectl exec -it sourcery-db-0 -- psql -U scholarrag -d scholarrag \
   -f - < db/migrations/002_workspace_isolation.sql
 ```
 
