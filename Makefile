@@ -1,6 +1,7 @@
 .PHONY: test lint lint-fix format format-check typecheck run run-frontend install install-dev clean help \
         compose-up compose-down compose-logs compose-rebuild stack-up stack-down \
-        health frontend-build frontend-lint frontend-typecheck pre-commit-install ci-local
+        health frontend-build frontend-lint frontend-typecheck pre-commit-install ci-local \
+        agent-eval
 
 # ── Environment ───────────────────────────────────────────────────────────────
 PYTHON  := python3
@@ -150,6 +151,9 @@ eval:
 		--k 10 \
 		--output Evaluation/data/retrieval_run_$(shell date +%Y%m%d).json
 
+agent-eval:
+	$(PYTHONPATH_ENV) $(PYTHON) scripts/eval_agentic_rag.py
+
 # ── Calibration pipeline (full reproduction in 6 steps) ─────────────────────
 #
 # 1. make ingest-corpus      — pull the 15 PDFs into the documents table
@@ -227,3 +231,4 @@ help:
 	@echo "    make compute-iaa       Pairwise Cohen's kappa + majority-vote gold labels"
 	@echo "    make extract-features  Compute M / S / A per gold pair"
 	@echo "    make fit-calibration   Fit unified logistic + ablation + DB write"
+	@echo "    make agent-eval        Run the agentic RAG smoke evaluation"

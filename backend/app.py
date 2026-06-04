@@ -18,6 +18,7 @@ from fastapi.responses import Response
 from openai import OpenAI
 
 from backend import agents, auth, chat, memory, pdf_ingest
+from backend.agentic.routes import router as agentic_router
 from backend.confidence import build_confidence, score_percent
 from backend.eval_metrics import aggregate_metrics
 from backend.intent_resolver import is_offtopic_by_intent, resolve_query_intent
@@ -168,6 +169,7 @@ app.add_middleware(RequestIDMiddleware)
 app.include_router(auth.router)
 app.include_router(memory.router)
 app.include_router(agents.router)
+app.include_router(agentic_router)
 app.include_router(pdf_ingest.router)
 app.include_router(chat.router)
 

@@ -4,6 +4,8 @@ import {
   DocumentRow,
   EvalCase,
   EvalRunResponse,
+  AgentResearchRequest,
+  AgentResearchResponse,
   JudgeRunPayload,
   JudgeRunResponse,
   JudgeRunSummary,
@@ -117,6 +119,13 @@ export const api = {
     run_judge_llm?: boolean;
   }): Promise<AnswerResponse> {
     return jsonRequest('/assistant/answer', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async runAgentResearch(payload: AgentResearchRequest): Promise<AgentResearchResponse> {
+    return jsonRequest('/agent/research', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

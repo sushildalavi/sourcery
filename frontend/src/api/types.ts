@@ -213,6 +213,56 @@ export type AskAssistantPayload = {
   run_judge_llm?: boolean;
 };
 
+export type AgentResearchRequest = {
+  query: string;
+  scope?: 'uploaded' | 'public' | 'both';
+  doc_id?: number | null;
+  doc_ids?: number[];
+  limit?: number;
+  use_llm?: boolean;
+  allow_general_background?: boolean;
+  trace_id?: string | null;
+};
+
+export type AgentResearchEvidence = {
+  source_id: string;
+  title: string;
+  snippet: string;
+  url?: string | null;
+  score: number;
+  citation?: string | null;
+  source: string;
+  doc_id?: number | null;
+  chunk_id?: number | null;
+  page?: number | null;
+  metadata?: Record<string, unknown>;
+};
+
+export type AgentResearchResponse = {
+  trace_id?: string | null;
+  workspace_id?: string | null;
+  plan?: {
+    query: string;
+    intent: string;
+    source_strategy: string;
+    required_evidence_count: number;
+    require_citations: boolean;
+    risk_notes: string[];
+    allow_general_background: boolean;
+    scope_hint: string;
+    doc_id?: number | null;
+    doc_ids?: number[];
+  } | null;
+  answer: string;
+  citations: string[];
+  confidence: number;
+  unsupported_claims: string[];
+  needs_human_review: boolean;
+  evidence: AgentResearchEvidence[];
+  judge_report?: Record<string, unknown> | null;
+  retrieval_metadata?: Record<string, unknown> | null;
+};
+
 export type JudgeCasePayload = {
   query: string;
   answer?: string;

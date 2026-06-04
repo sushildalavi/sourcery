@@ -23,7 +23,7 @@ A few things that make it different from "throw the PDF at GPT and pray":
 
 ## Where it stands today
 
-- 198 backend tests (191 unit + 7 cross-tenant integration that need a live DB; both run in CI), coverage 50%, ruff + format clean.
+- 206 backend tests (199 unit + 7 cross-tenant integration that need a live DB; both run in CI), coverage 50%, ruff + format clean.
 - 32 typed FastAPI routes (try `/docs` after booting).
 - Frontend: TypeScript strict, ESLint zero warnings, ~78 KB initial JS (gzipped ~22 KB) after lazy-loading the analytics route.
 - Security headers + tenant-scoped middleware on every response. CI runs Trivy + gitleaks + SBOM on every push.
@@ -554,6 +554,7 @@ sourcery/
 │   ├── confidence.py            # M/S/A logistic confidence model
 │   ├── eval_metrics.py          # Recall@K, MRR, nDCG — pure functions
 │   ├── sense_resolver.py        # Query WSD before generation
+│   ├── agentic/                 # Agentic RAG workflow + MCP tools
 │   ├── services/
 │   │   ├── embeddings.py        # Centralized Ollama embedding contract
 │   │   ├── db.py                # DB connection helpers
@@ -571,12 +572,15 @@ sourcery/
 │   │   ├── semanticscholar_utils.py  # Semantic Scholar API client
 │   │   ├── springer_utils.py    # Springer API client
 │   │   └── embedding_utils.py   # Embedding helper functions
-│   └── tests/                   # pytest test suite (12 modules)
+│   └── tests/                   # pytest test suite
 ├── frontend/
 │   └── src/
 │       ├── App.tsx              # Main React app with all UI state
 │       ├── components/ui/       # Prompt input box, shared UI primitives
 │       └── api/                 # HTTP client + TypeScript types
+├── docs/
+│   ├── AGENTIC_RAG.md           # Agentic RAG workflow and API reference
+│   └── MCP_SERVER.md            # MCP tool surface and safety notes
 ├── db/
 │   ├── init.sql                 # PostgreSQL + pgvector schema
 │   └── migrations/              # Schema migrations
@@ -589,6 +593,7 @@ sourcery/
 │   └── fit_unified_calibration.py   # Fit logistic + ablation + write DB row
 ├── scripts/
 │   ├── eval_retrieval.py            # Retrieval metrics harness
+│   ├── eval_agentic_rag.py          # Agentic workflow evaluation harness
 │   └── reindex_embeddings.py        # Re-embed chunks after model change
 ├── Evaluation/
 │   ├── papers/                      # 15-paper corpus (PDFs gitignored)
@@ -730,7 +735,7 @@ Every response carries `X-Request-ID` (echoed if the caller sent one, freshly mi
 
 | Gate | Command | Status |
 |---|---|---|
-| Backend tests | `make test` | **198 collected · 191 unit pass · 7 isolation skip without DB** |
+| Backend tests | `make test` | **206 collected · 199 unit pass · 7 isolation skip without DB** |
 | Isolation tests | `make test-isolation` | spins pgvector container, runs cross-tenant suite |
 | Coverage | `make test` (gate 45%) | **48%** |
 | Backend lint + format | `make lint && ruff format --check` | clean |
@@ -762,6 +767,8 @@ Initial bundle: **~78 KB gzipped** (down from 236 KB before splitting). The `/an
 |---|---|
 | [README.md](README.md) | Overview, benchmarks, quick start. |
 | [docs/architecture.md](docs/architecture.md) | Layered architecture, design decisions, code map. |
+| [docs/AGENTIC_RAG.md](docs/AGENTIC_RAG.md) | Agentic workflow, API contract, guardrails, traces. |
+| [docs/MCP_SERVER.md](docs/MCP_SERVER.md) | MCP tool surface and server startup. |
 | [docs/adr/](docs/adr/) | Architecture Decision Records (MADR format). |
 | [docs/examples/curl.md](docs/examples/curl.md) | Curl recipes for every public endpoint. |
 | [Evaluation/README.md](Evaluation/README.md) | Calibration pipeline, gold set construction, IAA. |
@@ -776,6 +783,7 @@ The big-ticket items I had originally lined up for 2.0 are now done. Keeping the
 Shipped:
 
 - [x] **Reranker stage** — lexical cross-scorer over the top-K (token + bigram overlap, exact-phrase bonus, title-position weighting). Pluggable so a real cross-encoder can drop in later. See [`backend/services/reranker.py`](backend/services/reranker.py).
+- [x] **Agentic RAG workflow** — a LangGraph-compatible planner/retriever/verifier pipeline plus MCP-exposed retrieval/evaluation tools. See [`backend/agentic/`](backend/agentic/) and [`docs/AGENTIC_RAG.md`](docs/AGENTIC_RAG.md).
 - [x] **SSE response framing** — `POST /assistant/answer/stream` returns Server-Sent Events (`meta` → `token` × N → `done`) so the UI can render sources before the answer text appears. Honest caveat: the retrieval + LLM still complete before the first byte; the SSE wire just chunks the settled answer. True token-level streaming (LLM `stream=True` end-to-end) is in the open list below.
 - [x] **Multi-tenant isolation** — `WorkspaceMiddleware` reads `X-Workspace-Id`, sanitises it, pins it on `request.state`. Every INSERT/SELECT/UPDATE/DELETE on `documents`, `chunks`, `chat_sessions`, `user_memory`, `digests`, and `confidence_calibration` filters by `workspace_id`. `db/init.sql` is canonical (fresh deploys are wired); existing deploys upgrade via `_ensure_workspace_columns()` on FastAPI lifespan startup. Cross-tenant isolation is covered by 7 integration tests in `test_workspace_isolation.py` (run via `make test-isolation`).
 - [x] **Batched embedding upserts** — verified the existing path: cache lookup → batched OpenAI / parallel Ollama → bulk `execute_values` insert into both `chunks` and `chunk_embeddings`. A 50-chunk PDF is one OpenAI call + one cache insert + one upsert per table.
@@ -797,7 +805,7 @@ make compose-up           # postgres + adminer
 cp backend/.env.example backend/.env
 
 make lint                 # ruff
-make test                 # pytest (~3s, 191 unit + 7 isolation skip without DB)
+make test                 # pytest (~3s, 199 unit + 7 isolation skip without DB)
 make test-isolation       # spin up pgvector container + run cross-tenant tests
 make frontend-typecheck   # tsc --noEmit
 make frontend-lint        # eslint, 0 warnings

@@ -9,3 +9,5 @@ pypdf>=4.0,<6.0
 python-multipart>=0.0.26,<1.0
 numpy>=2.4,<3.0
 google-auth>=2.49,<3.0
+langgraph>=0.2,<1.0
+mcp>=1.2,<2.0

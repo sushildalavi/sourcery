@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sparkles, Library, Globe, ChartBar, X } from 'lucide-react';
+import { Sparkles, Library, Globe, ChartBar, Bot, X } from 'lucide-react';
 import type { ComponentType, SVGProps } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { cn } from '../../lib/cn';
@@ -15,6 +15,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Uploaded', Icon: Library, hint: 'Your docs' },
   { to: '/public', label: 'Public', Icon: Globe, hint: 'Open literature' },
+  { to: '/agent', label: 'Agentic', Icon: Bot, hint: 'Planner + verifier' },
   { to: '/analytics', label: 'Analytics', Icon: ChartBar, hint: 'Eval metrics' },
 ];
 

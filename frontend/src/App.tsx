@@ -9,6 +9,7 @@ import PublicChat from './routes/PublicChat';
 // Analytics is the heaviest route (charts) — defer it so the chat shell
 // hydrates fast on first paint.
 const Analytics = lazy(() => import('./routes/Analytics'));
+const AgenticResearch = lazy(() => import('./routes/AgenticResearch'));
 
 export default function App() {
   return (
@@ -17,6 +18,14 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<UploadedChat />} />
           <Route path="/public" element={<PublicChat />} />
+          <Route
+            path="/agent"
+            element={
+              <Suspense fallback={<RouteFallback label="Loading agentic research" />}>
+                <AgenticResearch />
+              </Suspense>
+            }
+          />
           <Route
             path="/analytics"
             element={

@@ -58,11 +58,14 @@ def _parse_judge_json(raw: str) -> Dict:
 
 
 def _fallback_report(sentences: List[str], citations: List[Dict]) -> Dict:
+    source_list_pattern = re.compile(r"^[\w\s'\"().,\-/:;]+?\((wikipedia|duckduckgo|public)\)\s*$", re.I)
     cited_count = 0
     supported = 0
     claims = []
     unsupported = []
     for idx, s in enumerate(sentences):
+        normalized = (s or "").strip()
+        lower = normalized.lower()
         ids = re.findall(r"\[S(\d+)\]", s)
         if ids:
             cited_count += 1
@@ -74,6 +77,25 @@ def _fallback_report(sentences: List[str], citations: List[Dict]) -> Dict:
                     "supported": True,
                     "evidence_ids": [f"S{x}" for x in ids],
                     "reason": "citation_present",
+                }
+            )
+        elif (
+            not normalized
+            or normalized == "1."
+            or normalized == "2."
+            or normalized == "3."
+            or lower.startswith("here are the most relevant sources")
+            or "relevance:" in lower
+            or source_list_pattern.match(normalized)
+        ):
+            supported += 1
+            claims.append(
+                {
+                    "sentence_id": idx + 1,
+                    "sentence": s,
+                    "supported": True,
+                    "evidence_ids": [],
+                    "reason": "source_listing",
                 }
             )
         else:

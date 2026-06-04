@@ -54,3 +54,4 @@ temp/
 # build / packaging artifacts
 *.tar.gz
 *.zip
+artifacts/
