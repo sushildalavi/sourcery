@@ -2,9 +2,6 @@
 
 <img src="frontend/favicon.svg" width="56" alt="sourcery" align="left" hspace="12" />
 
-A scholarly RAG app I built because I kept getting plausible-but-uncited answers from off-the-shelf chatbots. It does hybrid retrieval over your uploaded PDFs and six live scholarly APIs, then scores every generated claim for whether it's actually supported by the cited evidence.
-
-<br clear="left"/>
 
 [![CI](https://img.shields.io/github/actions/workflow/status/sushildalavi/sourcery/ci.yml?branch=main&label=CI&logo=github)](https://github.com/sushildalavi/sourcery/actions/workflows/ci.yml) [![Tests](https://img.shields.io/badge/tests-198%20%E2%80%A2%2092%25%20unit-15803d?logo=pytest&logoColor=white)](https://github.com/sushildalavi/sourcery/actions) [![Coverage](https://img.shields.io/badge/coverage-50%25-15803d)](.github/workflows/ci.yml) [![Python](https://img.shields.io/badge/python-3.11-1d4ed8?logo=python&logoColor=white)](https://www.python.org/) [![FastAPI](https://img.shields.io/badge/FastAPI-0.135+-15803d?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) [![React](https://img.shields.io/badge/React-18-1d4ed8?logo=react&logoColor=white)](https://react.dev/) [![pgvector](https://img.shields.io/badge/Postgres%2016-pgvector-336791?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector) [![License](https://img.shields.io/badge/License-MIT-15803d)](LICENSE)
 
@@ -23,7 +20,7 @@ A few things that make it different from "throw the PDF at GPT and pray":
 
 ## Where it stands today
 
-- 206 backend tests (199 unit + 7 cross-tenant integration that need a live DB; both run in CI), coverage 50%, ruff + format clean.
+- 208 backend tests (202 unit + 6 cross-tenant integration that need a live DB; both run in CI), coverage 50%, ruff + format clean.
 - 32 typed FastAPI routes (try `/docs` after booting).
 - Frontend: TypeScript strict, ESLint zero warnings, ~78 KB initial JS (gzipped ~22 KB) after lazy-loading the analytics route.
 - Security headers + tenant-scoped middleware on every response. CI runs Trivy + gitleaks + SBOM on every push.
@@ -783,7 +780,7 @@ The big-ticket items I had originally lined up for 2.0 are now done. Keeping the
 Shipped:
 
 - [x] **Reranker stage** — lexical cross-scorer over the top-K (token + bigram overlap, exact-phrase bonus, title-position weighting). Pluggable so a real cross-encoder can drop in later. See [`backend/services/reranker.py`](backend/services/reranker.py).
-- [x] **Agentic RAG workflow** — a LangGraph-compatible planner/retriever/verifier pipeline plus MCP-exposed retrieval/evaluation tools. See [`backend/agentic/`](backend/agentic/) and [`docs/AGENTIC_RAG.md`](docs/AGENTIC_RAG.md).
+- [x] **Agentic RAG workflow** — a LangGraph-compatible planner/retriever/verifier pipeline plus MCP-exposed retrieval/evaluation and read-only Postgres tools. See [`backend/agentic/`](backend/agentic/) and [`docs/AGENTIC_RAG.md`](docs/AGENTIC_RAG.md).
 - [x] **SSE response framing** — `POST /assistant/answer/stream` returns Server-Sent Events (`meta` → `token` × N → `done`) so the UI can render sources before the answer text appears. Honest caveat: the retrieval + LLM still complete before the first byte; the SSE wire just chunks the settled answer. True token-level streaming (LLM `stream=True` end-to-end) is in the open list below.
 - [x] **Multi-tenant isolation** — `WorkspaceMiddleware` reads `X-Workspace-Id`, sanitises it, pins it on `request.state`. Every INSERT/SELECT/UPDATE/DELETE on `documents`, `chunks`, `chat_sessions`, `user_memory`, `digests`, and `confidence_calibration` filters by `workspace_id`. `db/init.sql` is canonical (fresh deploys are wired); existing deploys upgrade via `_ensure_workspace_columns()` on FastAPI lifespan startup. Cross-tenant isolation is covered by 7 integration tests in `test_workspace_isolation.py` (run via `make test-isolation`).
 - [x] **Batched embedding upserts** — verified the existing path: cache lookup → batched OpenAI / parallel Ollama → bulk `execute_values` insert into both `chunks` and `chunk_embeddings`. A 50-chunk PDF is one OpenAI call + one cache insert + one upsert per table.
