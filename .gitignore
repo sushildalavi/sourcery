@@ -56,3 +56,4 @@ temp/
 *.zip
 artifacts/
 .claude/
+Evaluation/papers/*.pdf
