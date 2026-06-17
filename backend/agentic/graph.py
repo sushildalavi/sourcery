@@ -108,9 +108,7 @@ def _generate_answer(
     scope = "public" if any(item.source != "uploaded" for item in evidence) else "uploaded"
     context, _ = _build_context(evidence)
     if not evidence:
-        return (
-            "I do not have enough reliable evidence to answer this confidently."
-        )
+        return "I do not have enough reliable evidence to answer this confidently."
 
     if use_llm and _use_llm():
         try:
@@ -128,34 +126,42 @@ def _generate_answer(
             answer = (completion.choices[0].message.content or "").strip()
             if answer:
                 answer = _normalize_inline_citations(answer)
-                answer, _hedged = _rewrite_ungrounded_claims(answer, [
-                    {
-                        "id": idx,
-                        "source": item.source,
-                        "title": item.title,
-                        "snippet": item.snippet,
-                        "doc_id": item.doc_id,
-                        "chunk_id": item.chunk_id,
-                        "page": item.page,
-                    }
-                    for idx, item in enumerate(evidence, start=1)
-                ])
+                answer, _hedged = _rewrite_ungrounded_claims(
+                    answer,
+                    [
+                        {
+                            "id": idx,
+                            "source": item.source,
+                            "title": item.title,
+                            "snippet": item.snippet,
+                            "doc_id": item.doc_id,
+                            "chunk_id": item.chunk_id,
+                            "page": item.page,
+                        }
+                        for idx, item in enumerate(evidence, start=1)
+                    ],
+                )
                 return answer
         except Exception:
             pass
 
-    return _build_strict_grounded_answer(query, [
-        {
-            "id": idx,
-            "source": item.source,
-            "title": item.title,
-            "snippet": item.snippet,
-            "doc_id": item.doc_id,
-            "chunk_id": item.chunk_id,
-            "page": item.page,
-        }
-        for idx, item in enumerate(evidence, start=1)
-    ], scope, answer_mode)
+    return _build_strict_grounded_answer(
+        query,
+        [
+            {
+                "id": idx,
+                "source": item.source,
+                "title": item.title,
+                "snippet": item.snippet,
+                "doc_id": item.doc_id,
+                "chunk_id": item.chunk_id,
+                "page": item.page,
+            }
+            for idx, item in enumerate(evidence, start=1)
+        ],
+        scope,
+        answer_mode,
+    )
 
 
 def _plan_retrieval(state: ResearchAgentState) -> ResearchAgentState:
@@ -302,9 +308,7 @@ def _verify_answer(state: ResearchAgentState) -> ResearchAgentState:
         citations=draft.citations,
         confidence=report["confidence"],
         unsupported_claims=report["unsupported_claims"],
-        needs_human_review=should_require_human_review(
-            report["confidence"], report["unsupported_claims"]
-        ),
+        needs_human_review=should_require_human_review(report["confidence"], report["unsupported_claims"]),
     )
     write_trace(
         trace_id,
@@ -323,10 +327,7 @@ def _human_review(state: ResearchAgentState) -> ResearchAgentState:
     final = state["final_answer"]
     safe_answer = final.answer
     if final.unsupported_claims or final.confidence < 0.70:
-        safe_answer = (
-            "I do not have enough reliable evidence to answer this confidently. "
-            "Human review is recommended."
-        )
+        safe_answer = "I do not have enough reliable evidence to answer this confidently. Human review is recommended."
     updated = final.model_copy(
         update={
             "answer": safe_answer,

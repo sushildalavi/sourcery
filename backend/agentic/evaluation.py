@@ -21,9 +21,7 @@ def run_agent_eval(cases: Iterable[EvalCase], *, scope: str = "public") -> dict:
     for case in cases:
         output = agent.invoke({"query": case.query, "scope": scope, "limit": 6, "use_llm": False})
         final = output["final_answer"]
-        evidence_text = " ".join(
-            f"{item.title} {item.snippet}" for item in output.get("reranked_evidence", [])
-        ).lower()
+        evidence_text = " ".join(f"{item.title} {item.snippet}" for item in output.get("reranked_evidence", [])).lower()
         citation_hit = case.expected_citation_keyword.lower() in evidence_text
         confidence_ok = float(final.confidence) >= float(case.min_confidence)
         no_unsupported = len(final.unsupported_claims) == 0

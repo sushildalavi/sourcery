@@ -13,4 +13,3 @@ def test_rerank_limits_results():
     out = rerank_evidence("dense retrieval", items, limit=1)
     assert len(out) == 1
     assert out[0].title == "B"
-

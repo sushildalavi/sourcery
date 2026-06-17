@@ -53,4 +53,3 @@ class AgentAnswer(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     unsupported_claims: list[str] = Field(default_factory=list)
     needs_human_review: bool = False
-

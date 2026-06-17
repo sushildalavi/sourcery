@@ -15,4 +15,3 @@ def should_require_human_review(confidence: float, unsupported_claims: List[str]
 
 def redact_sensitive_text(text: str) -> str:
     return (text or "").replace("@", "[at]")
-

@@ -23,4 +23,3 @@ def test_low_confidence_requires_human_review():
 
 def test_unsupported_claim_requires_human_review():
     assert should_require_human_review(0.9, ["unsupported claim"])
-
