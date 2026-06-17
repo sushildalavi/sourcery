@@ -55,3 +55,4 @@ temp/
 *.tar.gz
 *.zip
 artifacts/
+.claude/
