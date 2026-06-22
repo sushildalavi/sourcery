@@ -116,7 +116,7 @@ export default function Analytics() {
               Analytics
             </div>
             <h1 className="font-display text-4xl italic tracking-tight text-zinc-900 dark:text-zinc-50">
-              Evaluation metrics
+              evaluation metrics
             </h1>
             <p className="max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">
               Read-only view of the latest retrieval, judge, and calibration results recorded in the backend.

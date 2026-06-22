@@ -31,7 +31,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 import backend.app as app_module
 
-QUERIES_PATH = Path("Evaluation/queries/queries_120.json")
+QUERIES_PATH = Path("evaluation/queries/queries_120.json")
 OUT_DIR = Path("/Users/sushildalavi/Desktop/HUMAN EVAL")
 
 CODERS = ["A", "B", "C"]
@@ -516,7 +516,7 @@ def write_codebook(path: Path, coder: str, pairs: List[Dict]) -> None:
 
 def main() -> int:
     t0 = time.time()
-    pairs_path = Path("Evaluation/queries/claim_evidence_pairs.json")
+    pairs_path = Path("evaluation/queries/claim_evidence_pairs.json")
     include_public = os.getenv("CODEBOOK_INCLUDE_PUBLIC", "false").strip().lower() in {"1", "true", "yes"}
     # Default 120s per-call timeout — public-mode queries hit external APIs
     # (arXiv, OpenAlex, Semantic Scholar, CrossRef) which can take 30-60s per

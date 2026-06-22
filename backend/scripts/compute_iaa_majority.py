@@ -1,9 +1,9 @@
 """Compute inter-annotator agreement + majority-vote resolve human labels.
 
 Reads the three filled codebooks from Downloads/, writes:
-    - Evaluation/data/calibration/iaa_report.json         (pairwise kappa + overall)
-    - Evaluation/data/calibration/gold_labels.xlsx        (majority-vote resolved)
-    - Evaluation/data/calibration/label_distribution.json (aggregate stats)
+    - evaluation/data/calibration/iaa_report.json         (pairwise kappa + overall)
+    - evaluation/data/calibration/gold_labels.xlsx        (majority-vote resolved)
+    - evaluation/data/calibration/label_distribution.json (aggregate stats)
 
 Usage:
     python -m backend.scripts.compute_iaa_majority
@@ -48,14 +48,14 @@ def _write_xlsx(path: Path, fields: List[str], rows: Iterable[Mapping], sheet_na
     wb.save(path)
 
 
-_WORKBOOKS_DIR = Path("Evaluation/data/calibration/coder_workbooks")
+_WORKBOOKS_DIR = Path("evaluation/data/calibration/coder_workbooks")
 INPUTS = {
     "A": str(_WORKBOOKS_DIR / "coder_A.xlsx"),
     "B": str(_WORKBOOKS_DIR / "coder_B.xlsx"),
     "C": str(_WORKBOOKS_DIR / "coder_C.xlsx"),
 }
 
-OUT_DIR = Path("Evaluation/data/calibration")
+OUT_DIR = Path("evaluation/data/calibration")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 

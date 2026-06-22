@@ -1,7 +1,7 @@
 """Compute M/S/A features for each gold-labeled claim-evidence pair.
 
-Reads:  Evaluation/data/calibration/gold_labels.xlsx
-Writes: Evaluation/data/calibration/features.xlsx   (claim_id + gold_label + M + S + A + mode)
+Reads:  evaluation/data/calibration/gold_labels.xlsx
+Writes: evaluation/data/calibration/features.xlsx   (claim_id + gold_label + M + S + A + mode)
 
 Feature definitions (match production code in backend/services/assistant_utils.py):
   - M = NLI support probability (entailment + 0.3 * neutral) via support_prob(claim, evidence)
@@ -34,8 +34,8 @@ from backend.services.assistant_utils import (  # noqa: E402
 )
 from backend.services.nli import support_prob  # noqa: E402
 
-GOLD_PATH = Path("Evaluation/data/calibration/gold_labels.xlsx")
-OUT_PATH = Path("Evaluation/data/calibration/features.xlsx")
+GOLD_PATH = Path("evaluation/data/calibration/gold_labels.xlsx")
+OUT_PATH = Path("evaluation/data/calibration/features.xlsx")
 
 
 def _tokens(text: str) -> set[str]:
@@ -89,7 +89,7 @@ def _load_query_lookup() -> dict:
 
 def _load_target_doc_map() -> dict:
     """Map query_id → target_doc_id from queries_120.json."""
-    qpath = Path("Evaluation/queries/queries_120.json")
+    qpath = Path("evaluation/queries/queries_120.json")
     if not qpath.exists():
         return {}
     qd = json.loads(qpath.read_text())

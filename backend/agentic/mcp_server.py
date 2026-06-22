@@ -2,9 +2,51 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from backend.services.db import fetchall, fetchone
 
-from .tools import judge_answer_support, rerank_evidence, search_scholarly_sources, search_uploaded_docs
+def _tools_module():
+    from . import tools as tools_module
+
+    return tools_module
+
+
+def _fetchone(query: str, params: list[Any] | None = None):
+    from backend.services.db import fetchone
+
+    return fetchone(query, params)
+
+
+def _fetchall(query: str, params: list[Any] | None = None):
+    from backend.services.db import fetchall
+
+    return fetchall(query, params)
+
+
+def _search_documents_proxy(*args: Any, **kwargs: Any):
+    return _tools_module().search_documents(*args, **kwargs)
+
+
+def _retrieve_passages_proxy(*args: Any, **kwargs: Any):
+    return _tools_module().retrieve_passages(*args, **kwargs)
+
+
+def _search_uploaded_docs_proxy(*args: Any, **kwargs: Any):
+    return _tools_module().search_uploaded_docs(*args, **kwargs)
+
+
+def _search_scholarly_sources_proxy(*args: Any, **kwargs: Any):
+    return _tools_module().search_scholarly_sources(*args, **kwargs)
+
+
+def _rerank_evidence_proxy(*args: Any, **kwargs: Any):
+    return _tools_module().rerank_evidence(*args, **kwargs)
+
+
+def _judge_answer_support_proxy(*args: Any, **kwargs: Any):
+    return _tools_module().judge_answer_support(*args, **kwargs)
+
+
+def _score_citation_quality_proxy(*args: Any, **kwargs: Any):
+    return _tools_module().score_citation_quality(*args, **kwargs)
 
 
 def _require_workspace(workspace_id: str | None) -> str:
@@ -14,7 +56,7 @@ def _require_workspace(workspace_id: str | None) -> str:
 
 def _document_metadata(document_id: int, workspace_id: str = "default") -> dict[str, Any]:
     ws = _require_workspace(workspace_id)
-    row = fetchone(
+    row = _fetchone(
         """
         SELECT
             d.id,
@@ -51,7 +93,7 @@ def _document_metadata(document_id: int, workspace_id: str = "default") -> dict[
 
 def _recent_documents(workspace_id: str = "default", limit: int = 10) -> list[dict[str, Any]]:
     ws = _require_workspace(workspace_id)
-    rows = fetchall(
+    rows = _fetchall(
         """
         SELECT id, title, doc_type, status, pages, bytes, created_at
         FROM documents
@@ -65,7 +107,7 @@ def _recent_documents(workspace_id: str = "default", limit: int = 10) -> list[di
 
 
 def _recent_eval_runs(limit: int = 10) -> list[dict[str, Any]]:
-    rows = fetchall(
+    rows = _fetchall(
         """
         SELECT id, name, scope, k, case_count, metrics_retrieval_only, metrics_retrieval_rerank, latency_breakdown, created_at
         FROM eval_runs
@@ -78,7 +120,7 @@ def _recent_eval_runs(limit: int = 10) -> list[dict[str, Any]]:
 
 
 def _recent_judge_runs(limit: int = 10) -> list[dict[str, Any]]:
-    rows = fetchall(
+    rows = _fetchall(
         """
         SELECT id, scope, query_count, metrics, details, created_at
         FROM evaluation_judge_runs
@@ -92,7 +134,7 @@ def _recent_judge_runs(limit: int = 10) -> list[dict[str, Any]]:
 
 def _latest_calibration(label: str = "unified", workspace_id: str = "default") -> dict[str, Any]:
     ws = _require_workspace(workspace_id)
-    row = fetchone(
+    row = _fetchone(
         """
         SELECT id, model_name, label, weights, metrics, dataset_size, created_at
         FROM confidence_calibration
@@ -103,7 +145,7 @@ def _latest_calibration(label: str = "unified", workspace_id: str = "default") -
         [label, ws],
     )
     if not row and ws != "default":
-        row = fetchone(
+        row = _fetchone(
             """
             SELECT id, model_name, label, weights, metrics, dataset_size, created_at
             FROM confidence_calibration
@@ -120,10 +162,13 @@ def _latest_calibration(label: str = "unified", workspace_id: str = "default") -
 
 def tool_registry() -> dict[str, Callable[..., Any]]:
     return {
-        "search_uploaded_documents": search_uploaded_docs,
-        "search_scholarly_web": search_scholarly_sources,
-        "rerank_research_evidence": rerank_evidence,
-        "evaluate_answer_support": judge_answer_support,
+        "search_documents": _search_documents_proxy,
+        "retrieve_passages": _retrieve_passages_proxy,
+        "search_uploaded_documents": _search_uploaded_docs_proxy,
+        "search_scholarly_web": _search_scholarly_sources_proxy,
+        "rerank_research_evidence": _rerank_evidence_proxy,
+        "evaluate_answer_support": _judge_answer_support_proxy,
+        "score_citation_quality": _score_citation_quality_proxy,
         "get_document_metadata": _document_metadata,
         "list_recent_documents": _recent_documents,
         "list_recent_eval_runs": _recent_eval_runs,
@@ -141,6 +186,46 @@ def build_mcp_app():
     mcp = FastMCP("sourcery-agent-tools")
 
     @mcp.tool()
+    def search_documents(
+        query: str,
+        limit: int = 5,
+        workspace_id: str = "default",
+        scope: str = "both",
+        doc_id: int | None = None,
+        doc_ids: list[int] | None = None,
+    ) -> list[dict[str, Any]]:
+        return [
+            item.model_dump()
+            for item in _search_documents_proxy(
+                query,
+                limit=limit,
+                workspace_id=workspace_id,
+                scope=scope,
+                doc_id=doc_id,
+                doc_ids=doc_ids,
+            )
+        ]
+
+    @mcp.tool()
+    def retrieve_passages(
+        query: str,
+        limit: int = 5,
+        workspace_id: str = "default",
+        doc_id: int | None = None,
+        doc_ids: list[int] | None = None,
+    ) -> list[dict[str, Any]]:
+        return [
+            item.model_dump()
+            for item in _retrieve_passages_proxy(
+                query,
+                limit=limit,
+                workspace_id=workspace_id,
+                doc_id=doc_id,
+                doc_ids=doc_ids,
+            )
+        ]
+
+    @mcp.tool()
     def search_uploaded_documents(
         query: str,
         limit: int = 5,
@@ -150,7 +235,7 @@ def build_mcp_app():
     ) -> list[dict[str, Any]]:
         return [
             item.model_dump()
-            for item in search_uploaded_docs(
+            for item in _search_uploaded_docs_proxy(
                 query,
                 limit=limit,
                 workspace_id=workspace_id,
@@ -161,21 +246,25 @@ def build_mcp_app():
 
     @mcp.tool()
     def search_scholarly_web(query: str, limit: int = 5) -> list[dict[str, Any]]:
-        return [item.model_dump() for item in search_scholarly_sources(query, limit=limit)]
+        return [item.model_dump() for item in _search_scholarly_sources_proxy(query, limit=limit)]
 
     @mcp.tool()
     def rerank_research_evidence(query: str, evidence: list[dict[str, Any]], limit: int = 5) -> list[dict[str, Any]]:
         from .schemas import EvidenceItem
 
         items = [EvidenceItem.model_validate(row) for row in evidence]
-        return [item.model_dump() for item in rerank_evidence(query, items, limit=limit)]
+        return [item.model_dump() for item in _rerank_evidence_proxy(query, items, limit=limit)]
 
     @mcp.tool()
     def evaluate_answer_support(query: str, answer: str, evidence: list[dict[str, Any]]) -> dict[str, Any]:
         from .schemas import EvidenceItem
 
         items = [EvidenceItem.model_validate(row) for row in evidence]
-        return judge_answer_support(query, answer, items)
+        return _judge_answer_support_proxy(query, answer, items)
+
+    @mcp.tool()
+    def score_citation_quality(answer: str, abstained: bool = False) -> dict[str, Any]:
+        return _score_citation_quality_proxy(answer, abstained=abstained)
 
     @mcp.tool()
     def get_document_metadata(document_id: int, workspace_id: str = "default") -> dict[str, Any]:

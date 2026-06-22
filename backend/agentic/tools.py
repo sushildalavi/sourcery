@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
+from backend.citation_quality import score_citation_quality as _score_citation_quality
 from backend.pdf_ingest import search_chunks as search_uploaded_chunks
 from backend.public_search import public_live_search
 from backend.public_web import public_web_search
@@ -117,6 +118,40 @@ def search_scholarly_sources(
             "skipped": payload.get("skipped") if isinstance(payload, dict) else None,
         }
     return items
+
+
+def search_documents(
+    query: str,
+    limit: int = 8,
+    *,
+    workspace_id: str = "default",
+    scope: str = "both",
+    doc_id: int | None = None,
+    doc_ids: list[int] | None = None,
+) -> list[EvidenceItem]:
+    scope_norm = (scope or "both").strip().lower()
+    if scope_norm == "uploaded":
+        return search_uploaded_docs(query, limit=limit, workspace_id=workspace_id, doc_id=doc_id, doc_ids=doc_ids)
+    if scope_norm == "public":
+        return list(search_scholarly_sources(query, limit=limit))
+    uploaded = search_uploaded_docs(query, limit=limit, workspace_id=workspace_id, doc_id=doc_id, doc_ids=doc_ids)
+    public = list(search_scholarly_sources(query, limit=limit))
+    return uploaded + public
+
+
+def retrieve_passages(
+    query: str,
+    limit: int = 8,
+    *,
+    workspace_id: str = "default",
+    doc_id: int | None = None,
+    doc_ids: list[int] | None = None,
+) -> list[EvidenceItem]:
+    return search_uploaded_docs(query, limit=limit, workspace_id=workspace_id, doc_id=doc_id, doc_ids=doc_ids)
+
+
+def score_citation_quality(answer: str, *, abstained: bool = False) -> dict[str, Any]:
+    return _score_citation_quality(answer, abstained=abstained).to_dict()
 
 
 def rerank_evidence(

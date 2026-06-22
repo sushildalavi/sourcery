@@ -149,7 +149,7 @@ reindex:
 eval:
 	$(PYTHONPATH_ENV) $(PYTHON) scripts/eval_retrieval.py \
 		--k 10 \
-		--output Evaluation/data/retrieval_run_$(shell date +%Y%m%d).json
+		--output evaluation/data/retrieval_run_$(shell date +%Y%m%d).json
 
 agent-eval:
 	$(PYTHONPATH_ENV) $(PYTHON) scripts/eval_agentic_rag.py

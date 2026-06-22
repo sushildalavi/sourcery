@@ -1,6 +1,6 @@
 """Generate 120 fresh queries targeted at the corpus via GPT-4o-mini.
 
-Produces Evaluation/queries/queries_120.json with the schema:
+Produces evaluation/queries/queries_120.json with the schema:
     [
       {
         "query_id": "q1",
@@ -36,7 +36,7 @@ from backend.services.db import fetchall
 from backend.utils.config import get_openai_api_key
 
 MODEL = "gpt-4o-mini"
-OUT = Path("Evaluation/queries/queries_120.json")
+OUT = Path("evaluation/queries/queries_120.json")
 
 QUERY_TYPES: List[str] = ["definitional", "methodology", "factual", "limitations"]
 

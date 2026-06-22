@@ -127,7 +127,7 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON chat_messages(session_id
 CREATE INDEX IF NOT EXISTS idx_chat_uploads_session ON chat_uploads(session_id);
 CREATE INDEX IF NOT EXISTS idx_chat_sessions_workspace ON chat_sessions(workspace_id);
 
--- --- Evaluation runs ---
+-- --- Analysis runs ---
 CREATE TABLE IF NOT EXISTS eval_runs (
     id SERIAL PRIMARY KEY,
     name TEXT,

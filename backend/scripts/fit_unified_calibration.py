@@ -1,8 +1,8 @@
 """Fit the unified MSA logistic on human-labeled gold data and run the per-mode ablation.
 
-Reads:  Evaluation/data/calibration/features.xlsx   (claim_id, gold_label, M, S, A, mode)
-Writes: Evaluation/data/calibration/calibration_fit.json   (weights, metrics, ablation)
-        Evaluation/data/calibration/reliability_diagram.xlsx  (bucket-mean P / empirical rate)
+Reads:  evaluation/data/calibration/features.xlsx   (claim_id, gold_label, M, S, A, mode)
+Writes: evaluation/data/calibration/calibration_fit.json   (weights, metrics, ablation)
+        evaluation/data/calibration/reliability_diagram.xlsx  (bucket-mean P / empirical rate)
 
 Also writes the winning weights to the `confidence_calibration` DB table under
 `label='unified'` when --write-db is passed.
@@ -26,9 +26,9 @@ from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 
 from backend.services.db import fetchone
 
-FEATURES_PATH = Path("Evaluation/data/calibration/features.xlsx")
-OUT_JSON = Path("Evaluation/data/calibration/calibration_fit.json")
-OUT_DIAGRAM = Path("Evaluation/data/calibration/reliability_diagram.xlsx")
+FEATURES_PATH = Path("evaluation/data/calibration/features.xlsx")
+OUT_JSON = Path("evaluation/data/calibration/calibration_fit.json")
+OUT_DIAGRAM = Path("evaluation/data/calibration/reliability_diagram.xlsx")
 
 
 def load_features() -> List[Dict]:

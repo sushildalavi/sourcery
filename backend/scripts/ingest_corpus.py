@@ -2,7 +2,7 @@
 
 Deletes any stale documents whose title matches the 15-entry list in
 `_LEGACY_TITLES` (unrelated papers that might be left over from previous
-corpora), then ingests the 15 canonical corpus PDFs from Evaluation/papers/
+corpora), then ingests the 15 canonical corpus PDFs from evaluation/papers/
 (01_ResNet.pdf … 15_PageRank.pdf).
 
 Safe to rerun — existing ingested docs are skipped (dedup by SHA).
@@ -49,7 +49,7 @@ _LEGACY_TITLES = {
     "15_LLMasJudge.pdf",
 }
 
-# Canonical corpus. Files must exist in Evaluation/papers/.
+# Canonical corpus. Files must exist in evaluation/papers/.
 CORPUS_FILES = [
     "01_ResNet.pdf",
     "02_GAN.pdf",
@@ -68,7 +68,7 @@ CORPUS_FILES = [
     "15_PageRank.pdf",
 ]
 
-PAPERS_DIR = Path(__file__).resolve().parents[2] / "Evaluation" / "papers"
+PAPERS_DIR = Path(__file__).resolve().parents[2] / "evaluation" / "papers"
 
 
 def purge_legacy() -> int:
